@@ -1,0 +1,29 @@
+name: push the docs to the linux-zh repo
+
+on: [push]
+
+jobs:
+  build_job:
+    runs-on: ubuntu-20.04
+    name: Build documentation
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          path: source
+      - name: checkout hanyujie2002.github.io/linux-zh middle
+        uses: actions/checkout@v2
+        with:
+          repository: hanyujie2002/linux-zh
+          path: middle
+          token: ${{ secrets.DEPLOY_KEY }}
+      - name: Copy generated middle/Documentation/teaching
+        run: cp -r source/* middle/Documentation/teaching
+      - name: Commit and push changes
+        run: |
+          cd middle
+          git config user.name 'hanyujie2002'
+          git config user.email github-actions@github.com
+          git add .
+          git commit -m "changed at $(date -u)"
+          git push
