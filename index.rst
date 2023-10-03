@@ -16,15 +16,15 @@ Linux 内核教学
 
 在你的主机上安装 docker-compose 后，可以从源代码构建文档:
 
-.. code-block:: c
+.. code-block:: bash
 
-cd tools/labs && make docker-docs
+   cd tools/labs && make docker-docs
 
 然后用你的浏览器中打开 **Documentation/output/labs/index.html**。
 
 或者，你可以直接在主机上构建(参见 tools/labs/docs/Dockerfile 中的依赖项)：
 
-.. code-block:: c
+.. code-block:: bash
 
    cd tools/labs && make docs
 
