@@ -21,9 +21,9 @@
 
 ## 项目结构介绍：
 
-- 本仓库是最上游的文档仓库，大家贡献提交请在这里完成
-- 提交之后会自动通过 Github action 把文档放到 [linux-zh](https://github.com/hanyujie2002/linux-zh) 这个仓库里，这个仓库负责用文档生成网站
-- 网站生成之后，会通过 Github action 把生成的静态网页内容托管在 [linux-kernel-labs-zh-cn](https://github.com/hanyujie2002/linux-kernel-labs-zh-cn) 这个仓库里，之后就可以在 https://hanyujie2002.github.io/linux-kernel-labs-zh-cn/ 看到自己提交的改动了
+- 本仓库是最*上游*的文档仓库，大家贡献提交请在这里完成
+- 提交之后会自动通过 Github action 把文档放到 [linux-zh](https://github.com/hanyujie2002/linux-zh) 这个*中游*仓库里，这个仓库负责用文档生成网站
+- 网站生成之后，会通过 Github action 把生成的静态网页内容托管在 [linux-kernel-labs-zh-cn](https://github.com/hanyujie2002/linux-kernel-labs-zh-cn) 这个*下游*仓库里，之后就可以在 https://hanyujie2002.github.io/linux-kernel-labs-zh-cn/ 看到自己提交的改动了
 
 ## 贡献指南
 
