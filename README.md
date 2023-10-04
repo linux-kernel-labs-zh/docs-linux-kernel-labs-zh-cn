@@ -1,3 +1,7 @@
+[![Stars](https://img.shields.io/github/stars/hanyujie2002/docs-linux-kernel-labs-zh-cn.svg)](https://github.com/hanyujie2002/docs-linux-kernel-labs-zh-cn/stargazers)
+[![Forks](https://img.shields.io/github/forks/hanyujie2002/docs-linux-kernel-labs-zh-cn.svg)](https://github.com/hanyujie2002/docs-linux-kernel-labs-zh-cn/network/members)
+[![Watchers](https://img.shields.io/github/watchers/hanyujie2002/docs-linux-kernel-labs-zh-cn.svg)](https://github.com/hanyujie2002/docs-linux-kernel-labs-zh-cn/watchers)
+
 # Linux 内核实验室中文教程
 
 这是 linux kernel labs ([linux-kernel-labs/linux-kernel-labs.github.io](https://linux-kernel-labs.github.io/refs/heads/master/)) 教程的中文翻译版本，翻译后的版本托管在 Github pages 上，网址为 https://hanyujie2002.github.io/linux-kernel-labs-zh-cn/
