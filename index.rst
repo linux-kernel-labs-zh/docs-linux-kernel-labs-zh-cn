@@ -33,7 +33,7 @@ Linux 内核教学
    so2/index.rst
 
 .. toctree::
-   :caption: Lectures
+   :caption: 课程
 
    lectures/intro.rst
    lectures/syscalls.rst
@@ -49,7 +49,7 @@ Linux 内核教学
    lectures/virt.rst
 
 .. toctree::
-   :caption: Labs
+   :caption: 实验
 
    labs/infrastructure.rst
    labs/introduction.rst
@@ -68,7 +68,7 @@ Linux 内核教学
    labs/kernel_profiling.rst
 
 .. toctree::
-   :caption: Useful info
+   :caption: 有用信息
 
    info/vm.rst
    info/extra-vm.rst
