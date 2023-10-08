@@ -1,5 +1,5 @@
 ============
-Introduction
+    介绍
 ============
 
 `View slides <intro-slides.html>`_
@@ -8,152 +8,120 @@ Introduction
    :autoslides: False
    :theme: single-level
 
-Lecture objectives:
+课程目标:
 ===================
 
 .. slide:: Introduction
    :inline-contents: True
    :level: 2
 
-   * Basic operating systems terms and concepts
+   * 基本的操作系统名词和概念
 
-   * Overview of the Linux kernel
+   * Linux 内核概述
 
 
-Basic operating systems terms and concepts
+基本的操作系统名词和概念
 ==========================================
 
-User vs Kernel
+用户与内核的比较
 --------------
 
-.. slide:: User vs Kernel
+.. slide:: 用户与内核的比较
    :level: 2
 
-   * Execution modes
+   * 执行模式
 
-     * Kernel mode
+     * 内核模式
 
-     * User mode
+     * 用户模式
 
-   * Memory protection
+   * 内存保护
 
-     * Kernel-space
+     * 内核空间
 
-     * User-space
-
-
-Kernel and user are two terms that are often used in operating
-systems. Their definition is pretty straight forward: The kernel is
-the part of the operating system that runs with higher privileges
-while user (space) usually means by applications running with low
-privileges.
-
-However these terms are heavily overloaded and might have very
-specific meanings in some contexts.
-
-User mode and kernel mode are terms that may refer specifically to the
-processor execution mode. Code that runs in kernel mode can fully
-[#hypervisor]_ control the CPU while code that runs in user mode has
-certain limitations. For example, local CPU interrupts can only be
-disabled or enable while running in kernel mode. If such an operation
-is attempted while running in user mode an exception will be generated
-and the kernel will take over to handle it.
-
-.. [#hypervisor] some processors may have even higher privileges than
-                 kernel mode, e.g. a hypervisor mode, that is only
-                 accessible to code running in a hypervisor (virtual
-                 machine monitor)
-
-User space and kernel space may refer specifically to memory
-protection or to virtual address spaces associated with either the
-kernel or user applications.
-
-Grossly simplifying, the kernel space is the memory area that is
-reserved to the kernel while user space is the memory area reserved to
-a particular user process. The kernel space is accessed protected so
-that user applications can not access it directly, while user space
-can be directly accessed from code running in kernel mode.
+     * 用户空间
 
 
-Typical operating system architecture
+内核（kernel）和用户（user）是操作系统中经常使用的两个术语。它们的定义非常直接：内核是以较高权限级别运行的操作系统部分，而用户（空间）通常指以较低权限级别运行的应用程序。
+
+然而，这些术语在不同的上下文中可能有非常特定的含义，因此它们被赋予了多种不同的解释。
+
+用户模式（user mode）和内核模式（kernel mode）是可能特指处理器执行模式的术语。在内核模式下运行的代码可以完全 [#hypervisor]_ 控制 CPU，而在用户模式下运行的代码有一定的限制。例如，在内核模式下运行时可以启用或禁用本地 CPU 中断，而在用户模式下尝试执行此类操作将产生异常并由内核接管处理。
+
+.. [#hypervisor] 有些处理器可能具有比内核模式更高的特权，例如，虚拟机监视器（hypervisor）模式，仅允许在虚拟机监视器（虚拟机监控程序）中运行的代码访问。
+
+用户空间（user space）和内核空间（kernel space）可以特指内存保护或与内核或用户应用程序关联的虚拟地址空间。
+
+你可以粗略地理解为，内核空间是保留给内核的内存区域，而用户空间是保留给特定用户进程的内存区域。内核空间被保护访问，因此用户应用程序无法直接访问它，而用户空间可以被在内核模式下运行的代码直接访问。
+
+
+典型的操作系统架构
 -------------------------------------
 
-In the typical operating system architecture (see the figure below)
-the operating system kernel is responsible for access and sharing the
-hardware in a secure and fair manner with multiple applications.
+在典型的操作系统架构中（如下图所示），操作系统内核负责以安全和公平的方式让多个应用程序访问和共享硬件资源。
 
-.. slide:: Typical operating system architecture
+.. slide:: 典型操作系统架构
+
    :level: 2
    :inline-contents: True
 
-   .. ditaa::
+   .. code-block:: text
 
       +---------------+  +--------------+      +---------------+  -\
-      | Application 1 |  | Application2 | ...  | Application n |   |
-      +---------------+  +--------------+      +---------------+   |> User space
+      |   应用程序 1   |  |   应用程序 2  | ...  |   应用程序 n  |   |
+      +---------------+  +--------------+      +---------------+   |> 用户空间
               |                 |                      |           |
               v                 v                      v          -/
       +--------------------------------------------------------+  -\
-      |                 System Call Interface                  |   |
+      |                     系统调用接口                        |   |
       +--------------------------------------------------------+   |
               |                 |                      |           |
-              v                 v                      v           |> Kernel space
+              v                 v                      v           |> 内核空间
       +--------------------------------------------------------+   |
-      |                       Kernel                           |   |
+      |                        内核                            |   |
       +--------------------------------------------------------+   |
-      |                   Device drivers                       |   |
+      |                      设备驱动                           |   |
       +--------------------------------------------------------+  -/
               |                 |                      |          -\
-              v                 v                      v           |> Hardware
+              v                 v                      v           |> 硬件
                                                                   -/
 
 
 
-The kernel offers a set of APIs that applications issue which are
-generally referred to as "System Calls". These APIs are different from
-regular library APIs because they are the boundary at which the
-execution mode switch from user mode to kernel mode.
+内核提供了一组用来给应用程序调用的 API，通常称为“系统调用”。这些 API 与常规的库 API 不同，因为它们是执行模式从用户模式切换到内核模式的边界。
 
-In order to provide application compatibility, system calls are rarely
-changed. Linux particularly enforces this (as opposed to in kernel
-APIs that can change as needed).
+为了提供应用程序的兼容性，系统调用很少发生变化。Linux 特别强制执行此规定（与可能根据需要更改的内核 API 相对）。
 
-The kernel code itself can be logically separated in core kernel
-code and device drivers code. Device drivers code is responsible of
-accessing particular devices while the core kernel code is
-generic. The core kernel can be further divided into multiple logical
-subsystems (e.g. file access, networking, process management, etc.)
+内核代码本身可以在逻辑上分为核心内核代码和设备驱动程序代码。设备驱动程序代码负责访问特定设备，而核心内核代码是通用的。核心内核还可以进一步划分为多个逻辑子系统（例如文件访问、网络还有进程管理等）。
 
 
-Monolithic kernel
+单体内核
 -----------------
 
-A monolithic kernel is one where there is no access protection between
-the various kernel subsystems and where public functions can be
-directly called between various subsystems.
+单体内核（monolithic kernel，又译宏内核或巨内核）是指没有对各个内核子系统之间的访问进行保护的内核，其中公共函数可以在各个子系统之间直接调用。
 
 
-.. slide:: Monolithic kernel
+.. slide:: 单体内核
    :level: 2
    :inline-contents: True
 
-   .. ditaa::
+   .. code-block:: text
 
       +-----+          +-----+          +-----+
-      | App |          | App |          | App |
+      | 应用 |         | 应用 |          | 应用 |
       +-----+          +-----+          +-----+
-         |                |                |                 User
+         |                |                |                用户 
       =--|-------=--------|--------=-------|-------------------=-
-         |                |                |               Kernel
+         |                |                |                内核
          v                v                v
       +--------------------------------------------------------+
-      |                 System Call Interface                  |
+      |                   系统调用接口                          |
       +--------------------------------------------------------+
                 |                                    |
                 v                                    v
              +-----+                              +-----+
-             |     |<---------------------------->|     |    Kernel
-             |     |<---+                +------->|     |  functions
+             |     |<---------------------------->|     |  内核  
+             |     |<---+                +------->|     |  函数 
              +--+--+    |                |        +-----+
                 |       |                |           ^
                 |       |     +-----+    |           |
@@ -162,201 +130,142 @@ directly called between various subsystems.
                 ||      |                            |
                 vv      |                            v
              +--++-+    |                         +-----+
-             |     |    +------------------------>|     |  Device
-             |     |<---------------------------->|     |  Drivers
+             |     |    +------------------------>|     |  设备
+             |     |<---------------------------->|     |  驱动
              +--+--+                              +--+--+
                 |                                    |
                 v                                    v
       +--------------------------------------------------------+
-      |                         Hardware                       |
+      |                           应用                         |
       +--------------------------------------------------------+
 
 
-However, most monolithic kernels do enforce a logical separation
-between subsystems especially between the core kernel and device
-drivers with relatively strict APIs (but not necessarily fixed in
-stone) that must be used to access services offered by one subsystem
-or device drivers. This, of course, depends on the particular kernel
-implementation and the kernel's architecture.
+然而，大多数单体内核确实在子系统之间实施了逻辑分离，特别是在核心内核和设备驱动程序之间，需要通过相对严格的 API（但不一定是固定不变的）来访问一个子系统或设备驱动程序提供的服务。当然，这取决于特定的内核实现和内核的架构。
 
 
-Micro kernel
+微内核
 ------------
 
-A micro-kernel is one where large parts of the kernel are protected
-from each-other, usually running as services in user space. Because
-significant parts of the kernel are now running in user mode, the
-remaining code that runs in kernel mode is significantly smaller, hence
-micro-kernel term.
+微内核（micro kernel）是指内核的大部分功能彼此之间的访问都受到保护，通常作为用户空间中的服务运行。由于内核的重要功能现在运行在用户模式下，运行在内核模式下的剩余代码显著减少，因此称为微内核。
 
-.. slide:: Micro-kernel
-   :level: 2
-   :inline-contents: True
-
-   .. ditaa::
+   .. code-block:: text
 
         +-----+   +--------+  +---------+ +---------+
-        | App |   | File   |  | Network | | Display |<--+
-        |     |   | Server |  | Server  | | Server  |-+ |
+        | 应用 |  |  文件   |  |   网络  | |   显示  |<--+
+        | 服务 |  |  服务器 |  |  服务器 | |  服务器  |-+ |
         +-----+   +--------+  +---------+ +---------+ | |
-         | ^                                          | |     User
+         | ^                                          | |     用户
         -|-|----------------------------------------=-|-|-------=-
-         | |                                          | |   Kernel
+         | |                                          | |     内核
          | |                                          | |
          | |                                          | |
          | |                                          | |
-         | | Reply  +----------------------------+    | |
+         | |  回复  +----------------------------+    | |
          | +--------|                            |----+ |
-         +--------->|        Micro kernel        |------+
-          Request   |  (IPC, Memory, Scheduler)  |
-                    |                            |
+         +--------->|            微内核           |------+
+             请求   | （进程间通信（IPC），内存，   |
+                    |            调度程序）       |
                     +----------------------------+
                                  |
                                  v
         +--------------------------------------------------------+
-        |                         Hardware                       |
+        |                       硬件                             |
         +--------------------------------------------------------+
 
 
-In a micro-kernel architecture the kernel contains just enough code
-that allows for message passing between different running
-processes. Practically that means implement the scheduler and an IPC
-mechanism in the kernel, as well as basic memory management to setup
-the protection between applications and services.
+在微内核架构中，内核仅包含足够允许不同的运行中的进程间进行消息传递的代码。实践中，这意味着在内核中实现调度程序和进程间通讯（IPC）机制，以及基本的内存管理以建立应用程序和服务之间的保护。
 
-One of the advantages of this architecture is that the services are
-isolated and hence bugs in one service won't impact other services.
+这种架构的优点之一是服务被隔离，因此某一个服务中的错误不会影响其他服务。
 
-As such, if a service crashes we can just restart it without affecting
-the whole system. However, in practice this is difficult to achieve
-since restarting a service may affect all applications that depend on
-that service (e.g. if the file server crashes all applications with
-opened file descriptors would encounter errors when accessing them).
+因此，如果一个服务崩溃，我们可以只重启它而不影响整个系统。然而，实践中很难实现这一点，因为重新启动一个服务可能会影响依赖该服务的所有应用程序（例如，如果文件服务器崩溃，所有打开文件描述符的应用程序在访问文件时会遇到错误）。
 
-This architecture imposes a modular approach to the kernel and offers
-memory protection between services but at a cost of performance. What
-is a simple function call between two services on monolithic kernels
-now requires going through IPC and scheduling which will incur a
-performance penalty [#minix-vs-linux]_.
+这种架构对内核施加了模块化的方法，并在服务之间提供了内存保护，但代价是性能。在单体内核上两个服务之间的简单函数调用现在需要通过 IPC 和调度，这将导致性能损失 [#minix-vs-linux]_。
 
 .. [#minix-vs-linux] https://lwn.net/Articles/220255/
 
 
-Micro-kernels vs monolithic kernels
------------------------------------
+微内核与单体内核的比较
+-----------------
 
-Advocates of micro-kernels often suggest that micro-kernel are
-superior because of the modular design a micro-kernel
-enforces. However, monolithic kernels can also be modular and there
-are several approaches that modern monolithic kernels use toward this
-goal:
+微内核的支持者经常认为微内核由于其强制性的模块化设计而更优越。然而，单体内核也可以是模块化的，现代单体内核采用了以下几种方法来实现这一目标：
 
-.. slide:: Monolithic kernels *can* be modular
+.. slide:: 单体内核*可以*是模块化的
    :level: 2
    :inline-contents: True
 
-   * Components can enabled or disabled at compile time
+   * 组件可以在编译时启用或禁用
 
-   * Support of loadable kernel modules (at runtime)
+   * 支持可加载的内核模块（在运行时）
 
-   * Organize the kernel in logical, independent subsystems
+   * 将内核组织成逻辑上独立的子系统
 
-   * Strict interfaces but with low performance overhead: macros,
-     inline functions, function pointers
+   * 严格的接口，但其性能开销低：宏、内联函数以及函数指针
 
 
-There is a class of operating systems that (used to) claim to be
-hybrid kernels, in between monolithic and micro-kernels (e.g. Windows,
-Mac OS X). However, since all of the typical monolithic services run
-in kernel-mode in these operating systems, there is little merit to
-qualify them other then monolithic kernels.
+有一类操作系统（曾经）声称自己是混合内核，介于单体内核和微内核之间（例如 Windows 以及 Mac OS X）。但是，由于这些操作系统中所有典型的单体服务都在内核模式下运行，因此几乎没有理由将它们称为其他类型的内核，而不是单体内核。
 
-.. slide:: "Hybrid" kernels
+.. slide:: “混合”内核
    :level: 2
    :inline-contents: True
 
-   Many operating systems and kernel experts have dismissed the label
-   as meaningless, and just marketing. Linus Torvalds said of this
-   issue:
+   许多操作系统和内核专家认为这个标签毫无意义，只是营销手段。Linus Torvalds 对此问题说：
 
-   "As to the whole 'hybrid kernel' thing - it's just marketing. It's
-   'oh, those microkernels had good PR, how can we try to get good PR
-   for our working kernel? Oh, I know, let's use a cool name and try
-   to imply that it has all the PR advantages that that other system
-   has'."
+   “至于所谓的‘混合内核’，那只是营销而已。‘哦，那些微内核有很好的公关，我们怎么能给我们的工作内核也弄点好公关呢？哦，我知道了，让我们用一个酷酷的名字，来暗示它具有其他系统所拥有的所有公关优势’。”
 
 
-Address space
--------------
+地址空间
+-----------
 
-.. slide:: Address space
+.. slide:: 地址空间
    :level: 2
 
-   * Physical address space
+   * 物理地址空间
 
-     * RAM and peripheral memory
+    * RAM和外设内存
 
-   * Virtual address space
+   * 虚拟地址空间
 
-     * How the CPU sees the memory (when in protected / paging mode)
+     * CPU 在受保护/分页模式下看到的内存
 
-     * Process address space
+     * 进程地址空间
 
-     * Kernel address space
-
-
-The address space term is an overload term that can have different
-meanings in different contexts.
-
-The physical address space refers to the way the RAM and device
-memories are visible on the memory bus. For example, on 32bit Intel
-architecture, it is common to have the RAM mapped into the lower
-physical address space while the graphics card memory is mapped high
-in the physical address space.
-
-The virtual address space (or sometimes just address space) refers to
-the way the CPU sees the memory when the virtual memory module is
-activated (sometime called protected mode or paging enabled). The
-kernel is responsible of setting up a mapping that creates a virtual
-address space in which areas of this space are mapped to certain
-physical memory areas.
-
-Related to the virtual address space there are two other terms that
-are often used: process (address) space and kernel (address) space.
-
-The process space is (part of) the virtual address space associated
-with a process. It is the "memory view" of processes. It is a
-continuous area that starts at zero. Where the process's address space
-ends depends on the implementation and architecture.
-
-The kernel space is the "memory view" of the code that runs in kernel
-mode.
+     * 内核地址空间
 
 
-User and kernel sharing the virtual address space
--------------------------------------------------
+地址空间这个术语在不同的上下文中有不同的含义。
 
-A typical implementation for user and kernel spaces is one where the
-virtual address space is shared between user processes and the kernel.
+物理地址空间指的是 RAM 和设备内存在内存总线上的可见方式。例如，在 32 位 Intel 架构上，通常将 RAM 映射到较低的物理地址空间，而将显卡内存映射到较高的物理地址空间。
 
-In this case kernel space is located at the top of the address space,
-while user space at the bottom. In order to prevent the user processes
-from accessing kernel space, the kernel creates mappings that prevent
-access to the kernel space from user mode.
+虚拟地址空间（有时只称为地址空间）指的是当虚拟内存模块启用时，CPU 看到内存的方式（有时称为保护模式或启用分页）。内核负责设置映射，创建虚拟地址空间，其中该空间的某些区域（area）映射到特定的物理内存区域。
 
-.. slide:: User and kernel sharing the virtual address space
+与虚拟地址空间相关的还有另外两个常用的术语：进程（地址）空间和内核（地址）空间。
+
+进程空间是与进程相关联的（部分）虚拟地址空间。它是进程的“内存视图”。它是一个从零开始的连续区域。进程的地址空间的结束位置取决于具体的实现和架构。
+
+内核空间是以内核模式运行的代码的“内存视图”。
+
+
+用户和内核共享虚拟地址空间
+-------------------------
+
+一种典型的用户和内核空间的实现方式是将虚拟地址空间在用户进程和内核之间共享。
+
+在这种情况下，内核空间位于地址空间的顶部，而用户空间位于底部。为了防止用户进程访问内核空间，内核创建了映射，阻止用户模式下对内核空间的访问。
+
+.. slide:: 用户和内核共享虚拟地址空间
+
    :level: 2
    :inline-contents: True
 
-   .. ditaa::
+   .. code-block:: text
 
                   +-------------------+  ^
       0xFFFFFFFF  |                   |  |
-                  |                   |  | Kernel space
+                  |                   |  | 内核空间
                   |                   |  |
                   +-------------------+  v
       0xC0000000  |                   |  ^
-                  |                   |  | User space
+                  |                   |  | 用户空间
                   |                   |  |
                   |                   |  |
                   |                   |  |
@@ -366,165 +275,130 @@ access to the kernel space from user mode.
                   |                   |  |
       0x00000000  +-------------------+  v
 
-            32bit Virtual Address Space
+                   32 位虚拟地址空间
 
-Execution contexts
+执行上下文
 ------------------
 
-.. slide:: Execution contexts
+.. slide:: 执行上下文
    :level: 2
 
-   * Process context
+   * 进程上下文
 
-     * Code that runs in user mode, part of a process
+     * 在用户模式下运行的代码，属于进程的一部分
 
-     * Code that runs in kernel mode, as a result of a system call
-       issued by a process
+     * 作为进程发出的系统调用的结果，在内核模式下运行的代码
 
-   * Interrupt context
+   * 中断上下文：
 
-     * Code that runs as a result of an interrupt
+     * 作为中断的结果而运行的代码
 
-     * Always runs in kernel mode
-
-
-One of the most important jobs of the kernel is to service interrupts
-and to service them efficiently. This is so important that a special
-execution context is associated with it.
-
-The kernel executes in interrupt context when it runs as a result of
-an interrupt. This includes the interrupt handler, but it is not
-limited to it, there are other special (software) constructs that run
-in interrupt mode.
-
-Code running in interrupt context always runs in kernel mode and there
-are certain limitations that the kernel programmer has to be aware of
-(e.g. not calling blocking functions or accessing user space).
-
-Opposed to interrupt context there is process context. Code that runs
-in process context can do so in user mode (executing application code)
-or in kernel mode (executing a system call).
+     * 总是在内核模式下运行
 
 
-Multi-tasking
+内核最重要的工作之一是有效地处理中断。这一点非常重要，以至于与之相关联了一个特殊的执行上下文。
+
+当内核由于中断而运行时，它会在中断上下文中执行。这包括中断处理程序，但不仅限于此，还有其他一些特殊的（软件）结构也会在中断模式下运行。
+
+在中断上下文中运行的代码始终在内核模式下运行，内核程序员必须注意一些限制（例如不能调用阻塞函数（blocking function）或访问用户空间）。
+
+与中断上下文相对的是进程上下文。在进程上下文中的代码既可以在用户模式（执行应用程序代码）也可以在内核模式（执行系统调用）运行。
+
+
+多任务处理
 -------------
 
-.. slide:: Multi-tasking
+.. slide:: 多任务处理
    :level: 2
 
-   * An OS that supports the "simultaneous" execution of multiple processes
+   * 支持“同时”执行多个进程的操作系统
 
-   * Implemented by fast switching between running processes to allow
-     the user to interact with each program
+   * 通过快速切换运行进程来实现，以允许用户与每个程序进行交互
 
-   * Implementation:
+   * 实现方式：
 
-     * Cooperative
+     * 合作式
 
-     * Preemptive
+     * 抢占式
 
-Multitasking is the ability of the operating system to
-"simultaneously" execute multiple programs. It does so by quickly
-switching between running processes.
+多任务处理是操作系统同时执行多个程序的能力。它通过快速在运行进程之间切换来实现。
 
-Cooperative multitasking requires the programs to cooperate to achieve
-multitasking. A program will run and relinquish CPU control back
-to the OS, which will then schedule another program.
+合作式（cooperative）多任务处理要求程序协作以实现多任务处理。一个程序运行之后会将 CPU 控制权交还给操作系统，然后操作系统会调度另一个程序运行。
 
-With preemptive multitasking the kernel will enforce strict limits for
-each process, so that all processes have a fair chance of
-running. Each process is allowed to run a time slice (e.g. 100ms)
-after which, if it is still running, it is forcefully preempted and
-another task is scheduled.
+在抢占式（preemptive）多任务处理中，内核会对每个进程强制执行严格的限制，以使所有进程都有公平的运行机会。每个进程被允许运行一个时间片段（slice）（例如 100 毫秒），之后如果它仍在运行，则会被强制抢占并调度另一个任务。
 
-Preemptive kernel
+
+抢占式内核
 -----------------
 
-.. slide:: Preemptive kernel
+.. slide:: 抢占式内核
    :level: 2
    :inline-contents: True
 
-   Preemptive multitasking and preemptive kernels are different terms.
+   抢占式多任务处理和抢占式内核是不同的术语。
 
-   A kernel is preemptive if a process can be preempted while running
-   in kernel mode.
+   如果一个进程在内核模式下运行时可以被抢占，则内核是抢占式的。
 
-   However, note that non-preemptive kernels may support preemptive
-   multitasking.
+   然而，请注意非抢占式内核可能支持抢占式多任务处理。
 
 
-Pageable kernel memory
+可分页的内核内存
 ----------------------
 
-.. slide:: Pageable kernel memory
+.. slide:: 可分页的内核内存
    :level: 2
    :inline-contents: True
 
-   A kernel supports pageable kernel memory if parts of kernel memory
-   (code, data, stack or dynamically allocated memory) can be swapped
-   to disk.
+   如果内核内存的某些部分（代码、数据、堆栈或动态分配内存）可以交换到磁盘上，则内核支持可分页的内核内存。
 
-Kernel stack
+内核堆栈
 ------------
 
-.. slide:: Kernel stack
+.. slide:: 内核堆栈
    :level: 2
    :inline-contents: True
 
-   Each process has a kernel stack that is used to maintain the
-   function call chain and local variables state while it is executing
-   in kernel mode, as a result of a system call.
+   每个进程都有一个内核堆栈，用于在执行系统调用时，保持函数调用链和局部变量状态。内核栈在进程处于内核模式时使用。
 
-   The kernel stack is small (4KB - 12 KB) so the kernel developer has
-   to avoid allocating large structures on stack or recursive calls
-   that are not properly bounded.
+   内核堆栈很小（4 KB - 12 KB），因此内核开发人员必须避免在堆栈上分配大型结构或未适当限定的递归调用。
 
-Portability
+可移植性
 -----------
 
-In order to increase portability across various architectures and
-hardware configurations, modern kernels are organized as follows at the
-top level:
+为了增加在各种架构（architecture）和硬件配置之间的可移植性，现代内核在顶层上组织如下：
 
-.. slide:: Portability
+.. slide:: 可移植性
    :level: 2
    :inline-contents: True
 
-   * Architecture and machine specific code (C & ASM)
+   * 架构和机器特定代码（C 和 汇编）
 
-   * Independent architecture code (C):
+   * 独立于架构的代码（C）：
 
-     * kernel core (further split in multiple subsystems)
+     * 内核核心（进一步分为多个子系统）
 
-     * device drivers
+     * 设备驱动程序
 
-This makes it easier to reuse code as much as possible between
-different architectures and machine configurations.
+这使得在不同架构和机器配置之间尽可能地重用代码更容易。
 
 
-Asymmetric MultiProcessing (ASMP)
+非对称多处理（ASMP）
 ---------------------------------
 
-Asymmetric MultiProcessing (ASMP) is a way of supporting multiple
-processors (cores) by a kernel, where a processor is dedicated to the
-kernel and all other processors run user space programs.
+非对称多处理（Asymmetric MultiProcessing，ASMP）是一种通过内核支持多个处理器（核心）的方式。其中一个处理器专门用于内核，而其他处理器则用于运行用户空间程序。
 
-The disadvantage of this approach is that the kernel throughput
-(e.g. system calls, interrupt handling, etc.) does not scale with the
-number of processors and hence typical processes frequently use system
-calls. The scalability of the approach is limited to very specific
-systems (e.g. scientific applications).
+这种方法的缺点是内核吞吐量（例如系统调用、中断处理等）不随处理器数量的增加而扩展，然而典型的进程经常使用系统调用。该方法的可扩展性仅限于非常特定的系统（例如科学应用）。
 
 
-.. slide:: Asymmetric MultiProcessing (ASMP)
+.. slide:: 非对称多处理（ASMP）
    :level: 2
    :inline-contents: True
 
-   .. ditaa::
+   .. code-block:: text
 
                                   +-----------+
                                   |           |
-              +------------------>|  Memory   |<-----------------+
+              +------------------>|   内存    |<-----------------+
               |                   |           |                  |
               |                   +-----------+                  |
               |                         ^                        |
@@ -532,44 +406,38 @@ systems (e.g. scientific applications).
               v                         v                        v
       +--------------+          +---------------+         +---------------+
       |              |          |               |         |               |
-      | Processor A  |          |  Processor B  |         |  Processor C  |
+      |   处理器 A    |          |  处理器 B     |         |  处理器 C     |
       |              |          |               |         |               |
       |              |          | +-----------+ |         | +-----------+ |
-      |              |          | | Process 1 | |         | | Process 1 | |
+      |              |          | | 进程 1    | |         | | 进程 1    | |
       |              |          | +-----------+ |         | +-----------+ |
       |              |          |               |         |               |
       | +----------+ |          | +-----------+ |         | +-----------+ |
-      | |  kernel  | |          | | Process 2 | |         | | Process 2 | |
+      | |  内核    | |          | | 进程 2    | |         | | 进程 2    | |
       | +----------+ |          | +-----------+ |         | +-----------+ |
       |              |          |               |         |               |
       |              |          | +-----------+ |         | +-----------+ |
-      |              |          | | Process 3 | |         | | Process 3 | |
+      |              |          | | 进程 3    | |         | | 进程 3    | |
       |              |          | +-----------+ |         | +-----------+ |
       +--------------+          +---------------+         +---------------+
 
 
-Symmetric MultiProcessing (SMP)
+对称多处理（Symmetric MultiProcessing，SMP）
 -------------------------------
 
-As opposed to ASMP, in SMP mode the kernel can run on any of the
-existing processors, just as user processes. This approach is more
-difficult to implement, because it creates race conditions in the
-kernel if two processes run kernel functions that access the same
-memory locations.
+与 ASMP 相反，在 SMP 模式下，内核可以在任何现有处理器上运行，就像用户进程一样。这种方法更难实现，因为如果两个进程运行访问相同内存位置的内核函数，会在内核中产生竞态条件（race condition）。
 
-In order to support SMP the kernel must implement synchronization
-primitives (e.g. spin locks) to guarantee that only one processor is
-executing a critical section.
+为了支持 SMP，内核必须实现同步原语（synchronization primitive）（例如自旋锁（spin lock））来保证只有一个处理器执行临界区（critical section）。
 
-.. slide:: Symmetric MultiProcessing (SMP)
+.. slide:: 对称多处理（SMP）
    :level: 2
    :inline-contents: True
 
-   .. ditaa::
+   .. code-block:: text
 
                                    +-----------+
                                    |           |
-              +------------------->|  Memory   |<------------------+
+              +------------------->|   内存    |<------------------+
               |                    |           |                   |
               |                    +-----------+                   |
               |                          ^                         |
@@ -577,126 +445,102 @@ executing a critical section.
               v                          v                         v
       +---------------+          +---------------+         +---------------+
       |               |          |               |         |               |
-      |  Processor A  |          |  Processor B  |         |  Processor C  |
+      |  处理器 A      |          |  处理器 B      |         |  处理器 C     |
       |               |          |               |         |               |
       | +-----------+ |          | +-----------+ |         | +-----------+ |
-      | | Process 1 | |          | | Process 1 | |         | | Process 1 | |
-      | +-----------+ |          | +-----------+ |         | +-----------+ |
-      |               |          |               |         |               |
-      | +-----------+ |          | +-----------+ |         | +-----------+ |
-      | | Process 2 | |          | | Process 2 | |         | | Process 2 | |
+      | | 进程 1    | |          | | 进程 1    | |          | | 进程 1    | |
       | +-----------+ |          | +-----------+ |         | +-----------+ |
       |               |          |               |         |               |
       | +-----------+ |          | +-----------+ |         | +-----------+ |
-      | |   kernel  | |          | |   kernel  | |         | |   kernel  | |
+      | | 进程 2    | |          | | 进程 2     | |         | | 进程 2    | |
+      | +-----------+ |          | +-----------+ |         | +-----------+ |
+      |               |          |               |         |               |
+      | +-----------+ |          | +-----------+ |         | +-----------+ |
+      | |   内核    | |          | |   内核    | |          | |   内核    | |
       | +-----------+ |          | +-----------+ |         | +-----------+ |
       +---------------+          +---------------+         +---------------+
 
 
-CPU Scalability
+CPU可扩展性
 ---------------
 
-CPU scalability refers to how well the performance scales with
-the number of cores. There are a few things that the kernel developer
-should keep in mind with regard to CPU scalability:
+CPU 可扩展性是指随着核心（core）数量的增加，性能可以扩展到什么程度。内核开发者应该关注以下几点以提高 CPU 的可扩展性：
 
-.. slide:: CPU Scalability
+.. slide:: CPU 可扩展性
    :level: 2
    :inline-contents: True
 
-   * Use lock free algorithms when possible
+   * 尽可能使用无锁（lock free）算法
 
-   * Use fine grained locking for high contention areas
+   * 对于高争用区域（high contention areas）使用细粒度锁（fine grained locking）
 
-   * Pay attention to algorithm complexity
+   * 注意算法复杂度
 
 
-Overview of the Linux kernel
+Linux内核概述
 ============================
 
 
-Linux development model
+Linux开发模型
 -----------------------
 
-.. slide:: Linux development model
+.. slide:: Linux开发模型
    :level: 2
 
-   * Open source, GPLv2 License
+   * 开源，采用 GPLv2 许可证
 
-   * Contributors: companies, academia and independent developers
+   * 贡献者：公司、学术界和独立开发者
 
-   * Development cycle: 3 – 4 months which consists of a 1 - 2 week
-     merge window followed by bug fixing
+   * 开发周期：3 - 4 个月，包括 1 - 2 周的合并窗口（merge window）和错误修复阶段
 
-   * Features are only allowed in the merge window
+   * 新功能只允许在合并窗口期间合并
 
-   * After the merge window a release candidate is done on a weekly
-     basis (rc1, rc2, etc.)
+   * 合并窗口结束后,每周会制作一个发行候选（release candidate）版本（rc1、rc2等）
 
-The Linux kernel is one the largest open source projects in the world
-with thousands of developers contributing code and millions of lines of
-code changed for each release.
+Linux 内核是世界上最大的开源项目之一，拥有成千上万的开发人员贡献代码，每个发布版本都会有数百万行的代码更改。
 
-It is distributed under the GPLv2 license, which simply put,
-requires that any modification of the kernel done on software that is
-shipped to customer should be made available to them (the customers),
-although in practice most companies make the source code publicly
-available.
+它采用 GPLv2 许可证进行分发，简而言之，要求在交付给客户的软件上对内核所做的任何修改都应提供给客户，但实际上大多数公司都会公开源代码。
 
-There are many companies (often competing) that contribute code to the
-Linux kernel as well as people from academia and independent
-developers.
+许多公司（通常是竞争对手）以及学术界还有独立开发者向 Linux 内核贡献代码。
 
-The current development model is based on doing releases at fixed
-intervals of time (usually 3 - 4 months). New features are merged into
-the kernel during a one or two week merge window. After the merge
-window, a release candidate is done on a weekly basis (rc1, rc2, etc.)
+目前的开发模型是基于固定时间间隔进行发布（通常为 3 - 4 个月）。新功能在一两周的合并窗口期间合并到内核中。合并窗口结束后，每周发布一个发行候选版本（rc1、rc2 等）。
 
 
-Maintainer hierarchy
+维护者层次结构
 --------------------
 
-In order to scale the development process, Linux uses a hierarchical
-maintainership model:
+为了优化开发流程，Linux 使用了一个层次化的维护模型：
 
-.. slide:: Maintainer hierarchy
+.. slide:: 维护者层次结构
    :level: 2
    :inline-contents: True
 
-   * Linus Torvalds is the maintainer of the Linux kernel and merges pull
-     requests from subsystem maintainers
+   * Linus Torvalds 是 Linux 内核的维护者，他从子系统维护者那里合并拉取请求（pull request）
 
-   * Each subsystem has one or more maintainers that accept patches or
-     pull requests from developers or device driver maintainers
+   * 每个子系统都有一个或多个维护者，他们接受开发者或设备驱动程序维护者的补丁或拉取请求
 
-   * Each maintainer has its own git tree, e.g.:
+   * 每个维护者都有自己的 git 树，例如：
 
      * Linux Torvalds: git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux-2.6.git
 
-     * David Miller (networking): git://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/
+     * David Miller（网络）：git://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/
 
-   * Each subsystem may maintain a -next tree where developers can submit
-     patches for the next merge window
+   * 每个子系统可能维护一个 -next 树，开发者可以在其中提交下一个合并窗口的补丁（patch）
 
-Since the merge window is only a maximum of two weeks, most of the
-maintainers have a -next tree where they accept new features from
-developers or maintainers downstream while even when the merge window
-is closed.
+由于合并窗口最多只有两周时间，大多数维护者都拥有一个 -next 树，这样即使合并窗口关闭，他们也能接受下游开发者或维护者的新功能。
 
-Note that bug fixes are accepted even outside merge window in the
-maintainer's tree from where they are periodically pulled by the
-upstream maintainer regularly, for every release candidate.
+请注意，错误修复（bug fix）即使是在合并窗口外也可以被维护者的树接受，并定期由上游维护者拉取，用于每个发行候选版本。
 
 
 
-Linux source code layout
+Linux 源代码布局
 -------------------------
 
-.. slide:: Linux source code layout
+.. slide:: Linux 源代码布局
    :level: 2
    :inline-contents: True
 
-   .. ditaa::
+   .. code-block:: text
 
       +-------+
       | linux |
@@ -731,103 +575,72 @@ Linux source code layout
            +-------+ +-----+ +------+
 
 
-These are the top level of the Linux source code folders:
+以下是 Linux 源代码文件夹的顶层目录：
 
-* arch - contains architecture specific code; each architecture is
-  implemented in a specific sub-folder (e.g. arm, arm64, x86)
+* arch——包含特定架构（architecture）的代码；每个架构在特定的子文件夹中实现（例如 arm、arm64 以及 x86）
 
-* block - contains the block subsystem code that deals with reading
-  and writing data from block devices: creating block I/O requests,
-  scheduling them (there are several I/O schedulers available),
-  merging requests, and passing them down through the I/O stack to the
-  block device drivers
+* block——包含与读写块设备数据相关的块子系统代码：创建块 I/O 请求、调度（scheduling）请求（有几个 I/O 调度程序可用）、合并请求，并将其通过 I/O 堆栈传递给块设备驱动程序
 
-* certs - implements support for signature checking using certificates
+* certs——使用证书实现签名检查支持
 
-* crypto - software implementation of various cryptography algorithms
-  as well as a framework that allows offloading such algorithms in
-  hardware
+* crypto——各种加密算法的软件实现，以及允许将这些算法分载到硬件中的框架
 
-* Documentation - documentation for various subsystems, Linux kernel
-  command line options, description for sysfs files and format, device
-  tree bindings (supported device tree nodes and format)
+* Documentation——各个子系统的文档、对 Linux 内核命令行选项的描述、对 sysfs 文件和格式的描述以及设备树绑定（支持的设备树节点和格式）
 
-* drivers - driver for various devices as well as the Linux driver
-  model implementation (an abstraction that describes drivers, devices
-  buses and the way they are connected)
+* drivers——各种设备的驱动程序以及 Linux 驱动程序模型实现（对驱动程序、设备总线及其连接方式的抽象描述）
 
-* firmware - binary or hex firmware files that are used by various
-  device drivers
+* firmware——由各种设备驱动程序使用的二进制或十六进制固件文件
 
-* fs - home of the Virtual Filesystem Switch (generic filesystem code)
-  and of various filesystem drivers
+* fs——虚拟文件系统切换（通用文件系统代码）以及各种文件系统驱动程序的位置
 
-* include - header files
+* include——头文件
 
-* init - the generic (as opposed to architecture specific)
-  initialization code that runs during boot
+* init——在启动过程中运行的通用（而不是特定于架构的）初始化代码
 
-* ipc - implementation for various Inter Process Communication system
-  calls such as message queue, semaphores, shared memory
+* ipc——对各种进程间通信系统（Inter Process Communication）调用的实现，例如消息队列、信号量、共享内存
 
-* kernel - process management code (including support for kernel
-  thread, workqueues), scheduler, tracing, time management, generic
-  irq code, locking
+* kernel——进程管理代码（包括对内核线程、工作队列的支持）、调度程序（scheduler）、跟踪、时间管理、通用中断代码（generic irq code）以及锁定（locking）
 
-* lib - various generic functions such as sorting, checksums,
-  compression and decompression, bitmap manipulation, etc.
+* lib——各种通用函数，例如排序、校验和、压缩和解压缩、位图操作等
 
-* mm - memory management code, for both physical and virtual memory,
-  including the page,  SL*B and CMA allocators, swapping, virtual memory
-  mapping, process address space manipulation, etc.
+* mm——内存管理代码，用于物理和虚拟内存，包括页面、SL*B 和 CMA 分配器、交换（swapping）、虚拟内存映射、进程地址空间操作等
 
-* net - implementation for various network stacks including IPv4 and
-  IPv6; BSD socket implementation, routing, filtering, packet
-  scheduling, bridging, etc.
+* net——各种网络协议栈的实现，包括IPv4和IPv6；BSD 套接字实现、路由、过滤、数据包调度以及桥接（bridging）等
 
-* samples - various driver samples
+* samples——各种驱动程序示例
 
-* scripts - parts the build system, scripts used for building modules,
-  kconfig the Linux kernel configurator, as well as various other
-  scripts (e.g. checkpatch.pl that checks if a patch is conform with
-  the Linux kernel coding style)
+* scripts——构建系统的一部分，用于构建模块的脚本，Linux 内核配置器 kconfig，以及其他各种脚本（例如 checkpatch.pl，用于检查补丁（patch）是否符合 Linux 内核的编码风格）
 
-* security - home of the Linux Security Module framework that allows
-  extending the default (Unix) security model as well as
-  implementation for multiple such extensions such as SELinux, smack,
-  apparmor, tomoyo, etc.
+* security——Linux 安全模块框架的位置，允许扩展默认（Unix）安全模型，以及多个此类扩展的实现，例如 SELinux、smack、apparmor 以及 tomoyo 等
 
-* sound - home of ALSA (Advanced Linux Sound System) as well as the
-  old Linux sound framework (OSS)
+* sound——ALSA（Advanced Linux Sound System，高级 Linux 声音系统）的位置，以及旧的 Linux 音频框架（OSS）
 
-* tools - various user space tools for testing or interacting with
-  Linux kernel subsystems
+* tools——用于测试或与 Linux 内核子系统交互的各种用户空间工具
 
-* usr - support for embedding an initrd file in the kernel image
+* usr——支持在内核映像中嵌入 initrd 文件
 
-* virt - home of the KVM (Kernel Virtual Machine) hypervisor
+* virt——KVM（Kernel Virtual Machine，内核虚拟机）虚拟化管理程序（hypervisor）的位置
 
 
-Linux kernel architecture
+Linux 内核结构
 -------------------------
 
-.. slide:: Linux kernel architecture
+.. slide:: Linux 内核结构
    :level: 2
    :inline-contents: True
 
-   .. ditaa::
-      :height: 100%
+   .. code-block:: text
 
       +---------------+  +--------------+      +---------------+
-      | Application 1 |  | Application2 | ...  | Application n |
+      | 应用程序 1    |   | 应用程序 2   | ...  |   应用程序 n   |
       +---------------+  +--------------+      +---------------+
               |                 |                      |
               v                 v                      v
       +--------------------------------------------------------+
-      |                       Kernel                           |
+      |                       内核                             |
       |                                                        |
       |   +----------------------+     +-------------------+   |
-      |   |  Process Management  |     | Memory Management |   |
+      |   |     进程管理         |      |      内存管理      |   |
       |   +----------------------+     +-------------------+   |
       |                                                        |
       |   +------------+    +------------+    +------------+   |
@@ -843,23 +656,23 @@ Linux kernel architecture
       |   +------------+    +------------+    +------------+   |
       |                        ...                             |
       +--------------------------------------+-----------------+
-      |           Device drivers             |     arch        |
+      |              设备驱动程序             |      arch       |
       |                                      |                 |
-      | +----+ +-----+ +--------+ +----+     |  +----------+   |
-      | |char| |block| |ethernet| |wifi|     |  | machine 1|   |
-      | +----+ +-----+ +--------+ +----+     |  +----------+   |
-      | +----------+ +-----+ +----+ +---+    |  +----------+   |
-      | |filesystem| |input| |iio | |usb|    |  | machine 2|   |
-      | +----------+ +-----+ +----+ +---+    |  +----------+   |
+      | +----+  +-----+  +--------+ +----+   |  +----------+   |
+      | |字符 | |块设备 | |以太网  | |wifi |   | |   机器 1   |  |
+      | +----+  +-----+  +--------+ +----+   |  +----------+   |
+      | +--------+ +-----+   +----+ +---+    |  +----------+   |
+      | |文件系统| |输入设备| |IIO | |USB |    | |  机器 2   |   |
+      | +--------+ +-----+   +----+ +---+    |  +----------+   |
       | +-----------+ +----------+  +---+    |                 |
-      | |framebuffer| | platform |  |drm|    |     ...         |
+      | |帧缓冲区    | |平台设备  |  |DRM |   |     ...         |
       | +-----------+ +----------+  +---+    |                 |
       +-------------------------+----+-------+-----------------+
               |                 |                      |
               v                 v                      v
 
       +--------------------------------------------------------+
-      |                         Hardware                       |
+      |                         硬件                           |
       +--------------------------------------------------------+
 
 
@@ -870,207 +683,158 @@ arch
    :level: 2
    :inline-contents: True
 
-   * Architecture specific code
+   * 针对架构的特定代码
 
-   * May be further sub-divided in machine specific code
+   * 可能进一步细分为针对机器的特定代码
 
-   * Interfacing with the boot loader and architecture specific
-     initialization
+   * 与引导加载程序（boot loader）以及特定于架构的初始化程序进行交互
 
-   * Access to various hardware bits that are architecture or machine
-     specific such as interrupt controller, SMP controllers, BUS
-     controllers, exceptions and interrupt setup, virtual memory handling
+   * 访问各种硬件位，这些硬件位是架构或机器特定的，例如中断控制器、SMP 控制器、总线控制器、异常和中断设置以及虚拟内存处理
 
-   * Architecture optimized functions (e.g. memcpy, string operations,
-     etc.)
+   * 针对架构优化的函数（例如 memcpy，字符串操作等）
 
-This part of the Linux kernel contains architecture specific code and
-may be further sub-divided in machine specific code for certain
-architectures (e.g. arm).
+这部分是关于 Linux 内核的架构特定代码，可能会进一步细分为特定架构的特定机器的代码（例如 arm）。
 
-"Linux was first developed for 32-bit x86-based PCs (386 or
-higher). These days it also runs on (at least) the Compaq Alpha AXP,
-Sun SPARC and UltraSPARC, Motorola 68000, PowerPC, PowerPC64, ARM,
-Hitachi SuperH, IBM S/390, MIPS, HP PA-RISC, Intel IA-64, DEC VAX, AMD
-x86-64 and CRIS architectures.”
+“Linux最初是为 32 位基于 x86 的个人电脑（386 或更高版本）开发的。如今，它也可以（至少）运行在 Compaq Alpha AXP、Sun SPARC 和 UltraSPARC、Motorola 68000、PowerPC、PowerPC64、ARM、Hitachi SuperH、IBM S/390、MIPS、HP PA-RISC、Intel IA-64、DEC VAX、AMD x86-64 和 CRIS 等架构上。”
 
-It implements access to various hardware bits that are architecture or
-machine specific such as interrupt controller, SMP controllers, BUS
-controllers, exceptions and interrupt setup, virtual memory handling.
+它实现了对各种硬件位的访问，这些硬件位是架构或机器特定的，例如中断控制器、SMP 控制器、总线控制器、异常和中断设置以及虚拟内存处理。
 
-It also implements architecture optimized functions (e.g. memcpy,
-string operations, etc.)
+它还实现了针对架构优化的函数（例如 memcpy，字符串操作等）。
 
 
-Device drivers
-..............
+设备驱动程序
+...........
 
-.. slide:: Device drivers
+.. slide:: 设备驱动程序
    :level: 2
 
-   * Unified device model
+   * 统一的设备模型
 
-   * Each subsystem has its own specific driver interfaces
+   * 每个子系统都有自己特定的驱动程序接口
 
-   * Many device driver types (TTY, serial, SCSI, fileystem, ethernet,
-     USB, framebuffer, input, sound, etc.)
+   * 许多设备驱动程序类型（TTY、串行设备、SCSI、文件系统、以太网、USB 设备、帧缓冲区、输入设备以及声音设备等）
 
-The Linux kernel uses a unified device model whose purpose is to
-maintain internal data structures that reflect the state and structure
-of the system. Such information includes what devices are present,
-what is their status, what bus they are attached to, to what driver
-they are attached, etc. This information is essential for implementing
-system wide power management, as well as device discovery and dynamic
-device removal.
+Linux 内核使用统一的设备模型，其目的是维护反映系统状态和结构的内部数据结构。这些信息包括哪些设备存在、它们的状态如何、它们连接到哪个总线以及它们连接到哪个驱动程序等。这些信息对于实现系统范围的电源管理，以及设备发现和动态设备移除至关重要。
 
-Each subsystem has its own specific driver interface that is tailored
-to the devices it represents in order to make it easier to write
-correct drivers and to reduce code duplication.
+每个子系统都有自己特定的驱动程序接口，该接口针对其所表示的设备进行了定制，以便更容易编写正确的驱动程序并减少代码重复。
 
-Linux supports one of the most diverse set of device drivers type,
-some examples are: TTY, serial, SCSI, fileystem, ethernet, USB,
-framebuffer, input, sound, etc.
+Linux 支持最多样化的设备驱动程序类型，例如 TTY、串行设备、SCSI、文件系统、以太网、USB 设备、帧缓冲区、输入设备以及声音设备等
 
 
-Process management
+进程管理
 ..................
 
-.. slide:: Process management
+.. slide:: 进程管理
    :level: 2
 
-   * Unix basic process management and POSIX threads support
+   * Unix 基本进程管理和 POSIX 线程支持
 
-   * Processes and threads are abstracted as tasks
+   * 进程和线程被抽象为任务
 
-   * Operating system level virtualization
+   * 操作系统级虚拟化
 
-     * Namespaces
+     *  命名空间（namespace）
 
-     * Control groups
-
-Linux implements the standard Unix process management APIs such as
-fork(), exec(), wait(), as well as standard POSIX threads.
-
-However, Linux processes and threads are implemented particularly
-different than other kernels. There are no internal structures
-implementing processes or threads, instead there is a :c:type:`struct
-task_struct` that describe an abstract scheduling unit called task.
-
-A task has pointers to resources, such as address space, file
-descriptors, IPC ids, etc. The resource pointers for tasks that are
-part of the same process point to the same resources, while resources
-of tasks of different processes will point to different resources.
-
-This peculiarity, together with the `clone()` and `unshare()` system
-call allows for implementing new features such as namespaces.
-
-Namespaces are used together with control groups (cgroup) to implement
-operating system virtualization in Linux.
-
-cgroup is a mechanism to organize processes hierarchically and
-distribute system resources along the hierarchy in a controlled and
-configurable manner.
+     * 控制组
 
 
-Memory management
+Linux 实现了标准的 Unix 进程管理 API，如 fork()、exec()、wait()，以及标准的 POSIX 线程。
+
+不过，Linux 中的进程和线程的实现方式与其他内核显著不同。Linux 并没有用内部结构来实现进程或线程，而是使用了一个名为 :c:type:`struct task_struct` 的结构体来描述被称为任务（task）的抽象调度单元。
+
+每个任务具有指向资源的指针，例如地址空间、文件描述符、IPC id 等。属于同一进程的任务的资源指针指向相同的资源，而不同进程的任务的资源指针将指向不同的资源。
+
+这种特点与 clone() 和 unshare() 系统调用一起，可以实现诸如命名空间等新特性。
+
+命名空间与控制组（cgroup）一起用于在 Linux 中实现操作系统级别的虚拟化。
+
+cgroup 是一种以层次结构组织进程并以受控且可配置的方式分配系统资源的机制。
+
+
+内存管理
 .................
 
-Linux memory management is a complex subsystem that deals with:
+Linux 内存管理是一个复杂的子系统，它负责处理：
 
-.. slide:: Memory management
+.. slide:: 内存管理
    :level: 2
    :inline-contents: True
 
-   * Management of the physical memory: allocating and freeing memory
+   * 物理内存的管理：分配和释放内存
 
-   * Management of the virtual memory: paging, swapping, demand
-     paging, copy on write
+   * 虚拟内存的管理：分页，交换，需求分页（demand paging），写时复制（copy on write）
 
-   * User services: user address space management (e.g. mmap(), brk(),
-     shared memory)
+   * 用户服务：用户地址空间管理（例如 mmap()，brk()，共享内存）
 
-   * Kernel services: SL*B allocators, vmalloc
+   * 内核服务：SL*B 分配器，vmalloc
 
 
 
-Block I/O management
+块 I/O 管理
 ....................
 
-The Linux Block I/O subsystem deals with reading and writing data from
-or to block devices: creating block I/O requests, transforming block I/O
-requests (e.g. for software RAID or LVM), merging and sorting the
-requests and scheduling them via various I/O schedulers to the block
-device drivers.
+Linux 块I/O 子系统处理读取和写入块设备数据的操作：创建块 I/O 请求、转换块 I/O 请求（例如用于软件 RAID 或 LVM）、合并和排序请求，并通过各种 I/O 调度程序将它们调度到块设备驱动程序。
 
-.. slide:: Block I/O management
+.. slide:: 块I/O管理
    :level: 2
    :inline-contents: True
 
-   .. ditaa::
-      :height: 100%
+   .. code-block:: text
 
       +---------------------------------+
-      |    Virtual Filesystem Switch    |
+      |       虚拟文件系统切换           |
       +---------------------------------+
                      ^
                      |
                      v
       +---------------------------------+
-      |         Device Mapper           |
+      |         设备映射器               |
       +---------------------------------+
                      ^
                      |
                      v
       +---------------------------------+
-      |       Generic Block Layer       |
+      |           通用块层               |
       +---------------------------------+
                      ^
                      |
                      v
       +--------------------------------+
-      |          I/O scheduler         |
+      |          I/O 调度程序           |
       +--------------------------------+
              ^                ^
              |                |
              v                v
       +--------------+  +--------------+
-      | Block device |  | Block device |
-      |    driver    |  |    driver    |
+      |块设备驱动程序 |  | 块设备驱动程序 |
       +--------------+  +--------------+
 
 
-Virtual Filesystem Switch
-.........................
+虚拟文件系统切换
+...............
 
-The Linux Virtual Filesystem Switch implements common / generic
-filesystem code to reduce duplication in filesystem drivers. It
-introduces certain filesystem abstractions such as:
+Linux 虚拟文件系统切换（Virtual Filesystem Switch，VFS）实现了通用的文件系统代码，以减少文件系统驱动程序中的重复。它引入了一些文件系统抽象，例如：
 
-* inode - describes the file on disk (attributes, location of data
-  blocks on disk)
+* inode（index node，索引节点）——描述磁盘上的文件（属性，数据块在磁盘上的位置）
 
-* dentry - links an inode to a name
+* dentry（directory entry，目录项）——将 inode 与名称链接起来
 
-* file - describes the properties of an opened file (e.g. file
-  pointer)
+* file（文件）——描述打开文件的属性（例如文件指针）
 
-* superblock - describes the properties of a formatted filesystem
-  (e.g. number of blocks, block size, location of root directory on
-  disk, encryption, etc.)
+* superblock（超级块）——描述格式化文件系统的属性（例如块数、块大小、根目录在磁盘上的位置、加密等）
 
-.. slide:: Virtual Filesystem Switch
+.. slide:: 虚拟文件系统切换
    :level: 2
    :inline-contents: True
 
-   .. ditaa::
-      :height: 100%
+   .. code-block:: text
 
 
              ^                    ^                    ^
              | stat               | open               | read
              v                    v                    v
       +------------------------------------------------------------+
-      |                   Virtual Filesystem Switch                |
+      |                   虚拟文件系统切换                          |
       |                                                            |
       |                                                            |
       |    /-------\           /--------\           /--------\     |
@@ -1089,75 +853,72 @@ introduces certain filesystem abstractions such as:
                    |                                  |
                    v                                  v
             +-------------+                    +-------------+
-            | Filesystem  |                    | Filesystem  |
-            |   driver    |                    |   driver    |
+            | 文件系统驱动 |                    | 文件系统驱动 |
             +-------------+                    +-------------+
 
 
-The Linux VFS also implements a complex caching mechanism which
-includes the following:
+Linux VFS 还实现了一个复杂的缓存机制，包括以下内容：
 
-* the inode cache - caches the file attributes and internal file
-  metadata
+* inode 缓存——缓存文件属性和内部文件元数据
 
-* the dentry cache - caches the directory hierarchy of a filesystem
+* dentry 缓存——缓存文件系统的目录层次结构
 
-* the page cache - caches file data blocks in memory
+* page 缓存——在内存中缓存文件数据块
 
 
 
-Networking stack
+网络堆栈
 ................
 
-.. slide:: Networking stack
+.. slide:: 网络堆栈
    :level: 2
    :inline-contents: True
 
-   .. ditaa::
-      :height: 100%
+   .. code-block:: text
 
       +---------------------------+
-      | Berkeley Socket Interface |
+      | 伯克利套接字（socket）接口  |
       +---------------------------+
 
       +---------------------------+
-      |      Transport layer      |
+      | 传输层（Transport layer）  |
       +-------------+-------------+
       |      TCP    |     UDP     |
       +-------------+-------------+
 
       +---------------------------+
-      |      Network layer        |
+      |  网络层（Network layer）   |
       +-----+---------+-----------+
-      | IP  | Routing | NetFilter |
+      | IP  | 路由    | NetFilter |
       +-----+---------+-----------+
 
       +---------------------------+
-      |     Data link layer       |
+      |数据链路层（Data link layer）|
       +-------+-------+-----------+
       |  ETH  |  ARP  | BRIDGING  |
       +-------+-------+-----------+
 
-      +---------------------------+
-      |    Queuing discipline     |
-      +---------------------------+
+    +--------------------------------+
+    |           队列调度机制          |
+    |   （Queuing discipline，qdisc） |
+    +--------------------------------+
 
       +---------------------------+
-      | Network device drivers    |
+      |     网络设备驱动程序        |
       +---------------------------+
 
-Linux Security Modules
+Linux 安全模块
 ......................
 
-.. slide:: Linux Security Modules
+.. slide:: Linux 安全模块
    :level: 2
    :inline-contents: True
 
-   * Hooks to extend the default Linux security model
+   * 扩展默认的 Linux 安全模型的钩子
 
-   * Used by several Linux security extensions:
+   * 被几个 Linux 安全扩展使用:
 
-     * Security Enhancened Linux
+     * 安全增强型 Linux（Security Enhanced Linux，SELinux）
 
      * AppArmor
 
