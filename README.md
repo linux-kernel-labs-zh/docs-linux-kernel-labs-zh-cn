@@ -20,8 +20,8 @@
 
 ## 翻译进度
 
+- [x] [课程——介绍](https://hanyujie2002.github.io/linux-kernel-labs-zh-cn/lectures/intro.html)
 - [x] [课程——系统调用](https://hanyujie2002.github.io/linux-kernel-labs-zh-cn/lectures/syscalls.html)
-- [ ] WIP（施工中）[介绍](https://linux-kernel-labs.github.io/refs/heads/master/lectures/intro.html)
 
 ## 项目结构介绍：
 
