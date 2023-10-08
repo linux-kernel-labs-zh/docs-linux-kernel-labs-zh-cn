@@ -1,6 +1,9 @@
 name: push the docs to the linux-zh repo
 
-on: [push]
+on:
+  push:
+    branches:
+      - main
 
 jobs:
   build_job:
