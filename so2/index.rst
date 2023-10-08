@@ -4,7 +4,7 @@ Operating Systems 2
 
 
 .. toctree::
-   :caption: Lectures
+   :caption: 课程
    :maxdepth: 1
 
    lec1-intro.rst
@@ -21,7 +21,7 @@ Operating Systems 2
    lec12-virtualization.rst
 
 .. toctree::
-   :caption: Labs
+   :caption: 实验
    :maxdepth: 1
 
    lab1-intro.rst
@@ -38,7 +38,7 @@ Operating Systems 2
    lab12-kernel-profiling.rst
 
 .. toctree::
-   :caption: Assignments
+   :caption: 作业
    :maxdepth: 1
 
    assign-collaboration.rst
