@@ -1,15 +1,12 @@
 .. _vm_link:
 
-=====================
-Virtual Machine Setup
-=====================
+=========
+虚拟机设置
+=========
 
-Practice work is designed to run on a QEMU based virtual machine. Kernel code
-is developed and built on the host machine and then deployed and run on the
-virtual machine.
+实践工作是在基于 QEMU 的虚拟机上运行的。内核代码在主机上开发和构建，然后部署和运行在虚拟机上。
 
-In order to run and use the virtual machine the following packages are required
-on a Debian/Ubuntu system:
+为了运行和使用虚拟机，以下软件包在 Debian/Ubuntu 系统上是必需的：
 
 * ``flex``
 * ``bison``
@@ -21,12 +18,9 @@ on a Debian/Ubuntu system:
 * ``python3``
 * ``minicom``
 
-The ``kvm`` package is not strictly required, but will make the virtual machine
-faster by using KVM support (with the ``-enable-kvm`` option to QEMU). If ``kvm``
-is absent, the virtual machine will still run (albeit slower) using emulation.
+``kvm`` 软件包不是严格必需的，但是它会通过使用 KVM 支持（使用 QEMU 的 ``-enable-kvm`` 选项）来加快虚拟机的速度。如果缺少 ``kvm``，虚拟机仍然会使用模拟运行（尽管较慢）。
 
-The virtual machine setup uses prebuild Yocto images that it downloads and a
-kernel image that it builds itself. The following images are supported:
+虚拟机设置使用它下载的预构建的 Yocto 镜像和它自己构建的内核镜像。支持以下镜像：
 
 * ``core-image-minimal-qemu``
 * ``core-image-minimal-dev-qemu``
@@ -34,22 +28,18 @@ kernel image that it builds itself. The following images are supported:
 * ``core-image-sato-qemu``
 * ``core-image-sato-sdk-qemu``
 
-By default, ``core-image-minimal-qemu`` it used. This setting can be changed by
-updating the ``YOCTO_IMAGE`` variable in ``tools/labs/qemu/Makefile``.
+默认情况下，使用 ``core-image-minimal-qemu``。可以通过更新 ``tools/labs/qemu/Makefile`` 中的 ``YOCTO_IMAGE`` 变量来更改这个设置。
 
-Starting the Virtual Machine
-----------------------------
+启动虚拟机
+---------
 
-You start the virtual machine in the ``tools/labs/`` folder by running ``make
-boot``:
+你可以在 ``tools/labs/`` 文件夹中通过运行 ``make boot`` 来启动虚拟机：
 
 .. code-block:: shell
 
    .../linux/tools/labs$ make boot
 
-The first run of the ``make boot`` command will compile the kernel image and it
-will take longer. Subsequent runs will only start the QEMU virtual machine,
-with verbose output provided:
+第一次运行 ``make boot`` 命令会编译内核镜像，这会花费更长的时间。后续的运行只会启动 QEMU 虚拟机，并提供详细的输出：
 
 .. code-block:: shell
 
@@ -80,34 +70,29 @@ with verbose output provided:
    ARCH=x86 qemu/qemu.sh -kernel /home/razvan/school/so2/linux.git/arch/x86/boot/bzImage -device virtio-serial -chardev pty,id=virtiocon0 -device virtconsole,chardev=virtiocon0 -serial pipe:pipe1 -serial pipe:pipe2 -netdev tap,id=tap0,ifname=tap0,script=no,downscript=no -net nic,netdev=tap0,model=virtio -netdev tap,id=tap1,ifname=tap1,script=no,downscript=no -net nic,netdev=tap1,model=i82559er -drive file=core-image-minimal-qemux86.ext4,if=virtio,format=raw -drive file=disk1.img,if=virtio,format=raw -drive file=disk2.img,if=virtio,format=raw --append "root=/dev/vda loglevel=15 console=hvc0" --display none -s
    qemu-system-i386: -chardev pty,id=virtiocon0: char device redirected to /dev/pts/68 (label virtiocon0)
 
-.. note:: To show the QEMU console use
+.. note:: 要显示 QEMU 控制台，请使用
 
 .. code-block:: shell
 
    .../linux/tools/labs$ QEMU_DISPLAY=gtk make boot
 
-          This will show the VGA output and will also give
-          access to the standard keyboard.
+          这将显示 VGA 输出，并且还可以访问标准键盘。
 
-.. note:: The virtual machine setup scripts and configuration files are located
-          in ``tools/labs/qemu/``.
+.. note:: 虚拟机设置脚本和配置文件位于 ``tools/labs/qemu/``。
 
 .. _vm_interaction_link:
 
-Connecting to the Virtual Machine
+连接到虚拟机
 ---------------------------------
 
-Once the virtual machine is started you can connect to it on the serial port. A
-symbolic link named ``serial.pts`` is created to the emulated serial port
-device:
+一旦虚拟机启动，你可以通过串口连接到它。一个名为 ``serial.pts`` 的链接到模拟的串口设备的符号链接会被创建：
 
 .. code-block:: shell
 
    .../linux/tools/labs$ ls -l serial.pts
    lrwxrwxrwx 1 razvan razvan 11 Apr  1 08:03 serial.pts -> /dev/pts/68
 
-On the host you use the ``minicom`` command to connect to the virtual machine
-via the ``serial.pts`` link:
+在主机上，你可以使用 ``minicom`` 命令通过 ``serial.pts`` 链接连接到虚拟机：
 
 .. code-block:: shell
 
@@ -118,8 +103,6 @@ via the ``serial.pts`` link:
    qemux86 login: root
    root@qemux86:~#
 
-.. note:: When you connect to the virtual machine, simply enter ``root`` at the
-          login prompt and you will get a root console, no password required.
+.. note:: 当你连接到虚拟机时，只需在登录提示处输入 ``root``，你就会得到一个 root 控制台，不需要密码。
 
-.. note:: You exit ``minicom`` by pressing ``Ctrl+a`` and then ``x``. You will
-          get a confirmation prompt and then you will exit ``minicom``.
+.. note:: 你可以通过按 ``Ctrl+a`` 然后按 ``x`` 来退出 ``minicom``。你会得到一个确认提示，然后你就会退出 ``minicom``。
