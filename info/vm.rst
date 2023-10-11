@@ -1,7 +1,7 @@
 .. _vm_link:
 
 =========
-虚拟机设置
+虚拟机配置
 =========
 
 实践工作是在基于 QEMU 的虚拟机上运行的。内核代码在主机上开发和构建，然后部署和运行在虚拟机上。
@@ -20,7 +20,7 @@
 
 ``kvm`` 软件包不是严格必需的，但是它会通过使用 KVM 支持（使用 QEMU 的 ``-enable-kvm`` 选项）来加快虚拟机的速度。如果缺少 ``kvm``，虚拟机仍然会使用模拟运行（尽管较慢）。
 
-虚拟机设置使用它下载的预构建的 Yocto 镜像和它自己构建的内核镜像。支持以下镜像：
+虚拟机配置使用它下载的预构建的 Yocto 镜像和它自己构建的内核镜像。支持以下镜像：
 
 * ``core-image-minimal-qemu``
 * ``core-image-minimal-dev-qemu``
@@ -28,7 +28,7 @@
 * ``core-image-sato-qemu``
 * ``core-image-sato-sdk-qemu``
 
-默认情况下，使用 ``core-image-minimal-qemu``。可以通过更新 ``tools/labs/qemu/Makefile`` 中的 ``YOCTO_IMAGE`` 变量来更改这个设置。
+默认情况下，使用 ``core-image-minimal-qemu``。可以通过更新 ``tools/labs/qemu/Makefile`` 中的 ``YOCTO_IMAGE`` 变量来更改这个配置。
 
 启动虚拟机
 ---------
@@ -78,7 +78,7 @@
 
           这将显示 VGA 输出，并且还可以访问标准键盘。
 
-.. note:: 虚拟机设置脚本和配置文件位于 ``tools/labs/qemu/``。
+.. note:: 虚拟机配置脚本和配置文件位于 ``tools/labs/qemu/``。
 
 .. _vm_interaction_link:
 
