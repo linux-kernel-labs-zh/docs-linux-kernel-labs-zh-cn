@@ -70,7 +70,7 @@
    ARCH=x86 qemu/qemu.sh -kernel /home/razvan/school/so2/linux.git/arch/x86/boot/bzImage -device virtio-serial -chardev pty,id=virtiocon0 -device virtconsole,chardev=virtiocon0 -serial pipe:pipe1 -serial pipe:pipe2 -netdev tap,id=tap0,ifname=tap0,script=no,downscript=no -net nic,netdev=tap0,model=virtio -netdev tap,id=tap1,ifname=tap1,script=no,downscript=no -net nic,netdev=tap1,model=i82559er -drive file=core-image-minimal-qemux86.ext4,if=virtio,format=raw -drive file=disk1.img,if=virtio,format=raw -drive file=disk2.img,if=virtio,format=raw --append "root=/dev/vda loglevel=15 console=hvc0" --display none -s
    qemu-system-i386: -chardev pty,id=virtiocon0: char device redirected to /dev/pts/68 (label virtiocon0)
 
-.. 备注:: 要显示 QEMU 控制台，请使用
+.. note:: 要显示 QEMU 控制台，请使用
 
 .. code-block:: shell
 
@@ -78,7 +78,7 @@
 
           这将显示 VGA 输出，并且还可以访问标准键盘。
 
-.. 备注:: 虚拟机设置脚本和配置文件位于 ``tools/labs/qemu/``。
+.. note:: 虚拟机设置脚本和配置文件位于 ``tools/labs/qemu/``。
 
 .. _vm_interaction_link:
 
@@ -103,6 +103,6 @@
    qemux86 login: root
    root@qemux86:~#
 
-.. 备注:: 当你连接到虚拟机时，只需在登录提示处输入 ``root``，你就会得到一个 root 控制台，不需要密码。
+.. note:: 当你连接到虚拟机时，只需在登录提示处输入 ``root``，你就会得到一个 root 控制台，不需要密码。
 
-.. 备注:: 你可以通过按 ``Ctrl+a`` 然后按 ``x`` 来退出 ``minicom``。你会得到一个确认提示，然后你就会退出 ``minicom``。
+.. note:: 你可以通过按 ``Ctrl+a`` 然后按 ``x`` 来退出 ``minicom``。你会得到一个确认提示，然后你就会退出 ``minicom``。
