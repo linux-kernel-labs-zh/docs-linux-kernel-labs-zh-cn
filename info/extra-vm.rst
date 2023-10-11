@@ -1,29 +1,20 @@
-=====================================
-Customizing the Virtual Machine Setup
-=====================================
+===============
+自定义虚拟机设置
+===============
 
-Connect to the Virtual Machine via SSH
---------------------------------------
+通过 SSH 连接到虚拟机
+--------------------
+QEMU 虚拟机的默认 Yocto 镜像（core-image-minimal-qemu）仅提供了运行内核和内核模块所需要的最小功能。要使用额外的功能，例如 SSH 连接，需要一个更完整的镜像，例如 core-image-sato-dev-qemu。
 
-The default Yocto image for the QEMU virtual machine
-(``core-image-minimal-qemu``) provides the minimal functionality to run the
-kernel and kernel modules. For extra features, such as an SSH connection,
-a more complete image is required, such as ``core-image-sato-dev-qemu``.
+要使用新的镜像，需要更改 ``tools/labs/qemu/Makefile`` 中的 ``YOCTO_IMAGE`` 变量：
 
-To use the new image, update the ``YOCTO_IMAGE`` variable in
-``tools/labs/qemu/Makefile``:
-
-.. code-block:: shell
+… code-block:: shell
 
    YOCTO_IMAGE = core-image-sato-qemu$(ARCH).ext4
 
-When you start the virtual machine the first time using ``make boot`` with the
-new image configuration, it will download the image and then boot the virtual
-machine. The image is larger (around 400MB) than the minimal image so expect
-some time for the download.
+当你第一次使用新的镜像配置通过 ``make boot`` 命令启动虚拟机时，它会下载相应的镜像文件，然后启动虚拟机。这个镜像比最小的镜像要大（大约400MB），所以下载需要一些时间。
 
-You then enter the virtual machine via ``minicom``, determine the IP address of
-the ``eth0`` interface an then you can connect to the virtual machine via SSH:
+然后你可以通过 ``minicom`` 进入虚拟机，确定 eth0 接口的 IP 地址，之后你就可以通过 SSH 连接到虚拟机了：
 
 .. code-block:: shell
 
@@ -55,11 +46,8 @@ the ``eth0`` interface an then you can connect to the virtual machine via SSH:
    root@qemux86:~# uname -a
    Linux qemux86 4.19.0+ #3 SMP Sat Apr 4 22:45:18 EEST 2020 i686 GNU/Linux
 
-Connecting a Debugger to the Virtual Machine Kernel
----------------------------------------------------
-
-You can use GDB to connect to the running virtual machine kernel and inspect
-the state of the kernel. You run ``make gdb`` in ``tools/labs/``:
+将调试器（debugger）连接到虚拟机内核
+----------------------------------
 
 .. code-block:: shell
 
@@ -99,46 +87,40 @@ the state of the kernel. You run ``make gdb`` in ``tools/labs/``:
    #10 0x00000000 in ?? ()
    (gdb)
 
-Rebuild the Kernel Image
-------------------------
+重建内核镜像
+------------
 
-The kernel image is built the first time the VM is started. To rebuild the
-kernel remove the kernel image file defined by the ``ZIMAGE`` variable in
-``tools/labs/qemu/Makefile``:
+内核镜像是在虚拟机第一次启动时构建的。要重建内核，删除由在 ``tools/labs/qemu/Makefile`` 中的 ``ZIMAGE`` 变量定义的内核镜像文件：
 
 .. code-block:: shell
 
    ZIMAGE = $(KDIR)/arch/$(ARCH)/boot/$(b)zImage
 
-Typically the full path of the kernel is ``arch/x86/boot/bzImage``.
+通常，内核的完整路径是 ``arch/x86/boot/bzImage``。
 
-Once removed the kernel image is rebuild by using:
+删除后，可以使用以下命令重新构建内核镜像：
 
 .. code-block:: shell
 
    ~/src/linux/tools/labs$ make zImage
 
-or simply starting the virtual machine
+或者简单地启动虚拟机
 
 .. code-block:: shell
 
    ~/src/linux/tools/labs$ make boot
 
-Using Docker containers
------------------------
+使用 Docker 容器
+----------------
 
-If your setup doesn't allow the installation of the packages required for the
-laboratory setup, you can build and run a container that has all the setup
-already prepared for the virtual machine environment.
+如果你的设备不允许安装实验室配置所需的软件包，你可以构建和运行一个容器，它已经为虚拟机环境准备好了所有的配置。
 
-In order to run the containerized setup, you need to install the following
-packages:
+为了运行容器化的配置，你需要安装以下软件包：
 
 * ``docker``
 * ``docker-compose``
 
-In order to run the container infrastructure run the following command in the
-``tools/labs/`` directory:
+为了运行容器基础设施，在 ``tools/labs/`` 目录下运行以下命令：
 
 .. code-block:: shell
 
@@ -146,20 +128,15 @@ In order to run the container infrastructure run the following command in the
     ...
     ubuntu@so2:~$
 
-The first time you run the command above, it will take a long time, because you
-will have to build the container environment and install the required
-applications.
+你第一次运行上面的命令时，会花很长时间，因为你需要构建容器环境并安装所需的应用程序。
 
-Every time you run the ``make docker-kernel`` command, another shell will
-connect to the container. This will allow you to work with multiple tabs.
+每次你运行 ``make docker-kernel`` 命令时，另一个 shell 会连接到容器。这将允许你在多个窗口中工作。
 
-All the commands that you would use in the regular environment can be used in
-the containerized environment.
+你在常规环境中使用的所有命令都可以在容器化环境中使用。
 
-The linux repository is mounted in the ``/linux`` directory. All changes
-you will make here will also be seen on your local instance.
+linux 仓库被挂载在 ``/linux`` 目录下。你在这里做的所有更改也会在你的本地实例上看到。
 
-In order to stop the container use the following command:
+要停止容器运行，可以使用以下命令：
 
 .. code-block:: shell
 
