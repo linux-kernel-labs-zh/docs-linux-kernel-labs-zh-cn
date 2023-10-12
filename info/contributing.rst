@@ -1,98 +1,77 @@
-=================================
-Contributing to linux-kernel-labs
-=================================
+===========================
+对 Linux 内核实验室项目做贡献
+===========================
 
-``linux-kernel-labs`` is an open platform.
-You can help it get better by contributing to the documentation, exercises or
-the infrastructure.
-All contributions are welcome, no matter if they are just fixes for typos or
-new sections in the documentation.
+``Linux 内核实验室`` 是一个开放的平台。你可以通过对文档、练习或基础设施的贡献来帮助它变得更好。无论是对错别字的修正还是在文档中添加新的部分，所有的贡献我们都欢迎。
 
-All information required for making a contribution can be found in the
-`linux-kernel-labs Linux repo <https://github.com/linux-kernel-labs/linux>`_.
-In order to change anything, you need to create a Pull Request (``PR``)
-from your own fork to this repository.
-The PR will be reviewed by the members of the team and will be merged once
-any potential issue is fixed.
+所有需要进行贡献的信息都可以在 `linux 内核实验室 Linux 仓库 <https://github.com/linux-kernel-labs/linux>`_中找到。如果要改变任何东西，你需要从你自己的 fork 创建一个拉取请求（``Pull Request``，``PR``）到这个仓库。PR 将由团队成员进行审核，并在解决任何可能的问题后合并。
 
-********************
-Repository structure
-********************
+********
+仓库结构
+********
 
-The `linux-kernel-labs repo <https://github.com/linux-kernel-labs/linux>`_ is
-a fork of the Linux kernel repo, with the following additions:
+`Linux 内核实验室仓库 <https://github.com/linux-kernel-labs/linux>`_是 Linux 内核仓库的一个 fork，增加了以下内容：
 
-  * ``/tools/labs``: contains the labs and the :ref:`virtual machine (VM) infrastructure<vm_link>`
+  * ``/tools/labs``: 包含实验室和 :ref:`虚拟机（VM）基础设施<vm_link>`
 
-    * ``tools/labs/templates``: contains the skeletons sources
-    * ``tools/labs/qemu``: contains the qemu VM configuration
+    * ``tools/labs/templates``: 包含骨架（skeleton）源码
+    * ``tools/labs/qemu``: 包含 qemu 虚拟机配置
 
-  * ``/Documentation/teaching``: contains the sources used to generate this
-    documentation
+  * ``/Documentation/teaching``: 包含用于生成此文档的源码
 
-**************************
-Building the documentation
-**************************
+********
+构建文档
+********
 
-To build the documentation, navigate to ``tools/labs`` and run the following
-command:
+要构建文档，请导航到 ``tools/labs`` 并运行以下命令：
 
 .. code-block:: bash
 
   make docs
 
 .. note::
-  The command should install all the required packages.
-  In some cases, installing the packages or building the documentation might
-  fail, because of broken dependencies versions.
+  该命令会安装所有需要的包。在某些情况下，包的安装或文档的构建可能会因为依赖版本不兼容而失败。
 
-  Instead of struggling to fix the dependencies, the simplest way to build
-  the documentation is using a `Docker <https://www.docker.com/>`_.
-  First, install ``docker`` and ``docker-compose`` on your host, and then run:
+  与其费力去修复依赖，构建文档最简单的方法是使用 `Docker <https://www.docker.com/>`_。 首先，在你的主机上安装 ``docker`` 和 ``docker-compose``，然后运行：
 
   .. code-block:: bash
 
      make docker-docs
 
-  The first run might take some time, but subsequent builds will be faster.
+  第一次运行可能需要一些时间，但后续的构建会更快一些。
 
-***********************
-Creating a contribution
-***********************
+********
+做出贡献
+********
 
-Forking the repository
+Fork 仓库
 ======================
 
-1. If you haven't done it already, clone the
-   `linux-kernel-labs repo <https://github.com/linux-kernel-labs/linux>`_
-   repository locally:
+1. 如果你还没有做过，请把 `linux-kernel-labs repo <https://github.com/linux-kernel-labs/linux>`_ 仓库克隆到本地：
 
    .. code-block:: bash
 
      $ mkdir -p ~/src
      $ git clone git@github.com:linux-kernel-labs/linux.git ~/src/linux
 
-2. Go to https://github.com/linux-kernel-labs/linux, make sure you are logged
-   in and click ``Fork`` in the top right of the page.
+2. 前往 https://github.com/linux-kernel-labs/linux，确保你已经登录并点击页面右上角的 ``Fork``。
 
-3. Add the forked repo as a new remote to the local repo:
+3. 把 fork 的仓库作为一个新的远程仓库添加到本地仓库：
 
    .. code-block:: bash
 
      $ git remote add my_fork git@github.com:<your_username>/linux.git
 
-Now, you can push to your fork by using ``my_fork`` instead of ``origin``
-(e.g. ``git push my_fork master``).
+现在，你可以用 ``my_fork`` 来代替 ``origin`` 推送到你的分叉（例如 ``git push my_fork master``）。
 
-Creating a pull request
-=======================
+创建拉取请求
+===========
 
 .. warning::
 
-  Pull requests must be created from their own branches, which are started from
-  ``master``.
+  拉取请求必须从它们自己的分支创建，这些分支是从``master``开始的。
 
-1. Go to the master branch and make sure you have no local changes:
+1. 切换到 master 分支，确保没有本地更改:
 
   .. code-block:: bash
 
@@ -103,7 +82,7 @@ Creating a pull request
     nothing to commit, working directory clean
 
 
-2. Make sure the local master branch is up-to-date with linux-kernel-labs:
+2. 确保本地 master 分支与 linux-kernel-labs 同步:
 
   .. code-block:: bash
 
@@ -111,20 +90,19 @@ Creating a pull request
 
   .. note::
 
-    You can also push the latest master to your forked repo:
+    你也可以将最新的 master 推送到你 fork 的仓库:
 
     .. code-block:: bash
 
       student@eg106:~/src/linux$ git push my_fork master
 
-3. Create a new branch for your change:
+3. 为你的更改创建一个新分支：
 
   .. code-block:: bash
 
     student@eg106:~/src/linux$ git checkout -b <your_branch_name>
 
-4. Make some changes and commit them. In this example, we are going to change
-   ``Documentation/teaching/index.rst``:
+4. 做一些更改并提交。在这个例子中，我们将更改 ```Documentation/teaching/index.rst``：
 
   .. code-block:: bash
 
@@ -134,39 +112,33 @@ Creating a pull request
 
   .. warning::
 
-    The commit message must include a relevant description of your change
-    and the location of the changed component.
+    提交信息必须包含对更改的相关描述以及已更改组件的位置。
 
-    Examples:
+    示例:
 
-      * ``documentation: index: Fix typo in the first section``
-      * ``labs: block_devices: Change printk log level``
+      * ``documentation: index: 修正第一节错别字``
+      * ``labs: block_devices: 更改 printk 日志级别``
 
-5. Push the local branch to your forked repository:
+5. 将本地分支推送到你 fork 的仓库:
 
   .. code-block:: bash
 
     student@eg106:~/src/linux$ git push my_fork <your_branch_name>
 
-6. Open the Pull Request
+6. 打开拉取请求
 
-  * Go to https://github.com and open your forked repository page
-  * Click ``New pull request``.
-  * Make sure base repository (left side) is ``linux-kernel-labs/linux`` and the
-    base is master.
-  * Make sure the head repository (right side) is your forked repo and the
-    compare branch is your pushed branch.
-  * Click ``Create pull request``.
+  * 转到 https://github.com 并打开你 fork 的仓库页面
+  * 点击 ``New pull request``。
+  * 确保基础仓库（左侧）是 ``linux-kernel-labs/linux``，基础是 master。
+  * 确保头部仓库（右侧）是你的 fork 仓库，比较分支是你推送的分支。
+  * 点击 ``Create pull request``。
 
-Making changes to a Pull Request
-================================
+修改拉取请求
+===========
 
-After receiving feedback for your changes, you might need to update the Pull
-Request.
-Your goal is to do a new push on the same branch. For this, follow the next steps:
+在收到对你的更改的反馈后，你可能需要更新拉取请求。你应该对同一分支进行新的推送。为此，请按照以下步骤操作：
 
-1. Make sure your branch is still up to date with the ``linux-kernel-labs`` repo
-   ``master`` branch.
+1. 确保你的分支仍然与 ``linux-kernel-labs`` 仓库的 ``master`` 分支同步。
 
   .. code-block:: bash
 
@@ -175,32 +147,24 @@ Your goal is to do a new push on the same branch. For this, follow the next step
 
   .. note::
 
-    If you are getting conflicts, it means that someone else modified the same
-    files/lines as you and already merged the changes since you opened the
-    Pull Request.
+    如果你遇到冲突，这意味着其他人修改了与你相同的文件/行，并且在你打开拉取请求后已经合并了更改。
 
-    In this case, you will need to fix the conflicts by editing the
-    conflicting files manually (run ``git status`` to see these files).
-    After fixing the conflicts, add them using ``git add`` and then run
-    ``git rebase --continue``.
+    在这种情况下，你需要通过手动编辑冲突文件来修复冲突（运行 ``git status`` 查看这些文件）。
+    修复冲突后，使用 ``git add`` 添加它们，然后运行 ``git rebase --continue``。
 
 
-2. Apply the changes to your local files
-3. Commit the changes. We want all the changes to be in the same commit, so
-   we will amend the changes to the initial commit.
+2. 将更改应用于本地文件
+3. 提交更改。我们希望所有更改都在同一提交中，所以我们将更改合并到初始提交中。
 
   .. code-block:: bash
 
     student@eg106:~/src/linux$ git add Documentation/teaching/index.rst
     student@eg106:~/src/linux$ git commit --amend
 
-4. Force-push the updated commit:
+4. 强制推送更新的提交:
 
   .. code-block:: bash
 
     student@eg106:~/src/linux$ git push my_fork <your_branch_name> -f
 
-  After this step, the Pull Request is updated. It is now up to the
-  linux-kernel-labs team to review the pull request and integrate your
-  contributions in the main project.
-
+  此步骤之后，拉取请求将被更新。现在由 linux-kernel-labs 小组来审查拉取请求并将你的贡献集成到主项目中。
