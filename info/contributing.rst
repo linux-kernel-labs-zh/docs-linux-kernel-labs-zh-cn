@@ -12,7 +12,7 @@
 
 `Linux 内核实验室仓库 <https://github.com/linux-kernel-labs/linux>`_ 是 Linux 内核仓库的一个 fork，增加了以下内容：
 
-  * ``/tools/labs``: 包含实验室和 :ref:`虚拟机（VM）基础设施<vm_link>`
+  * ``/tools/labs``: 包含实验室和:ref:`虚拟机（VM）基础设施<vm_link>`
 
     * ``tools/labs/templates``: 包含骨架（skeleton）源码
     * ``tools/labs/qemu``: 包含 qemu 虚拟机配置
