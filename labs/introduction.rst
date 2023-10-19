@@ -114,7 +114,7 @@ Cscope 也可以作为独立工具使用，但与编辑器结合使用时更加�
 
 如果有多个结果（通常会有），你可以使用 :code:`F6` 和 :code:`F5` （:code:`:ccnext` 和 :code:`:cprev`）在它们之间切换。你还可以使用命令 :code:`:copen` 打开一个新的面板来显示结果。要关闭面板，可以使用 :code:`:cclose` 命令。
 
-要返回到先前的位置，可以使用 :code:`Ctrl+o`（是字母 o，不是零）。该命令可以多次使用，即使 cscope 更改了你当前正在编辑的文件也有效。
+要返回到先前的位置，可以使用 :code:`Ctrl+o` （是字母 o，不是零）。该命令可以多次使用，即使 cscope 更改了你当前正在编辑的文件也有效。
 
 要在 :command:`vim` 启动时直接跳转到符号定义，可以使用 :code:`vim -t <symbol_name>`（例如 :code:`vim -t task_struct`）。如果你已经启动了 :command:`vim` 并想按名称搜索符号，可以使用 :code:`cs find g <symbol_name>` (例如 :code:`cs find g task_struct`)。
 
