@@ -541,7 +541,7 @@ GDB 和 QEMU
 
           就像前面的练习一样。
 
-          请参阅实验室中的 `gdb(Linux) <#gdb-linux>`__ 部分。
+          请参阅实验室中的 `gdb (Linux) <#gdb-linux>`__ 部分。
 
 .. hint:: :code:`jiffies` 是一个 64 位变量。
           可以发现它的地址与 :code:`jiffies_64` 变量相同。
