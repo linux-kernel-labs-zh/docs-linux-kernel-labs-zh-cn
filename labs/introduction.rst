@@ -68,7 +68,7 @@
 cscope
 ------
 
-Cscope <http://cscope.sourceforge.net/> 是一个用于高效导航 C 源代码的工具。要使用它，必须从现有的源代码生成一个 cscope 数据库。在 Linux 树中，执行命令 :command:`make ARCH=x86 cscope` 就足够了。通过 ARCH 变量指定架构不是必须的，但建议这样做；否则，一些依赖于架构的函数会在数据库中出现多次。
+`Cscope <http://cscope.sourceforge.net/>`__ 是一个用于高效导航 C 源代码的工具。要使用它，必须从现有的源代码生成一个 cscope 数据库。在 Linux 树中，执行命令 :command:`make ARCH=x86 cscope` 就足够了。通过 ARCH 变量指定架构不是必须的，但建议这样做；否则，一些依赖于架构的函数会在数据库中出现多次。
 
 你可以使用命令 :command:`make ARCH=x86 COMPILED_SOURCE=1 cscope` 构建 cscope 数据库。这样，cscope 数据库中只包含在编译过程中已经使用过的符号（symbol），从而在搜索符号时可以获得更好的性能。
 
@@ -114,7 +114,7 @@ Cscope 也可以作为独立工具使用，但与编辑器结合使用时更加�
 
 如果有多个结果（通常会有），你可以使用 :code:`F6` 和 :code:`F5` （:code:`:ccnext` 和 :code:`:cprev`）在它们之间切换。你还可以使用命令 :code:`:copen` 打开一个新的面板来显示结果。要关闭面板，可以使用 :code:`:cclose` 命令。
 
-要返回到先前的位置，可以使用 `Ctrl+o`（是字母 o，不是零）。该命令可以多次使用，即使 cscope 更改了你当前正在编辑的文件也有效。
+要返回到先前的位置，可以使用 :code:`Ctrl+o`（是字母 o，不是零）。该命令可以多次使用，即使 cscope 更改了你当前正在编辑的文件也有效。
 
 要在 :command:`vim` 启动时直接跳转到符号定义，可以使用 :code:`vim -t <symbol_name>`（例如 :code:`vim -t task_struct`）。如果你已经启动了 :command:`vim` 并想按名称搜索符号，可以使用 :code:`cs find g <symbol_name>` (例如 :code:`cs find g task_struct`)。
 
@@ -149,9 +149,9 @@ Clangd 需要一个编译数据库来理解内核源代码。可以通过以下�
 
 LSP 客户端：
 
-- Vim/Neovim (`coc.nvim <https://github.com/neoclide/coc.nvim>`__、 `nvim-lsp <https://github.com/neovim/nvim-lspconfig>`__、 `vim-lsc <https://github.com/natebosch/vim-lsc>`__以及 `vim-lsp <https://github.com/prabirshrestha/vim-lsp>`__)
-- Emacs (`lsp-mode <https://github.com/emacs-lsp/lsp-mode>`__)
-- VSCode (`clangd extension <https://marketplace.visualstudio.com/items?itemName=llvm-vs-code-extensions.vscode-clangd>`__)
+- Vim/Neovim（ `coc.nvim <https://github.com/neoclide/coc.nvim>`__、 `nvim-lsp <https://github.com/neovim/nvim-lspconfig>`__、 `vim-lsc <https://github.com/natebosch/vim-lsc>`__ 以及 `vim-lsp <https://github.com/prabirshrestha/vim-lsp>`__ ）
+- Emacs（ `lsp-mode <https://github.com/emacs-lsp/lsp-mode>`__ ）
+- VSCode（ `clangd extension <https://marketplace.visualstudio.com/items?itemName=llvm-vs-code-extensions.vscode-clangd>`__ ）
 
 Kscope
 ------
@@ -489,7 +489,7 @@ GDB 和 QEMU
 
     make gdb
 
-我们在 QEMU 命令中使用了 :command:`-s`参数，这意味着 QEMU 会监听 :code:`1234` 端口等待 :command:`gdb` 的连接。我们可以使用 :command:`gdb` 的**远程目标**功能来进行调试。现有的 :file:`Makefile` 已经帮我们处理了相关细节。
+我们在 QEMU 命令中使用了 :command:`-s` 参数，这意味着 QEMU 会监听 :code:`1234` 端口等待 :command:`gdb` 的连接。我们可以使用 :command:`gdb` 的 **远程目标** 功能来进行调试。现有的 :file:`Makefile` 已经帮我们处理了相关细节。
 
 当你附加调试器到一个进程时，该进程会暂停。你可以添加断点并检查进程的当前状态。
 
@@ -529,7 +529,7 @@ GDB 和 QEMU
 
               gdb vmlinux
 
-          请参阅实验中的 `gdb（Linux）<#gdb-linux>`__ 部分。
+          请参阅实验中的 `gdb (Linux) <#gdb-linux>`__ 部分。
 
 使用 `gdb` 命令找到 `jiffies` 变量在内存中的地址和内容。:code:`jiffies` 变量保存了系统启动以来的时钟节拍数。
 
@@ -541,7 +541,7 @@ GDB 和 QEMU
 
           就像前面的练习一样。
 
-          请参阅实验室中的 `gdb（Linux）<#gdb-linux>`__ 部分。
+          请参阅实验室中的 `gdb (Linux) <#gdb-linux>`__ 部分。
 
 .. hint:: :code:`jiffies` 是一个 64 位变量。
           可以发现它的地址与 :code:`jiffies_64` 变量相同。
@@ -652,7 +652,7 @@ GDB 和 QEMU
 也就是说，你访问一个结构，然后找到其中具有下一个结构数据类型的字段，访问相应的字段，依此类推。注意这些结构定义在哪些文件中；这将对接下来的实验有用。
 
 
-.. hint:: 要在 :command:`vim` 中搜索符号（:command:`vim` 带有 :command:`cscope` 支持），可以将光标放在符号上，并使用键盘快捷键:command:`Ctrl+]`。
+.. hint:: 要在 :command:`vim` 中搜索符号（:command:`vim` 带有 :command:`cscope` 支持），可以将光标放在符号上，并使用键盘快捷键 :command:`Ctrl+]`。
 
           要返回到上一个匹配项（在搜索/跳转之前的匹配项），请使用键盘快捷键 :command:`Ctrl+o`。
 
