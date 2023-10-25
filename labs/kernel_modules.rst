@@ -1,32 +1,24 @@
-==============
-Kernel modules
-==============
+========
+内核模块
+========
 
-Lab objectives
-==============
+实验目标
+========
 
-* creating simple modules
-* describing the process of kernel module compilation
-* presenting how a module can be used with a kernel
-* simple kernel debugging methods
+* 创建简单的模块
+* 描述内核模块编译的过程
+* 展示如何在内核中使用模块
+* 简单的内核调试方法
 
 ..
   _[SECTION-OVERVIEW-BEGIN]
 
-Kernel Modules Overview
-=======================
+内核模块概述
+===========
 
-A monolithic kernel, though faster than a microkernel, has the disadvantage of
-lack of modularity and extensibility. On modern monolithic kernels, this has
-been solved by using kernel modules. A kernel module (or loadable kernel mode)
-is an object file that contains code that can extend the kernel functionality
-at runtime (it is loaded as needed); When a kernel module is no longer needed,
-it can be unloaded. Most of the device drivers are used in the form of kernel
-modules.
+虽然单体内核比微内核更快，但缺乏模块化和可扩展性。在现代单体内核中，这个问题已经通过使用内核模块来解决。内核模块（或可加载内核模式）是一个包含代码的目标文件（object file），它可以在运行时扩展内核的功能（根据需要加载）；当不需要内核模块时，可以卸载它。大多数设备驱动程序以内核模块的形式使用。
 
-For the development of Linux device drivers, it is recommended to download the
-kernel sources, configure and compile them and then install the compiled version
-on the test /development tool machine.
+为了开发 Linux 设备驱动程序，建议下载内核源代码，配置和编译它们，然后将编译后的版本安装在测试/开发工具机上。
 
 ..
   _[SECTION-OVERVIEW-END]
@@ -34,12 +26,10 @@ on the test /development tool machine.
 ..
   _[SECTION-MODULE-EXAMPLE-BEGIN]
 
-An example of a kernel module
-=============================
+内核模块示例
+============
 
-Below is a very simple example of a kernel module. When loading into the kernel,
-it will generate the message :code:`"Hi"`. When unloading the kernel module, the
-:code:`"Bye"` message will be generated.
+以下是一个非常简单的内核模块示例。当加载到内核中时，它会生成消息 :code:`"Hi"`。当卸载内核模块时，将生成消息 :code:`"Bye"`。
 
 .. code-block:: c
 
@@ -66,10 +56,7 @@ it will generate the message :code:`"Hi"`. When unloading the kernel module, the
     module_exit(dummy_exit);
 
 
-The generated messages will not be displayed on the console but will be saved
-in a specially reserved memory area for this, from where they will be extracted
-by the logging daemon (syslog). To display kernel messages, you can use the
-:command:`dmesg` command or inspect the logs:
+生成的消息不会显示在控制台上，而是保存在专门预留的内存区域中，由日志守护程序（syslog）负责将其提取出来。要显示内核消息，你可以使用 `dmesg` 命令或检查日志文件。
 
 .. code-block:: bash
 
@@ -87,17 +74,12 @@ by the logging daemon (syslog). To display kernel messages, you can use the
 ..
   _[SECTION-COMPILE-MODULES-BEGIN]
 
-Compiling kernel modules
-========================
+编译内核模块
+============
 
-Compiling a kernel module differs from compiling an user program. First, other
-headers should be used. Also, the module should not be linked to libraries.
-And, last but not least, the module must be compiled with the same options as
-the kernel in which we load the module. For these reasons, there is a standard
-compilation method (:code:`kbuild`). This method requires the use of two files:
-a :file:`Makefile` and a :file:`Kbuild` file.
+编译内核模块与编译用户程序不同。首先，需要使用另外的头文件。此外，模块不应链接到库。最重要的是，模块必须使用与加载模块的内核相同的选项进行编译。出于这些原因，有一种标准的编译方法（kbuild）。该方法需要使用两个文件： :file:`Makefile` 文件和 :file:`Kbuild` 文件。
 
-Below is an example of a :file:`Makefile`:
+以下是 :file:`Makefile` 文件的示例：
 
 .. code-block:: bash
 
@@ -109,7 +91,7 @@ Below is an example of a :file:`Makefile`:
    clean:
            make -C $(KDIR) M=`pwd` clean
 
-And the example of a :file:`Kbuild` file used to compile a module:
+以下是用于编译模块的 :file:`Kbuild` 文件示例：
 
 .. code-block:: bash
 
@@ -118,30 +100,18 @@ And the example of a :file:`Kbuild` file used to compile a module:
    obj-m        = modul.o
 
 
-As you can see, calling :command:`make` on the :file:`Makefile` file in the
-example shown will result in the :command:`make` invocation in the kernel
-source directory (``/lib/modules/`uname -r`/build``) and referring to the
-current directory (``M = `pwd```). This process ultimately leads to reading
-the :file:`Kbuild` file from the current directory and compiling the module
-as instructed in this file.
+正如你所见，在示例中调用 :command:`make` 命令对 :file:`Makefile` 文件进行编译将导致在内核源代码目录（``/lib/modules/`uname -r`/build``）中调用 :command:`make` 并引用当前目录（``M = `pwd``）。该过程最终会读取当前目录中的 :file:`Kbuild` 文件，并按照该文件中的指示编译模块。
 
-.. note:: For labs we will configure different :command:`KDIR`, according to
-          the virtual machine specifications:
+.. note:: 对于实验，我们将根据虚拟机的规格配置不同的 :command:`KDIR`：
 
           .. code-block:: bash
 
               KDIR = /home/student/src/linux
               [...]
 
-A :file:`Kbuild` file contains one or more directives for compiling a kernel
-module.  The easiest example of such a directive is ``obj-m =
-module.o``. Following this directive, a kernel module (:code:`ko` - kernel
-object) will be created, starting from the ``module.o`` file. ``module.o`` will
-be created starting from ``module.c`` or ``module.S``. All of these files can
-be found in the :file:`Kbuild`'s directory.
+:file:`Kbuild` 文件包含一个或多个指令，用于编译内核模块。其中一个最简单的指令示例是 ``obj-m = module.o``。根据该指令，将从 ``module.o`` 文件开始创建一个内核模块（ :code:`ko` ，即 :code:`kernel object`，也就是内核对象）。``module.o`` 将基于 ``module.c`` 或 ``module.S`` 创建。所有这些文件都可以在 :file:`Kbuild` 所在的目录中找到。
 
-An example of a :file:`Kbuild` file that uses several sub-modules is shown
-below:
+下面是一个使用多个子模块的 :file:`Kbuild` 文件示例：
 
 .. code-block:: bash
 
@@ -150,43 +120,25 @@ below:
    obj-m        = supermodule.o
    supermodule-y = module-a.o module-b.o
 
-For the example above, the steps to compile are:
+对于上面的示例，编译步骤如下：
 
-   * compile the :file:`module-a.c` and :file:`module-b.c` sources,
-     resulting in module-a.o and module-b.o objects
-   * :file:`module-a.o` and :file:`module-b.o` will then be linked
-     in :file:`supermodule.o`
-   * from :file:`supermodule.o` will be created :file:`supermodule.ko`
-     module
+   * 编译 :file:`module-a.c` 和 :file:`module-b.c` 源文件，生成 module-a.o 和 module-b.o 对象文件（object）
+   * 然后将 :file:`module-a.o` 和 :file:`module-b.o` 链接到 :file:`supermodule.o`
+   * 基于 :file:`supermodule.o` 创建 :file:`supermodule.ko` 模块
 
 
-The suffix of targets in :file:`Kbuild` determines how they are used, as
-follows:
+:file:`Kbuild` 中目标（target）的后缀决定了它们的用途，如下所示：
 
-   * M (modules) is a target for loadable kernel modules
+   * M（modules） 标示目标为可加载内核模块
 
-   * Y (yes) represents a target for object files to be compiled and then
-     linked to a module (``$(mode_name)-y``) or within the kernel (``obj-y``)
+   * Y（yes） 表示目标是用于编译并链接到模块（``$(模块名称)-y``）或内核（``obj-y``）的对象文件
 
-   * any other target suffix will be ignored by :file:`Kbuild` and will not be
-     compiled
+   * 其他任何目标后缀都将被 :file:`Kbuild` 忽略，不会被编译
 
 
-.. note:: These suffixes are used to easily configure the kernel by running the
-          :command:`make menuconfig` command or directly editing the
-          :file:`.config` file. This file sets a series of variables that are
-          used to determine which features are added to the kernel at build
-          time. For example, when adding BTRFS support with :command:`make
-          menuconfig`, add the line :code:`CONFIG_BTRFS_FS = y` to the
-          :file:`.config` file.  The BTRFS kbuild contains the line
-          ``obj-$(CONFIG_BTRFS_FS):= btrfs.o``, which becomes ``obj-y:=
-          btrfs.o``. This will compile the :file:`btrfs.o` object and will be
-          linked to the kernel. Before the variable was set, the line became
-          ``obj:=btrfs.o`` and so it was ignored, and the kernel was build
-          without BTRFS support.
+.. note:: 这些后缀使得可以通过运行 :command:`make menuconfig` 命令或直接编辑 :file:`.config` 文件来轻松配置内核。该文件设置了一系列变量，用于确定在构建时向内核添加哪些特性。例如，使用 :command:`make menuconfig` 命令添加 BTRFS 支持时，在 :file:`.config` 文件中添加行 :code:`CONFIG_BTRFS_FS = y`。BTRFS kbuild 包含了一行 ``obj-$(CONFIG_BTRFS_FS):= btrfs.o``，它会转变成 ``obj-y:= btrfs.o``。这将编译 :file:`btrfs.o` 对象，并将其链接到内核。如果没有设置变量，该行会转变成 ``obj:=btrfs.o``，然后被忽略，进而内核构建时不会包含 BTRFS 支持。
 
-For more details, see the :file:`Documentation/kbuild/makefiles.txt` and
-:file:`Documentation/kbuild/modules.txt` files within the kernel sources.
+要了解更多详细信息，请参阅内核源代码中的 :file:`Documentation/kbuild/makefiles.txt` 和 :file:`Documentation/kbuild/modules.txt` 文件。
 
 ..
   _[SECTION-COMPILE-MODULES-END]
@@ -194,25 +146,19 @@ For more details, see the :file:`Documentation/kbuild/makefiles.txt` and
 ..
   _[SECTION-LOAD-MODULES-BEGIN]
 
-Loading/unloading a kernel module
-=================================
+加载/卸载内核模块
+================
 
-To load a kernel module, use the :command:`insmod` utility. This utility
-receives as a parameter the path to the :file:`*.ko` file in which the module
-was compiled and linked.  Unloading the module from the kernel is done using
-the :command:`rmmod` command, which receives the module name as a parameter.
+要加载内核模块，请使用 :command:`insmod` 程序。该程序接收用于编译和链接模块的 :file:`*.ko` 文件的路径作为参数。要从内核中卸载模块请使用 :command:`rmmod` 命令，该命令接收模块名称作为参数。
 
 .. code-block:: bash
 
    $ insmod module.ko
    $ rmmod module.ko
 
-When loading the kernel module, the routine specified as a parameter of the
-``module_init`` macro will be executed. Similarly, when the module is unloaded
-the routine specified as a parameter of the ``module_exit`` will be executed.
+加载内核模块时，将执行 ``module_init`` 宏（macro）参数指定的函数。同样，当卸载模块时，将执行 ``module_exit`` 宏参数指定的函数。
 
-A complete example of compiling and loading/unloading a kernel module is
-presented below:
+下面是一个完整的编译、加载和卸载内核模块的示例：
 
 .. code-block:: bash
 
@@ -246,9 +192,7 @@ presented below:
    Hi
    Bye
 
-Information about modules loaded into the kernel can be found using the
-:command:`lsmod` command or by inspecting the :file:`/proc/modules`,
-:file:`/sys/module` directories.
+可以使用 :command:`lsmod` 命令或查看 :file:`/proc/modules` 、 :file:`/sys/module` 目录来获取有关加载到内核中的模块的信息。
 
 ..
   _[SECTION-LOAD-MODULES-END]
@@ -256,38 +200,23 @@ Information about modules loaded into the kernel can be found using the
 ..
   _[SECTION-DEBUG-MODULES-BEGIN]
 
-Kernel Module Debugging
-=======================
+内核模块调试
+===========
 
-Troubleshooting a kernel module is much more complicated than debugging a
-regular program. First, a mistake in a kernel module can lead to blocking the
-entire system. Troubleshooting is therefore much slowed down. To avoid reboot,
-it is recommended to use a virtual machine (qemu, virtualbox, vmware).
+与调试常规程序相比，调试内核模块要复杂得多。首先，内核模块中的错误可能导致整个系统阻塞。因此，故障排除的速度会大大降低。为了避免重新启动，建议使用虚拟机（qemu、virtualbox 或者 vmware）。
 
-When a module containing bugs is inserted into the kernel, it will eventually
-generate a `kernel oops <https://en.wikipedia.org/wiki/Linux_kernel_oops>`_.
-A kernel oops is an invalid operation detected by the kernel and can only
-be generated by the kernel. For a stable kernel version, it almost certainly
-means that the module contains a bug. After the oops appears, the kernel will
-continue to work.
+当插入包含错误的模块到内核中时，它最终会生成一个 `内核 oops <https://zh.wikipedia.org/wiki/Oops_(Linux内核)>`_ 。内核 oops 是内核检测到的无效操作，只可能由内核生成。对于稳定的内核版本，这几乎可以肯定意味着模块含有错误。在 oops 出现后，内核仍将继续工作。
 
-Very important to the appearance of a kernel oops is saving the generated
-message. As noted above, messages generated by the kernel are saved in logs and
-can be displayed with the :command:`dmesg` command. To make sure that no kernel
-message is lost, it is recommended to insert/test the kernel directly from the
-console, or periodically check the kernel messages. Noteworthy is that an oops
-can occur because of a programming error, but also a because of hardware error.
+出现内核 oops 时，保存生成的消息非常重要。如上所述，内核生成的消息保存在日志中，并可使用 :command:`dmesg` 命令显示。为了确保不丢失任何内核消息，建议直接从控制台插入/测试内核，或定期检查内核消息。值得注意的是，oops 不止可能是由于编程错误，也有可能是硬件错误引起的。
 
-If a fatal error occurs, after which the system can not return to a stable
-state, a `kernel panic <https://en.wikipedia.org/wiki/Linux_kernel_panic>`_ is
-generated.
+如果发生致命错误，系统无法恢复到稳定状态，将造成 `内核错误（kernel panic） <https://zh.wikipedia.org/wiki/内核错误>`_ 。
 
-Look at the kernel module below that contains a bug that generates an oops:
+以下是一个包含错误并会造成 oops 的内核模块示例：
 
 .. code-block:: c
 
     /*
-     * Oops generating kernel module
+     * 造成 oops 的内核模块
      */
 
     #include <linux/kernel.h>
@@ -327,7 +256,7 @@ Look at the kernel module below that contains a bug that generates an oops:
 
 .. **
 
-Inserting this module into the kernel will generate an oops:
+将此模块插入内核将造成 oops：
 
 .. code-block:: bash
 
@@ -368,40 +297,30 @@ Inserting this module into the kernel will generate an oops:
    EIP: [<c89d4005>] my_oops_init+0x5/0x20 [oops] SS:ESP 0068:c5799e24
    ---[ end trace 2981ce73ae801363 ]---
 
-Although relatively cryptic, the message provided by the kernel to the
-appearance of an oops provides valuable information about the error. First line:
+虽然相对晦涩，但内核在出现 oops 时提供了有关错误的宝贵信息。第一行：
 
 .. code-block:: bash
 
    BUG: unable to handle kernel paging request at 00001234
    EIP: [<c89d4005>] my_oops_init + 0x5 / 0x20 [oops]
 
-Tells us the cause and the address of the instruction that generated the error.
-In our case this is an invalid access to memory.
+告诉我们错误的原因和生成错误的指令的地址。在我们的例子中，这是对内存的无效访问。
 
-Next line
+接下来的一行是：
 
    ``Oops: 0002 [# 1] PREEMPT DEBUG_PAGEALLOC``
 
-Tells us that it's the first oops (#1). This is important in the context that
-an oops can lead to other oopses. Usually only the first oops is relevant.
-Furthermore, the oops code (``0002``) provides information about the error type
-(see :file:`arch/x86/include/asm/trap_pf.h`):
+告诉我们这是第一个 oops（#1）。在这个上下文中，这很重要，因为一个 oops 可能会导致其他 oops。通常只有第一个 oops 是相关的。此外，oops 代码（ ``0002`` ）提供了有关错误类型的信息（参见 :file:`arch/x86/include/asm/trap_pf.h` ）：
 
+   * Bit 0 == 0 表示找不到页面，1 表示保护故障
+   * Bit 1 == 0 表示读取，1 表示写入
+   * Bit 2 == 0 表示内核模式，1 表示用户模式
 
-   * Bit 0 == 0 means no page found, 1 means protection fault
-   * Bit 1 == 0 means read, 1 means write
-   * Bit 2 == 0 means kernel, 1 means user mode
+在这种情况下，我们有一个写入访问导致了 oops（bit 1 为 1）。
 
-In this case, we have a write access that generated the oops (bit 1 is 1).
+下面是寄存器的转储（dump）。它解码了指令指针 (``EIP``) 的值，并指出错误出现在 :code:`my_oops_init` 函数中，偏移为 5 个字节（``EIP: [<c89d4005>] my_oops_init+0x5``）。该消息还显示了堆栈内容和到目前为止的调用回溯。
 
-Below is a dump of the registers. It decodes the instruction pointer (``EIP``)
-value and notes that the bug appeared in the :code:`my_oops_init` function with
-a 5-byte offset (``EIP: [<c89d4005>] my_oops_init+0x5``). The message also
-shows the stack content and a backtrace of calls until then.
-
-If an invalid read call is generated (``#define OP_OOPS OP_READ``), the message
-will be the same, but the oops code will differ, which would now be ``0000``:
+如果发生了无效的读取调用 (``#define OP_OOPS OP_READ``)，消息将是相同的，但是 oops 代码将不同，现在将是 ``0000``:
 
 .. code-block:: bash
 
@@ -443,14 +362,9 @@ will be the same, but the oops code will differ, which would now be ``0000``:
 objdump
 -------
 
-Detailed information about the instruction that generated the oops can be found
-using the :command:`objdump` utility. Useful options to use are :command:`-d`
-to disassemble the code and :command:`-S` for interleaving C code in assembly
-language code.  For efficient decoding, however, we need the address where the
-kernel module was loaded. This can be found in :file:`/proc/modules`.
+可以使用 :command:`objdump` 程序找到造成 oops 的指令（instruction）的详细信息。常用的选项有 :command:`-d` 用于反汇编代码， :command:`-S` 用于将 C 代码与汇编语言代码交错显示。然而，为了进行高效的解码，我们需要找到内核模块被加载到的地址。这可以在 :file:`/proc/modules` 中找到。
 
-Here's an example of using :command:`objdump` on the above module to identify
-the instruction that generated the oops:
+以下是在上述模块上使用 :command:`objdump` 的示例，以确定造成 oops 的指令：
 
 .. code-block:: bash
 
@@ -534,226 +448,145 @@ the instruction that generated the oops:
    c89d4026:       90                      nop
    c89d4027:       90                      nop
 
-Note that the instruction that generated the oops (``c89d4005`` identified
-earlier) is:
+请注意，生成 oops 的指令（先前确定为 ``c89d4005`` ）是：
 
-  ``C89d4005: c7 05 34 12 00 00 03 movl $ 0x3,0x1234``
+  ```C89d4005: c7 05 34 12 00 00 03 movl $ 0x3,0x1234``
 
-That is exactly what was expected - storing value 3 at 0x0001234.
+这正是预期的结果 - 将值 3 存储在地址 0x0001234 上。
 
-The :file:`/proc/modules` is used to find the address where a kernel module is
-loaded.  The :command:`--adjust-vma` option allows you to display instructions
-relative to ``0xc89d4000``. The :command:`-l` option displays the number of
-each line in the source code interleaved with the assembly language code.
+:file:`/proc/modules` 用于查找加载的内核模块的地址。:command:`--adjust-vma` 选项允许你相对于 ``0xc89d4000`` 位置显示指令。:command:`-l` 选项将显示源代码中每行的编号，源代码与汇编语言代码交错显示。
 
 addr2line
 ---------
 
-A more simplistic way to find the code that generated an oops is to use the
-:command:`addr2line` utility:
+寻找造成 oops 的代码的一种更简单的方法是使用 :command:`addr2line` 实用程序：
 
 .. code-block:: bash
 
    faust:~/lab-01/modul-oops# addr2line -e oops.o 0x5
    /root/lab-01/modul-oops/oops.c:23
 
-Where ``0x5`` is the value of the program counter (``EIP = c89d4005``) that
-generated the oops, minus the base address of the module (``0xc89d4000``)
-according to :file:`/proc/modules`
+其中``0x5``是生成 oops 的程序计数器的值（``EIP = c89d4005``），减去根据 :file:`/proc/modules` 的信息得出的模块的基地址（``0xc89d4000``），。
 
 minicom
 -------
 
-:command:`Minicom` (or other equivalent utilities, eg :command:`picocom`,
-:command:`screen`) is a utility that can be used to connect and interact with a
-serial port. The serial port is the basic method for analyzing kernel messages
-or interacting with an embedded system in the development phase. There are two
-more common ways to connect:
+:command:`Minicom`（或其他等效程序，例如 :command:`picocom` 以及 :command:`screen` ）是一种用于与串行端口（serial port）连接和交互的程序。串行端口是在开发阶段分析内核消息（kernel message）或与嵌入式系统进行交互的基本方法。有两种常见的连接方式：
 
-* a serial port where the device we are going to use is :file:`/dev/ttyS0`
+* 使用串行端口，设备路径为 :file:`/dev/ttyS0`
 
-* a serial USB port (FTDI) in which case the device we are going to use is
-  :file:`/dev/ttyUSB`.
+* 使用串行 USB 端口（FTDI），在这种情况下，设备路径为 :file:`/dev/ttyUSB`
 
-For the virtual machine used in the lab, the device that we need to use is
-displayed after the virtual machine starts:
+对于实验中使用的虚拟机，在虚拟机启动后，我们需要使用的设备路径将显示在屏幕上：
 
 .. code-block:: bash
 
     char device redirected to /dev/pts/20 (label virtiocon0)
 
-Minicom use:
+使用 Minicom：
 
 .. code-block:: bash
 
-   #for connecting via COM1 and using a speed of 115,200 characters per second
+   # 使用 COM1 连接，速率为 115,200 字符/秒
    minicom -b 115200 -D /dev/ttyS0
 
-   #For USB serial port connection
+   # 使用 USB 串行端口连接
    minicom -D /dev/ttyUSB0
 
-   #To connect to the serial port of the virtual machine
+   # 连接到虚拟机的串行端口
    minicom -D /dev/pts/20
 
 netconsole
 ----------
 
-:command:`Netconsole` is a utility that allows logging of kernel debugging
-messages over the network. This is useful when the disk logging system does not
-work or when serial ports are not available or when the terminal does not
-respond to commands. :command:`Netconsole` comes in the form of a kernel
-module.
+:command:`Netconsole` 是允许通过网络记录内核调试消息的程序。当磁盘日志系统不起作用、串行端口不可用或终端不响应命令时，这非常有用。:command:`Netconsole` 是内核模块。
 
-To work, it needs the following parameters:
+要想正常工作，它需要以下参数：
 
-   * port, IP address, and the source interface name of the debug station
-   * port, MAC address, and IP address of the machine to which the debug
-     messages will be sent
+   * 调试站点的端口、IP 地址和源接口名称
+   * 将调试消息发送到的机器的端口、MAC 地址和 IP 地址
 
-These parameters can be configured when the module is inserted into the kernel,
-or even while the module is inserted if it has been compiled with the
-``CONFIG_NETCONSOLE_DYNAMIC`` option.
+这些参数可以在将模块插入内核时进行配置，甚至在模块插入后也可以配置，如果模块在编译时配置了 ``CONFIG_NETCONSOLE_DYNAMIC`` 选项。
 
-An example configuration when inserting :command:`netconsole` kernel module is
-as follows:
+插入 :command:`netconsole` 内核模块时的示例配置如下：
 
 .. code-block:: bash
 
    alice:~# modprobe netconsole netconsole=6666@192.168.191.130/eth0,6000@192.168.191.1/00:50:56:c0:00:08
 
-Thus, the debug messages on the station that has the address
-``192.168.191.130`` will be sent to the ``eth0`` interface, having source port
-``6666``. The messages will be sent to ``192.168.191.1`` with the MAC address
-``00:50:56:c0:00:08``, on port ``6000``.
+因此，在具有地址 ``192.168.191.130`` 的站点上，调试消息将被发送到 ``eth0`` 接口，源端口为``6666``。消息将被发送到``192.168.191.1``，使用 MAC 地址``00:50:56:c0:00:08``，至端口``6000``上。
 
-Messages can be played on the destination station using :command:`netcat`:
+可以在目标站点上使用 :command:`netcat` 显示消息：
 
 .. code-block:: bash
 
    bob:~ # nc -l -p 6000 -u
 
-Alternatively, the destination station can configure :command:`syslogd` to
-intercept these messages. More information can be found in
-:file:`Documentation/networking/netconsole.txt`.
+或者，目标站点可以配置 :command:`syslogd` 来拦截这些消息。更多信息可以在 :file:`Documentation/networking/netconsole.txt` 中找到。
 
-Printk debugging
-----------------
+Printk 调试
+-----------
 
-``The two oldest and most useful debugging aids are Your Brain and Printf``.
+``最古老且最有用的两种调试辅助工具是你的大脑和 Printf``。
 
-For debugging, a primitive way is often used, but it is quite effective:
-:code:`printk` debugging. Although a debugger can also be used, it is generally
-not very useful: simple bugs (uninitialized variables, memory management
-problems, etc.)  can be easily localized by control messages and the
-kernel-decoded oop message.
+在调试过程中，通常会使用一种原始但非常有效的方法：:code:`printk` 调试。尽管也可以使用调试器，但通常并不是非常有用：简单的错误（未初始化的变量、内存管理问题等）可以通过控制消息和内核解码的 oops 消息轻松找到。
 
-For more complex bugs, even a debugger can not help us too much unless the
-operating system structure is very well understood. When debugging a kernel
-module, there are a lot of unknowns in the equation: multiple contexts (we have
-multiple processes and threads running at a time), interruptions, virtual
-memory, etc.
+对于更复杂的错误，即使是调试器也无法提供太多帮助，除非你对操作系统的结构非常熟悉。在调试内核模块时，其中存在许多未知因素：多个上下文（我们同时运行多个进程和线程）、中断以及虚拟内存等等。
 
-You can use :code:`printk` to display kernel messages to user space. It is
-similar to :code:`printf`'s functionality; the only difference is that the
-transmitted message can be prefixed with a string of :code:`"<n>"`, where
-:code:`n` indicates the error level (loglevel) and has values between ``0`` and
-``7``. Instead of :code:`"<n>"`, the levels can also be coded by symbolic
-constants:
+你可以使用 :code:`printk` 将内核消息显示到用户空间。它类似于 :code:`printf` 的功能；唯一的区别是传输的消息可以用 :code:`"<n>"` 字符串为前缀，其中 :code:`n` 表示错误级别（日志级别），取值范围为 ``0`` 到 ``7`` 。除了 :code:`"<n>"`，级别也可以用符号常量编码：
 
 .. code-block:: c
 
-    KERN_EMERG - n = 0
-    KERN_ALERT - n = 1
-    KERN_CRIT - n = 2
-    KERN_ERR - n = 3
-    KERN_WARNING - n = 4
-    KERN_NOTICE - n = 5
-    KERN_INFO - n = 6
-    KERN_DEBUG - n = 7
+    KERN_EMERG——n = 0
+    KERN_ALERT——n = 1
+    KERN_CRIT——n = 2
+    KERN_ERR——n = 3
+    KERN_WARNING——n = 4
+    KERN_NOTICE——n = 5
+    KERN_INFO——n = 6
+    KERN_DEBUG——n = 7
 
 
-The definitions of all log levels are found in :file:`linux/kern_levels.h`.
-Basically, these log levels are used by the system to route messages sent to
-various outputs: console, log files in :file:`/var/log` etc.
+所有日志级别的定义都可以在 :file:`linux/kern_levels.h` 中找到。基本上，系统凭借这些日志级别将消息发送到各种输出：控制台、位于 :file:`/var/log` 中的日志文件等等。
 
-.. note:: To display :code:`printk` messages in user space, the :code:`printk`
-          log level must be of higher priority than `console_loglevel`
-          variable. The default console log level can be configured from
-          :file:`/proc/sys/kernel/printk`.
+.. note:: 要在用户空间显示 :code:`printk` 消息，:code:`printk` 日志级别必须比 `console_loglevel` 变量的优先级高。可以从 :file:`/proc/sys/kernel/printk` 配置默认的控制台日志级别。
 
-          For instance, the command:
-
-          .. code-block:: bash
-
-              echo 8 > /proc/sys/kernel/printk
-
-          will enable all the kernel log messages to be displayed in the
-          console. That is, the logging level has to be strictly less than the
-          :code:`console_loglevel` variable. For example, if the
-          :code:`console_loglevel` has a value of ``5`` (specific to
-          :code:`KERN_NOTICE`), only messages with loglevel stricter than ``5``
-          (i.e :code:`KERN_EMERG`, :code:`KERN_ALERT`, :code:`KERN_CRIT`,
-          :code:`KERN_ERR`, :code:`KERN_WARNING`) will be shown.
-
-Console-redirected messages can be useful for quickly viewing the effect of
-executing the kernel code, but they are no longer so useful if the kernel
-encounters an irreparable error and the system freezes. In this case, the logs
-of the system must be consulted, as they keep the information between system
-restarts. These are found in :file:`/var/log` and are text files, populated by
-:code:`syslogd` and :code:`klogd` during the kernel run. :code:`syslogd` and
-:code:`klogd` take the information from the virtual file system mounted in
-:file:`/proc`. In principle, with :code:`syslogd` and :code:`klogd` turned on,
-all messages coming from the kernel will go to :file:`/var/log/kern.log`.
-
-A simpler version for debugging is using the :file:`/var/log/debug` file.  It
-is populated only with the :code:`printk` messages from the kernel with the
-:code:`KERN_DEBUG` log level.
-
-Given that a production kernel (similar to the one we're probably running with)
-contains only release code, our module is among the few that send messages
-prefixed with KERN_DEBUG . In this way, we can easily navigate through the
-:file:`/var/log/debug` information by finding the messages corresponding to a
-debugging session for our module.
-
-Such an example would be the following:
+例如，以下命令：
 
 .. code-block:: bash
 
-    # Clear the debug file of previous information (or possibly a backup)
-    $ echo "New debug session" > /var/log/debug
-    # Run the tests
-    # If there is no critical error causing a panic kernel, check the output
-    # if a critical error occurs and the machine only responds to a restart,
-      restart the system and check /var/log/debug.
+    echo 8 > /proc/sys/kernel/printk
 
-The format of the messages must obviously contain all the information of
-interest in order to detect the error, but inserting in the code :code:`printk`
-to provide detailed information can be as time-consuming as writing the code to
-solve the problem. This is usually a trade-off between the completeness of the
-debugging messages displayed using :code:`printk` and the time it takes to
-insert these messages into the text.
+将使所有内核日志消息在控制台上显示。也就是说，日志级别必须严格小于 :code:`console_loglevel` 变量。例如，如果 :code:`console_loglevel` 的值为 ``5``（指定于 :code:`KERN_NOTICE`），只有比 ``5`` 更严格的日志级别的消息（即 :code:`KERN_EMERG` 、:code:`KERN_ALERT` 、:code:`KERN_CRIT` 、:code:`KERN_ERR` 以及 :code:`KERN_WARNING`）将显示。
 
-A very simple way, less time-consuming for inserting :code:`printk` and
-providing the possibility to analyze the flow of instructions for tests is the
-use of the predefined constants :code:`__FILE__`, :code:`__LINE__` and
-:code:`__func__`:
+想要快速查看执行内核代码的效果的话，控制台重定向的消息可能对你很有帮助，但如果内核遇到不可修复的错误并且系统冻结，则不再那么有用。在这种情况下，必须查看系统的日志，因为它们保留从一次系统启动到下一次系统重新启动之间的信息。这些日志文件位于 :file:`/var/log` 中，是由内核运行期间的 :code:`syslogd` 和 :code:`klogd` 填充的文本文件。:code:`syslogd` 和 :code:`klogd` 从挂载在 :file:`/proc` 中的虚拟文件系统中获取信息。原则上，打开 :code:`syslogd` 和 :code:`klogd` 后，来自内核的所有消息都将发送到 :file:`/var/log/kern.log`。
 
-    * ``__FILE__`` is replaced by the compiler with the name of the source file
-      it is currently being compiled.
+调试的更简单的方法是使用 :file:`/var/log/debug` 文件。它只包含具有 :code:`KERN_DEBUG` 日志级别的内核的 :code:`printk` 消息。
 
-    * ``__LINE__`` is replaced by the compiler with the line number on which the
-      current instruction is found in the current source file.
+给定一个生产内核（production kernel）（类似于我们可能正在运行的内核），其只包含发布代码，我们的模块是少数几个带有以 KERN_DEBUG 为前缀的消息的模块之一。通过查找与我们的模块的调试会话对应的消息，我们可以轻松浏览 :file:`/var/log/debug` 中的信息。
 
-    * ``__func__`` /``__FUNCTION__`` is replaced by the compiler with the name
-      of the function in which the current instruction is found.
+一个示例如下：
+
+.. code-block:: bash
+
+    # 清除先前信息的调试文件（或可能是备份文件）
+    $ echo "新调试会话" > /var/log/debug
+    # 运行测试
+    # 如果没有导致内核崩溃的关键错误，检查输出
+    # 如果发生关键错误且机器只能通过重新启动来响应，请重新启动系统并检查 /var/log/debug。
+
+消息的格式显然必须包含所有相关信息，以便检测错误，但插入代码 :code:`printk` 以提供详细信息可能会花费与编写代码解决问题一样多的时间。通常在使用 :code:`printk` 显示的调试消息的完整性与将这些消息插入文本中所需的时间之间需要有权衡。
+
+一种非常简单、插入 :code:`printk` 更省时并使我们能够分析测试指令流的方法是使用预定义的常量 :code:`__FILE__` 、:code:`__LINE__` 和 :code:`__func__`：
+
+    * ``__FILE__`` 会被编译器替换为当前正在编译的源文件的名称。
+    * ``__LINE__`` 会被编译器替换为当前源文件中当前指令所在的行号。
+    * ``__func__`` / ``__FUNCTION__`` 会被编译器替换为当前指令所在的函数的名称。
 
 .. note::
-    :code:`__FILE__` and :code:`__LINE__` are part of the ANSI C specifications:
-    :code:`__func__` is part of specification C99; :code:`__FUNCTION__` is a GNU
-    :code:`C` extension and is not portable; However, since we write code for the
-    :code:`Linux` kernel, we can use it without any problems.
+    :code:`__FILE__` 和 :code:`__LINE__` 是 ANSI C 规范的一部分，:code:`__func__` 是 C99 规范的一部分；:code:`__FUNCTION__` 是 GNU 的一个 C 扩展，不具有可移植性；然而，由于我们编写的代码是针对 Linux 内核的，所以可以毫无问题地使用它们。
 
-The following macro definition can be used in this case:
+可以在这种情况下使用以下宏定义：
 
 .. code-block:: c
 
@@ -761,83 +594,60 @@ The following macro definition can be used in this case:
           printk (KERN_DEBUG "[% s]: FUNC:% s: LINE:% d \ n", __FILE__,
                   __FUNCTION__, __LINE__)
 
-Then, at each point where we want to see if it is "reached" in execution,
-insert PRINT_DEBUG; This is a simple and quick way, and can yield by carefully
-analyzing the output.
+然后，在每个想要查看执行是否“到达”的位置，插入 PRINT_DEBUG；这是一种简单快捷的方法，通过仔细分析输出可以得出结果。
 
-The :command:`dmesg` command is used to view the messages printed with
-:code:`printk` but not appearing on the console.
+:command:`dmesg` 命令用于查看在控制台上不显示，需要使用 :code:`printk` 来打印的消息。
 
-To delete all previous messages from a log file, run:
+要删除日志文件中的所有先前消息，请运行：
 
 .. code-block:: bash
 
     cat /dev/null > /var/log/debug
 
-To delete messages displayed by the :command:`dmesg` command, run:
+要删除 :command:`dmesg` 命令显示的消息，请运行：
 
 .. code-block:: bash
 
     dmesg -c
 
 
-Dynamic debugging
------------------
+动态调试
+--------
 
-Dynamic `dyndbg <https://www.kernel.org/doc/html/v4.15/admin-guide/dynamic-debug-howto.html>`_
-debugging enables dynamic debugging activation/deactivation.
-Unlike :code:`printk`, it offers more advanced :code:`printk` options for the
-messages we want to display; it is very useful for complex modules or
-troubleshooting subsystems.
-This significantly reduces the amount of messages displayed, leaving only
-those relevant for the debug context. To enable ``dyndbg``, the kernel must be
-compiled with the ``CONFIG_DYNAMIC_DEBUG`` option. Once configured,
-:code:`pr_debug()`, :code:`dev_dbg()` and :code:`print_hex_dump_debug()`,
-:code:`print_hex_dump_bytes()` can be dynamically enabled per call.
+动态调试（ `dyndbg <https://www.kernel.org/doc/html/v4.15/admin-guide/dynamic-debug-howto.html>`_ ）技术可以动态地激活/停用调试。与 :code:`printk` 不同，它提供了更高级的 :code:`printk` 选项，可以用于仅显示我们想要的消息；其对于复杂模块或故障排除子系统非常有用。这显著减少了显示的消息数量，只留下与调试上下文相关的消息。要启用 ``dyndbg`` ，内核必须编译时启用 ``CONFIG_DYNAMIC_DEBUG`` 选项。一旦配置了这个选项，就可以每次调用时动态启用 :code:`pr_debug()` 、 :code:`dev_dbg()` 和 :code:`print_hex_dump_debug()` 、 :code:`print_hex_dump_bytes()`。
 
-The :file:`/sys/kernel/debug/dynamic_debug/control` file from the debugfs (where
-:file:`/sys/kernel/debug` is the path to which debugfs was mounted) is used to
-filter messages or to view existing filters.
+debugfs 中的 :file:`/sys/kernel/debug/dynamic_debug/control` 文件可以用于过滤消息或查看现有过滤器。
 
 .. code-block:: c
 
    mount -t debugfs none /debug
 
-`Debugfs <http://opensourceforu.com/2010/10/debugging-linux-kernel-with-debugfs/>`_
-is a simple file system, used as a kernel-space interface and
-user-space interface to configure different debug options. Any debug utility
-can create and use its own files /folders in debugfs.
+`Debugfs <http://opensourceforu.com/2010/10/debugging-linux-kernel-with-debugfs/>`_ 是个简单的文件系统，用作内核空间接口和用户空间接口，以配置不同的调试选项。任何调试工具都可以在 debugfs 中创建和使用自己的文件/文件夹。
 
-For example, to display existing filters in ``dyndbg``, you will use:
+例如，要显示 ``dyndbg`` 中的现有过滤器，可以使用以下命令：
 
 .. code-block:: bash
 
    cat /debug/dynamic_debug/control
 
-And to enable the debug message from line ``1603`` in the :file:`svcsock.c` file:
+要启用 :file:`svcsock.c` 文件中第 ``1603`` 行的调试消息：
 
 .. code-block:: bash
 
    echo 'file svcsock.c line 1603 +p' > /debug/dynamic_debug/control
 
-The :file:`/debug/dynamic_debug/control` file is not a regular file. It shows
-the ``dyndbg`` settings on the filters. Writing in it with an echo will change
-these settings (it will not actually make a write). Be aware that the file
-contains settings for ``dyndbg`` debugging messages. Do not log in this file.
+:file:`/debug/dynamic_debug/control` 文件不是普通文件。它显示了过滤器的 ``dyndbg`` 设置。使用 echo 在其中写入会更改这些设置（实际上不会进行写入）。请注意，该文件包含了 ``dyndbg`` 调试消息的设置。不要在该文件中进行日志记录。
 
-Dyndbg Options
-~~~~~~~~~~~~~~
+Dyndbg 选项
+~~~~~~~~~~
 
-* ``func`` - just the debug messages from the functions that have the same
-  name as the one defined in the filter.
+* ``func`` ——只显示与过滤器中定义的函数名称相同的函数的调试消息。
 
   .. code-block:: bash
 
       echo 'func svc_tcp_accept +p' > /debug/dynamic_debug/control
 
-* ``file`` - the name of the file(s) for which we want to display the debug
-  messages. It can be just the source name, but also the absolute path or
-  kernel-tree path.
+* ``file`` ——要显示调试消息的文件名。可以只是源文件名，也可以是绝对路径或内核树路径。
 
   .. code-block:: bash
 
@@ -845,160 +655,137 @@ Dyndbg Options
     file kernel/freezer.c
     file /usr/src/packages/BUILD/sgi-enhancednfs-1.4/default/net/sunrpc/svcsock.c
 
-* ``module`` - module name.
+* ``module`` ——显示模块名称。
 
   .. code-block:: bash
 
      module sunrpc
 
-* ``format`` - only messages whose display format contains the specified string.
+* ``format`` ——只显示显示格式包含指定字符串的消息。
 
   .. code-block:: bash
 
      format "nfsd: SETATTR"
 
-* ``line`` - the line or lines for which we want to enable debug calls.
+* ``line`` - 显示调试调用的行号或行号范围。
 
   .. code-block:: bash
 
-     # Triggers debug messages between lines 1603 and 1605 in the svcsock.c file
+     # 在 svcsock.c 文件的第 1603 行到第 1605 行之间触发调试消息
      $ echo 'file svcsock.c line 1603-1605 +p' > /sys/kernel/debug/dynamic_debug/control
-     # Enables debug messages from the beginning of the file to line 1605
+     # 从文件开头到第 1605 行启用调试消息
      $ echo 'file svcsock.c line -1605 +p' > /sys/kernel/debug/dynamic_debug/control
 
-In addition to the above options, a series of flags can be added, removed, or set
-with operators ``+``, ``-`` or ``=``:
+除了上述选项外，还可以使用操作符 ``+``、 ``-`` 或 ``=`` 来添加、删除或设置一系列标志：
 
-   * ``p`` activates the pr_debug() .
-   * ``f`` includes the name of the function in the printed message.
-   * ``l`` includes the line number in the printed message.
-   * ``m`` includes the module name in the printed message.
-   * ``t`` includes the thread id if it is not called from interrupt context
-   * ``_`` no flag is set.
+   * ``p`` 激活 pr_debug()。
+   * ``f`` 在打印的消息中包含函数名。
+   * ``l`` 在打印的消息中包含行号。
+   * ``m`` 在打印的消息中包含模块名称。
+   * ``t`` 如果不是从中断上下文调用，则包括线程 ID。
+   * ``_`` 不设置标志。
 
-KDB: Kernel debugger
---------------------
+KDB：内核调试器
+--------------
 
-The kernel debugger has proven to be very useful to facilitate the development and
-debugging process. One of its main advantages is the possibility to perform live debugging.
-This allows us to monitor, in real time, the accesses to memory or even modify the memory
-while debugging.
-The debugger has been integrated in the mainline kernel starting with version 2.6.26-rci.
-KDB is not a *source debugger*, but for a complete analysis it can be used in parallel with
-gdb and symbol files -- see :ref:`the GDB debugging section <gdb_intro>`
+内核调试器已被证明在开发和调试过程中非常有用。其主要优势之一是可以进行实时调试。这使得我们能够实时监视对内存的访问，甚至在调试过程中修改内存。内核调试器从版本 2.6.26-rc1 开始，已集成到主线内核中。KDB 不是一个*源代码调试器*，但在进行完整分析时，可以与 gdb 和符号文件并行使用——请参见 :ref:`GDB调试部分 <gdb_intro>`
 
-To use KDB, you have the following options:
+要使用KDB，你有以下选项：
 
- * non-usb keyboard + VGA text console
- * serial port console
- * USB EHCI debug port
+ * 非 USB 键盘 + VGA 文本控制台
+ * 串口控制台
+ * USB EHCI 调试端口
 
-For the lab, we will use a serial interface connected to the host.
-The following command will activate GDB over the serial port:
+在实验中，我们将使用连接到主机的串口接口。以下命令将在串口上激活 GDB：
 
 .. code-block:: bash
 
   echo hvc0 > /sys/module/kgdboc/parameters/kgdboc
 
-KDB is a *stop mode debugger*, which means that, while it is active, all the other processes
-are stopped. The kernel can be *forced* to enter KDB during execution using the following
-`SysRq <http://en.wikipedia.org/wiki/Magic_SysRq_key>`__ command
+KDB 是一种*停止模式调试器*，这意味着在其活动期间，所有其他进程都将停止。可以使用 `SysRq <http://zh.wikipedia.org/wiki/Magic_SysRq組合鍵>`__ 命令强制内核在执行过程中进入 KDB
 
 .. code-block:: bash
 
   echo g > /proc/sysrq-trigger
 
-or by using the key combination ``Ctrl+O g`` in a terminal connected to the serial port
-(for example using :command:`minicom`).
+或者在连接到串口的终端中使用键盘组合键 ``Ctrl+O g``（例如使用 :command:`minicom`）。
 
-KDB has various commands to control and define the context of the debugged system:
+KDB 具有各种命令来控制和定义被调试系统的上下文：
 
- * lsmod, ps, kill, dmesg, env, bt (backtrace)
- * dump trace logs
- * hardware breakpoints
- * modifying memory
+ * lsmod, ps, kill, dmesg, env, bt（backtrace，回溯）
+ * 转储跟踪日志
+ * 硬件断点
+ * 修改内存
 
-For a better description of the available commands you can use the ``help`` command in
-the KDB shell.
-In the next example, you can notice a simple KDB usage example which sets a hardware
-breakpoint to monitor the changes of the ``mVar`` variable.
+要获取有关可用命令的更详细描述，可以在 KDB shell 中使用 ``help`` 命令。在下一个示例中，你可以看到一个简单的 KDB 使用示例，它设置了一个硬件断点来监视 ``mVar`` 变量的更改。
 
 .. code-block:: bash
 
-  # trigger KDB
+  # 触发 KDB
   echo g > /proc/sysrq-trigger
-  # or if we are connected to the serial port issue
+  # 或者如果我们连接到串口，使用以下命令
   Ctrl-O g
-  # breakpoint on write access to the mVar variable
+  # 在对 mVar 变量进行写访问时设置断点
   kdb> bph mVar dataw
-  # return from KDB
+  # 从KDB返回
   kdb> go
 
 ..
   _[SECTION-DEBUG-MODULES-END]
 
-Exercises
-=========
+练习
+====
 
 .. _exercises_summary:
 
 .. include:: ../labs/exercises-summary.hrst
 .. |LAB_NAME| replace:: kernel_modules
 
-0. Intro
+0. 引言
 --------
 
-Using :command:`cscope` or |LXR|_ find the definitions of the following symbols
-in the Linux kernel source code:
+使用 :command:`cscope` 或 |LXR|_ 在 Linux 内核源代码中查找以下符号的定义：
 
-* :c:func:`module_init` and :c:func:`module_exit`
+* :c:func:`module_init` 和 :c:func:`module_exit`
 
-  - what do the two macros do? What is ``init_module`` and ``cleanup_module``?
+  - 这两个宏的作用是什么？ ``init_module`` 和 ``cleanup_module`` 是什么？
 
 * :c:data:`ignore_loglevel`
 
-  - What is this variable used for?
+  - 这个变量用于什么？
 
 .. warning::
-  If you have problems using :command:`cscope`, it is possible that the database
-  is not generated.  To generate it, use the following command in the kernel
-  directory:
+  如果使用 :command:`cscope` 时遇到问题，可能是数据库没有生成。要生成数据库，请在内核目录中使用以下命令：
 
   .. code-block:: bash
 
     make ARCH=x86 cscope
 
 .. note::
-  When searching for a structure using :command:`cscope`, use only the
-  structure name (without :code:`struct`).  So, to search for the
-  structure :c:type:`struct module`, you will use the command
+  在使用 :command:`cscope` 搜索结构时，只使用结构名（不包括 :code:`struct`）。所以，要搜索结构 :c:type:`struct module`，可以使用以下命令：
 
    .. code-block:: bash
 
      vim -t module
 
-  or, in :command:`vim`, the command
+  或者在 :command:`vim` 中使用命令：
 
    .. code-block:: bash
 
      :cs f g module
 
 .. note::
-  For more info on using :command:`cscope`, read the
-  :ref:`cscope section <cscope_intro>` in the previous lab.
+  有关使用 :command:`cscope` 的更多信息，请阅读上一个实验的 :ref:`cscope 章节 <cscope_intro>`。
 
 ..
   _[EXERCISE1-BEGIN]
 
-1. Kernel module
-----------------
+1. 内核模块
+-----------
 
-To work with the kernel modules, we will follow the steps described
-:ref:`above <exercises_summary>`.
+为了使用内核模块，我们将按照 :ref:`上述 <exercises-summary>` 步骤进行操作。
 
-Generate the skeleton for the task named **1-2-test-mod** then build and
-copy the module to the VM, by running the following commands in
-:file:`tools/labs`.
+首先在 `tools/labs` 目录下运行以下命令生成名为 **1-2-test-mod** 的任务骨架，然后构建并复制模块到虚拟机中。
 
 .. code-block:: bash
 
@@ -1006,30 +793,22 @@ copy the module to the VM, by running the following commands in
   $ make build
   $ make copy
 
-These commands will build and copy all the modules in the current
-lab skeleton.
+这些命令将构建并复制当前实验骨架中的所有模块。
 
 .. warning::
-  Until after solving exercise 3, you will get a compilation error for
-  ``3-error-mod``. To avoid this issue, remove the directory
-  :file:`skels/kernel_modules/3-error-mod/` and remove the corresponding
-  line from ``skels/Kbuild``.
+  在解决练习 3 之前，编译 ``3-error-mod`` 时会出现编译错误。为了避免此问题，删除 :file:`skels/kernel_modules/3-error-mod/` 目录，并从 ``skels/Kbuild`` 中删除相应的行。
 
-Start the VM using :command:`make boot`, connect to the serial console
-using `minicom -D serial.pts` and perform the following tasks:
+使用 :command:`make boot` 启动虚拟机，使用 `minicom -D serial.pts` 连接到串行控制台，并执行以下任务：
 
-* load the kernel module.
+* 加载内核模块。
 
-* list the kernel modules and check if current module is present
+* 列出内核模块并检查当前模块是否存在。
 
-* unload the kernel module
+* 卸载内核模块。
 
-* view the messages displayed at loading/unloading the kernel module using
-  :command:`dmesg` command
+* 使用 :command:`dmesg` 命令查看加载/卸载内核模块时显示的消息。
 
-.. note:: Read `Loading/unloading a kernel module`_ section. When unloading
-          a kernel module, you can specify only the module name
-          (without extension).
+.. note:: 请阅读 `加载/卸载内核模块`_ 部分。在卸载内核模块时，只需指定模块名称（不包括扩展名）。
 
 ..
   _[EXERCISE1-END]
@@ -1041,20 +820,13 @@ using `minicom -D serial.pts` and perform the following tasks:
 2. Printk
 ---------
 
-Watch the virtual machine console. Why were the messages displayed directly
-to the virtual machine console?
+观察虚拟机控制台。为什么消息直接显示在虚拟机控制台上？
 
-Configure the system such that the messages are not displayed directly
-on the serial console, and they can only be inspected using ``dmesg``.
+配置系统，使消息不直接显示在串行控制台上，只能使用 ``dmesg`` 命令来查看。
 
-.. hint:: One option is to set the console log level by writting
-          the desired level to ``/proc/sys/kernel/printk``.
-          Use a value smaller than the level used for the prints in
-          the source code of the module.
+.. hint:: 一种方法是通过将所需级别写入 ``/proc/sys/kernel/printk`` 来设置控制台日志级别。使用的值应小于模块源代码中用于打印消息的级别。
 
-Load/unload the module again.
-The messages should not be printed to the virtual machine console,
-but they should be visible when running ``dmesg``.
+重新加载/卸载该模块。消息不应该打印到虚拟机控制台上，但是在运行 ``dmesg`` 命令时应该可见。
 
 ..
   _[EXERCISE2-END]
@@ -1062,17 +834,14 @@ but they should be visible when running ``dmesg``.
 ..
   _[EXERCISE3-BEGIN]
 
-3. Error
+3. 错误
 --------
 
-Generate the skeleton for the task named **3-error-mod**. Compile the
-sources and get the corresponding kernel module.
+生成名为 **3-error-mod** 的任务的框架。编译源代码并得到相应的内核模块。
 
-Why have compilation
-errors occurred? **Hint:** How does this module differ from the previous module?
+为什么会出现编译错误？**提示：**这个模块与前一个模块有什么不同？
 
-Modify the module to solve the cause of those errors, then compile and test
-the module.
+修改该模块以解决这些错误的原因，然后编译和测试该模块。
 
 ..
   _[EXERCISE3-END]
@@ -1080,19 +849,16 @@ the module.
 ..
   _[EXERCISE4-BEGIN]
 
-4. Sub-modules
---------------
+4. 子模块
+---------
 
-Inspect the C source files ``mod1.c`` and ``mod2.c`` in :file:`4-multi-mod/`.
-Module 2 contains only the definition of a function used by module 1.
+查看 :file:`4-multi-mod/` 目录中的 C 源代码文件 ``mod1.c`` 和 ``mod2.c``。模块 2 仅包含模块 1 使用的函数的定义。
 
-Change the :file:`Kbuild` file to create the ``multi_mod.ko`` module from the
-two C source files.
+修改 :file:`Kbuild` 文件，从这两个 C 源文件创建 ``multi_mod.ko`` 模块。
 
-.. hint:: Read the `Compiling kernel modules`_ section of the lab.
+.. hint:: 阅读实验室中的 `编译内核模块`_ 部分。
 
-Compile, copy, boot the VM, load and unload the kernel module. Make sure messages
-are properly displayed on the console.
+编译、复制、启动虚拟机、加载和卸载内核模块。确保消息在控制台上正确显示。
 
 ..
   _[EXERCISE4-END]
@@ -1100,35 +866,22 @@ are properly displayed on the console.
 ..
   _[EXERCISE5-BEGIN]
 
-5. Kernel oops
+5. 内核 oops
 --------------
 
-Enter the directory for the task **5-oops-mod** and inspect the
-C source file. Notice where the problem will occur. Add the compilation flag
-``-g`` in the Kbuild file.
+进入任务目录 **5-oops-mod** 并检查 C 源代码文件。注意问题将在哪里发生。在 Kbuild 文件中添加编译标记 ``-g``。
 
-.. hint:: Read `Compiling kernel modules`_  section of the lab.
+.. hint:: 阅读实验中的 `编译内核模块`_ 部分。
 
-Compile the corresponding module and load it into the kernel. Identify the memory
-address at which the oops appeared.
+编译相应的模块并将其加载到内核中。识别 oops 出现的内存地址。
 
-.. hint:: Read `Debugging`_ section of the lab.  To identify the
-          address, follow the oops message and extract the value of
-          the instructions pointer (``EIP``) register.
+.. hint:: 阅读实验中的 `调试`_ 部分。要识别地址，请遵循 oops 消息并提取指令指针 (``EIP``) 寄存器的值。
 
-Determine which instruction has triggered the oops.
+确定是哪条指令触发了 oops。
 
-.. hint:: Use the :file:`proc/modules` information to get the load address of
-          the kernel module.  Use, on the physical machine, objdump
-          and/or addr2line . Objdump needs debugging support for
-          compilation!  Read the lab's `objdump`_ and `addr2line`_
-          sections.
+.. hint:: 使用 :file:`proc/modules` 信息获取内核模块的加载地址。在物理机上使用 objdump 和/或 addr2line。Objdump 需要编译时开启调试支持！请阅读实验中的 `objdump`_ 和 `addr2line`_ 部分。
 
-Try to unload the kernel module. Notice that the operation does not
-work because there are references from the kernel module within the
-kernel since the oops; Until the release of those references (which is
-almost impossible in the case of an oops), the module can not be
-unloaded.
+尝试卸载内核模块。请注意，该操作无法成功，因为自 oops 发生以来，内核模块内部仍然存在对内核的引用；在释放这些引用之前（在 oops 的情况下几乎不可能），模块无法卸载。
 
 ..
   _[EXERCISE5-END]
@@ -1136,20 +889,14 @@ unloaded.
 ..
   _[EXERCISE6-BEGIN]
 
-6. Module parameters
---------------------
+6. 模块参数
+-----------
 
-Enter the directory for the task **6-cmd-mod** and inspect the C
-``cmd_mod.c`` source file. Compile and copy the associated module and
-load the kernel module to see the printk message. Then unload the
-module from the kernel.
+进入任务目录 **6-cmd-mod** 并检查 C 源代码文件 ``cmd_mod.c``。编译并复制相关的模块，然后加载内核模块以查看 printk 消息。然后从内核中卸载该模块。
 
-Without modifying the sources, load the kernel module so that the
-message shown is ``Early bird gets tired``.
+在不修改源代码的情况下，加载内核模块以显示消息 ``Early bird gets tired``。
 
-.. hint:: The str variable can be changed by passing a parameter to
-          the module. Find more information `here
-          <http://tldp.org/LDP/lkmpg/2.6/html/x323.html>`_.
+.. hint:: 可以通过向模块传递参数来更改 str 变量。在 `这里 <http://tldp.org/LDP/lkmpg/2.6/html/x323.html>`_ 找到更多相关信息。
 
 .. _proc-info:
 
@@ -1159,41 +906,25 @@ message shown is ``Early bird gets tired``.
 ..
   _[EXERCISE7-BEGIN]
 
-7. Proc info
+7. 进程信息
 ------------
 
-Check the skeleton for the task named **7-list-proc**. Add code to
-display the Process ID (``PID``) and the executable name for the current
-process.
+检查名为 **7-list-proc** 的任务的框架。添加代码来显示当前进程的进程 ID（ ``PID`` ）和可执行文件名。
 
-Follow the commands marked with ``TODO``.
-The information must be displayed both when loading and unloading the
-module.
+按照标记为 ``TODO`` 的命令进行操作。在加载和卸载模块时，必须显示这些信息。
 
 .. note::
-          * In the Linux kernel, a process is described by the
-            :c:type:`struct task_struct`.  Use |LXR|_ or ``cscope`` to find the
-            definition of :c:type:`struct task_struct`.
+          * 在Linux内核中，进程由 :c:type:`struct task_struct` 描述。使用 |LXR|_ 或 ``cscope`` 来查找 :c:type:`struct task_struct` 的定义。
 
-          * To find the structure field that contains the name of the
-            executable, look for the "executable" comment.
+          * 要找到包含可执行文件名的结构字段，请查找“executable”的注释。
 
-          * The pointer to the structure of the current process
-            running at a given time in the kernel is given by the
-            :c:macro:`current` variable (of the type
-            :c:type:`struct task_struct*`).
+          * 内核中给定时间运行的当前进程的结构指针由 :c:macro:`current` 变量（类型为 :c:type:`struct task_struct*`）给出。
 
-.. hint:: To use :c:macro:`current` you'll need to include the header
-          in which the :c:type:`struct task_struct` is defined, i.e
-          ``linux/sched.h``.
+.. hint:: 要使用 :c:macro:`current`，你需要包含定义 :c:type:`struct task_struct` 的头文件，即 ``linux/sched.h``。
 
-Compile, copy, boot the VM and load the module. Unload the kernel module.
+编译、复制、启动虚拟机并加载模块。卸载内核模块。
 
-Repeat the loading/unloading operation. Note that the PIDs of the
-displayed processes differ. This is because a process is created
-from the executable :file:`/sbin/insmod` when the module is loaded and
-when the module is unloaded a process is created from the executable
-:file:`/sbin/rmmod`.
+重复加载/卸载操作。注意显示的进程 PID 是不同的。这是因为在加载模块时，从可执行文件 :file:`/sbin/insmod` 创建了一个进程，而在卸载模块时，从可执行文件 :file:`/sbin/rmmod` 创建了一个进程。
 
 ..
   _[EXERCISE7-END]
@@ -1204,145 +935,107 @@ when the module is unloaded a process is created from the executable
 Extra Exercises
 ===============
 
+额外练习
+=======
+
 1. KDB
 ------
 
-Go to the **8-kdb** directory. Activate KDB over the serial port and enter KDB
-mode using :command:`SysRq`. Connect to the pseudo-terminal linked to virtiocon0
-using :command:`minicom`, configure KDB to use the hvc0 serial port:
+进入 **8-kdb** 目录。使用 :command:`SysRq` 命令通过串口激活 KDB 并进入 KDB 模式。使用 :command:`minicom` 连接到与 virtiocon0 相链接的伪终端，配置 KDB 使用 hvc0 串口：
 
 .. code-block:: bash
 
     echo hvc0 > /sys/module/kgdboc/parameters/kgdboc
 
-and enable it using SysRq (:command:`Ctrl + O g`).
-Review the current system status (:command:`help` to see the available KDB
-commands). Continue the kernel execution using the :command:`go` command.
+然后使用 SysRq 命令启用 KDB (:command:`Ctrl + O g`)。查看当前系统状态（使用 :command:`help` 命令查看可用的 KDB 命令）。使用 :command:`go` 命令继续内核执行。
 
-Load the :file:`hello_kdb` module.
-The module will simulate a bug when writing to the :file:`/proc/hello_kdb_bug`
-file. To simulate a bug, use the below command:
+加载 :file:`hello_kdb` 模块。该模块在写入 :file:`/proc/hello_kdb_bug` 文件时会模拟一个错误。使用以下命令模拟错误：
 
 .. code-block:: bash
 
     echo 1 > /proc/hello_kdb_bug
 
-After running the above command, at every oops/panic the kernel stops the
-execution and enters debug mode.
+运行上述命令后，每次出现 oops/内核崩溃 时，内核会停止执行并进入调试模式。
 
-Analyze the stacktrace and determine the code that generated the bug.
-How can we find out from KDB the address where the module was loaded?
+分析堆栈跟踪并确定导致错误的代码。我们如何从 KDB 中找到模块加载的地址？
 
-In parallel, use GDB in a new window to view the code based on KDB information.
+同时，在一个新窗口中使用 GDB 并根据 KDB 提供的信息查看代码。
 
 .. hint::
-    Load the symbol file. Use :command:`info line`.
+    加载符号文件。使用 :command:`info line` 命令。
 
-When writing to :file:`/proc/hello_kdb_break`, the module will increment the
-:c:data:`kdb_write_address` variable. Enter KDB and set a breakpoint for each
-write access of the :c:data:`kdb_write_address` variable.
-Return to kernel to trigger a write using:
+当写入 :file:`/proc/hello_kdb_break` 时，模块将递增 :c:data:`kdb_write_address` 变量。进入 KDB 并设置每次对 :c:data:`kdb_write_address` 变量进行写入访问的断点。返回内核以触发写入，使用以下命令：
 
 .. code-block:: bash
 
     echo 1 > /proc/hello_kdb_break
 
-2. PS Module
-------------
+2. PS模块
+----------
 
-Update the created kernel module at :ref:`proc-info` in order to display
-information about all the processes in the system, when inserting the kernel
-module, not just about the current process. Afterwards, compare the obtained
-result with the output of the :command:`ps` command.
+更新在 :ref:`proc-info` 处创建的内核模块，以便在插入内核模块时显示有关系统中所有进程的信息，而不仅仅是当前进程的信息。然后，将获得的结果与 :command:`ps` 命令的输出进行比较。
 
 .. hint::
-    * Processes in the system are structured in a circular list.
+    * 系统中的进程以循环列表的形式组织。
 
-    * :c:macro:`for_each _...` macros (such as :c:macro:`for_each_process`) are
-      useful when you want to navigate the items in a list.
+    * :c:macro:`for_each_...` 宏（例如 :c:macro:`for_each_process`）在你希望遍历列表中的项目时非常有用。
 
-    * To understand how to use a feature or a macro, use |LXR|_ or Vim and
-      :command:`cscope` and search for usage scenarios.
+    * 要了解如何使用某个功能或宏，请使用 |LXR|_ 或 Vim 和 :command:`cscope` 进行搜索并查找使用场景。
 
-3. Memory Info
---------------
+3. 内存信息
+-----------
 
-Create a kernel module that displays the virtual memory areas of the current
-process; for each memory area it will display the start address and the end
-address.
+创建一个内核模块，显示当前进程的虚拟内存区域；对于每个内存区域，它将显示起始地址和结束地址。
 
 .. hint::
-    * Start from an existing kernel module.
+    * 从现有的内核模块开始。
 
-    * Investigate the structures :c:type:`struct task_struct`,
-      :c:type:`struct mm_struct` and :c:type:`struct vm_area_struct`. A
-      memory area is indicated by a structure of type :c:type:`struct
-      vm_area_struct`.
+    * 研究结构 :c:type:`struct task_struct`、:c:type:`struct mm_struct` 和 :c:type:`struct vm_area_struct`。内存区域由类型为 :c:type:`struct vm_area_struct` 的结构表示。
 
-    * Don't forget to include the headers where the necessary structures are
-      defined.
+    * 不要忘记包含定义必要结构的头文件。
 
-4. Dynamic Debugging
---------------------
+4. 动态调试
+----------
 
-Go to the **9-dyndbg** directory and compile the :code:`dyndbg.ko` module.
+进入 **9-dyndbg** 目录并编译 :code:`dyndbg.ko` 模块。
 
-Familiarize yourself with the :code:`debugfs` file system mounted in
-:file:`/debug` and analyze the contents of the file
-:file:`/debug/dynamic_debug/control`. Insert the :code:`dyndbg.ko` module and
-notice the new content of the :file:`dynamic_debug/control` file.
+熟悉挂载在 :file:`/debug` 中的 :code:`debugfs` 文件系统，并分析文件 :file:`/debug/dynamic_debug/control` 的内容。插入 :code:`dyndbg.ko` 模块并注意 :file:`dynamic_debug/control` 文件的新内容。
 
-What appears extra in the respective file? Run the following command:
+在相应的文件中出现了什么额外内容？运行以下命令：
 
 .. code-block:: bash
 
     grep dyndbg /debug/dynamic_debug/control
 
-Configure :command:`dyndbg` so that only messages marked as "Important" in
-:c:func:`my_debug_func` function are displayed when the module is unloaded.
-The exercise will only filter out the :c:func:`pr_debug` calls; :c:func:`printk`
-calls being always displayed.
+配置 :command:`dyndbg`，以便在卸载模块时仅显示来自 :c:func:`my_debug_func` 的标记为“Important”的消息，本练习仅过滤掉 :c:func:`pr_debug` 调用；始终显示 :c:func:`printk` 调用。
 
-Specify two ways to filter.
+请指定两种过滤方式。
 
 .. hint::
-    Read the `Dynamic debugging`_ section and look at the :command:`dyndbg`
-    options (for example, :command:`line`, :command:`format`).
+    阅读 `Dynamic debugging`_ 部分并查看 :command:`dyndbg` 的选项（例如 :command:`line` 、:command:`format`）。
 
-Perform the filtering and revise the :file:`dynamic_debug/control` file. What
-has changed? How do you know which calls are activated?
+执行过滤操作并检查 :file:`dynamic_debug/control` 文件。发生了什么变化？如何知道哪些调用被激活了？
 
 .. hint::
-    Check the :command:`dyndbg` flags. Unload the kernel module and observe the
-    log messages.
+    检查 :command:`dyndbg` 标志。卸载内核模块并观察日志消息。
 
-5. Dynamic Debugging During Initialization
-------------------------------------------
+5. 初始化期间的动态调试
+------------------------
 
-As you have noticed, :c:func:`pr_debug` calls can only be activated /filtered
-after module insertion. In some situations, it might be helpful to view the
-messages from the initialization of the module. This can be done by using a
-default (fake) parameter called :command:`dyndbg` that can be passed as an
-argument to initialize the module. With this parameter you can add /delete
-:command:`dyndbg` flags.
+正如你注意到的那样，只有在插入模块后才能激活/过滤 :c:func:`pr_debug` 调用。在某些情况下，查看模块初始化期间的消息可能会很有帮助。可以通过使用一个名为 :command:`dyndbg` 的默认（伪）参数作为初始化模块的参数来实现。使用此参数，你可以添加/删除 :command:`dyndbg` 标志。
 
 .. hint::
-    Read the last part of the `Dynamic debugging`_ section and see the available
-    flags (e.g.: :command:`+/- p`).
+    阅读 `Dynamic debugging`_ 部分的最后一部分，查看可用的标志（例如： :command:`+/- p`）。
 
-Read the `Debug Messages section at Module Initialization Time
-<https://01.org/linuxgraphics/gfx-docs/drm/admin-guide/dynamic-debug-howto.html#debug-messages-at-module-initialization-time>`_
-and insert the module so that the messages in :c:func:`my_debug_func` (called
-:c:func:`dyndbg_init`) are also displayed during initialization.
+阅读 `模块初始化时的调试消息部分 <https://01.org/linuxgraphics/gfx-docs/drm/admin-guide/dynamic-debug-howto.html#debug-messages-at-module-initialization-time>`_ ，并插入模块以便在初始化期间显示 :c:func:`my_debug_func`（即 :c:func:`dyndbg_init`）中的消息。
 
 .. warning::
-    In the VM from the lab, you will need to use :command:`insmod` instead of
-    :command:`modprobe`.
+    在实验的虚拟机中，你需要使用 :command:`insmod` 而不是 :command:`modprobe`。
 
-Without unloading the module, deactivate :c:func:`pr_debug` calls.
+在不卸载模块的情况下，停用 :c:func:`pr_debug` 调用。
 
 .. hint::
-    You can delete the set flags. Unload the kernel module.
+    你可以删除设置的标志。卸载内核模块。
 
 ..
   _[EXTRA-EXERCISE-END]
