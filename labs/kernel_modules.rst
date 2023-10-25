@@ -308,7 +308,7 @@
 
 接下来的一行是：
 
-   ```Oops: 0002 [# 1] PREEMPT DEBUG_PAGEALLOC``
+   ``Oops: 0002 [# 1] PREEMPT DEBUG_PAGEALLOC``
 
 告诉我们这是第一个 oops（#1）。在这个上下文中，这很重要，因为一个 oops 可能会导致其他 oops。通常只有第一个 oops 是相关的。此外，oops 代码（ ``0002`` ）提供了有关错误类型的信息（参见 :file:`arch/x86/include/asm/trap_pf.h` ）：
 
