@@ -1,0 +1,50 @@
+.. important::
+
+   要解决练习，你需要执行以下步骤：
+
+      * 用模板来准备骨架
+      * 构建模块
+      * 将模块复制到虚拟机
+      * 启动虚拟机并在虚拟机中测试模块。
+
+   当前实验名称为 |LAB_NAME|。请参阅任务名称的练习。
+
+   骨架代码是从位于 :file:`tools/labs/templates` 的完整源代码示例中生成的。要解决任务，首先要为所有实验生成骨架代码：
+
+   .. code-block:: shell
+
+      tools/labs $ make clean
+      tools/labs $ LABS=<lab name> make skels
+
+   你还可以使用以下命令为单个任务生成骨架代码：
+
+   .. code-block:: shell
+
+      tools/labs $ LABS=<lab name>/<task name> make skels
+
+   生成骨架驱动程序后，构建源代码：
+
+   .. code-block:: shell
+
+      tools/labs $ make build
+
+   然后，复制模块并启动虚拟机：
+
+   .. code-block:: shell
+
+      tools/labs $ make copy
+      tools/labs $ make boot
+
+   模块将放置在 /home/root/skels/|LAB_NAME|/<task_name> 目录中。
+
+   或者，我们可以通过 :command:`scp` 命令复制文件，以避免重新启动虚拟机。有关通过网络连接到虚拟机的详细信息，请参阅 :ref:`vm_interaction_link`。
+
+   请查看 `Exercises`_ 部分以获取更详细的信息。
+
+.. warning::
+
+   在开始练习或生成骨架之前，请在 Linux 仓库中运行 **git pull** 命令，以确保你拥有最新版本的练习。
+
+   如果你有本地更改，pull 命令将失败。使用 ``git status`` 检查本地更改。如果要保留更改，在 ``pull`` 之前运行 ``git stash``，之后运行 ``git stash pop``。要放弃更改，请运行 ``git reset --hard master``。
+
+   如果你在 ``git pull`` 之前已经生成了骨架，你需要再次生成骨架。
