@@ -492,7 +492,7 @@ Linux 采用了不同的线程实现方式。其基本单位被称为“任务�
    :level: 2
 
    .. code-block:: c
-      :emphasize-lines: 26-28,49
+      :emphasize-lines: 26-28,51
 
       #define switch_to(prev, next, last)               \
       do {                                              \
