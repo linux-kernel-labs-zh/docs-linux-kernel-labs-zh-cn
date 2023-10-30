@@ -48,4 +48,3 @@
    如果你有本地更改，pull 命令将失败。使用 ``git status`` 检查本地更改。如果要保留更改，在 ``pull`` 之前运行 ``git stash``，之后运行 ``git stash pop``。要放弃更改，请运行 ``git reset --hard master``。
 
    如果你在 ``git pull`` 之前已经生成了骨架，你需要再次生成骨架。
-   
