@@ -1,6 +1,6 @@
-=========
-Processes
-=========
+====
+进程
+====
 
 `View slides <processes-slides.html>`_
 
@@ -8,58 +8,51 @@ Processes
    :autoslides: False
    :theme: single-level
 
-Lecture objectives
-==================
+课程目标
+========
 
-.. slide:: Processes and threads
+.. slide:: 进程和线程
    :inline-contents: True
    :level: 2
 
-   * Process and threads
+   * 进程和线程
 
-   * Context switching
+   * 上下文切换
 
-   * Blocking and waking up
+   * 阻塞和唤醒
 
-   * Process context
+   * 进程上下文
 
+进程和线程
+==========
 
+进程是操作系统的抽象概念，用于组织多个资源：
 
-Processes and threads
-=====================
-
-A process is an operating system abstraction that groups together
-multiple resources:
-
-.. slide:: What is a process?
+.. slide:: 什么是进程？
    :inline-contents: True
    :level: 2
 
    .. hlist::
       :columns: 2
 
-      * An address space
-      * One or more threads
-      * Opened files
-      * Sockets
-      * Semaphores
-      * Shared memory regions
-      * Timers
-      * Signal handlers
-      * Many other resources and status information
+      * 地址空间
+      * 一个或多个线程
+      * 打开的文件
+      * 套接字（Socket）
+      * 信号量（semaphore）
+      * 共享内存区域
+      * 定时器
+      * 信号处理程序
+      * 许多其他资源和状态信息
 
-   All this information is grouped in the Process Control Group
-   (PCB). In Linux this is :c:type:`struct task_struct`.
+   所有这些信息都被组织在进程控制块（PCB）中。在 Linux 中，PCB 对应的结构体是 :c:type:`struct task_struct`。
 
+进程资源概述
+------------
 
-Overview of process resources
------------------------------
+我们可以在 `/proc/<pid>` 目录中获取关于进程资源的摘要信息，其中 `<pid>` 是我们要查看的进程的进程 ID。
 
-A summary of the resources a process has can be obtain from the
-`/proc/<pid>` directory, where `<pid>` is the process id for the
-process we want to look at.
-
-.. slide:: Overview of process resources
+.. slide:: 进程资源概述
    :inline-contents: True
    :level: 2
 
@@ -100,10 +93,7 @@ process we want to look at.
 :c:type:`struct task_struct`
 ----------------------------
 
-Lets take a close look at :c:type:`struct task_struct`. For that we
-could just look at the source code, but here we will use a tool called
-`pahole` (part of the dwarves install package) in order to get
-some insights about this structure:
+让我们仔细分析 :c:type:`struct task_struct`。为此，我们可以查看源代码，但在这里我们将使用一个名为 `pahole` 的工具（它是 dwarves 安装包的一部分），来获取有关这个结构的一些见解：
 
 
 .. slide:: struct task_struct
@@ -131,19 +121,12 @@ some insights about this structure:
           /* forced alignments: 6, forced holes: 2, sum forced holes: 12 */
       } __attribute__((__aligned__(64)));
 
+可以看出，这是一个相当大的数据结构：大小接近 8KB，具有 155 个字段（field）。
 
-As you can see it is a pretty large data structure: almost 8KB in size
-and 155 fields.
+检查 task_struct
+----------------
 
-
-Inspecting task_struct
-----------------------
-
-The following screencast is going to demonstrate how we can inspect
-the process control block (:c:type:`struct task_struct`) by connecting
-the debugger to the running virtual machine. We are going to use a
-helper gdb command `lx-ps` to list the processes and the address of
-the task_struct for each process.
+以下屏幕录像（screencast）将演示如何通过连接调试器到正在运行的虚拟机来检查进程控制块（:c:type:`struct task_struct`）。我们将使用辅助的 gdb 命令 `lx-ps` 来列出进程以及每个进程的 task_struct 地址。
 
 .. slide:: Inspecting task_struct
    :inline-contents: True
@@ -154,52 +137,43 @@ the task_struct for each process.
    .. asciicast:: ../res/inspect_task_struct.cast
 
 
-Quiz: Inspect a task to determine opened files
-----------------------------------------------
+测验：查看任务以确定打开的文件
+----------------------------
 
-.. slide:: Quiz: Inspect opened files
+.. slide:: 测验：查看打开的文件
    :inline-contents: True
    :level: 2
 
-   Use the debugger to inspect the process named syslogd.
+   使用调试器来检查名为 syslogd 的进程。
 
-   * What command should we use to list the opened file descriptors?
+   * 我们应该使用什么命令列出已打开的文件描述符？
 
-   * How many file descriptors are opened?
+   * 有多少个文件描述符已打开？
 
-   * What command should we use the determine the file name for opened file descriptor 3?
+   * 我们应该使用什么命令来确定打开文件描述符 3 的文件名？
 
-   * What is the filename for file descriptor 3?
+   * 文件描述符 3 的文件名是什么？
 
 
-Threads
--------
+线程
+----
 
-A thread is the basic unit that the kernel process scheduler uses to
-allow applications to run the CPU. A thread has the following
-characteristics:
+线程是内核进程调度器允许应用程序在 CPU 上运行的基本单位。线程具有以下特点：
 
-.. slide:: Threads
+.. slide:: 线程
    :inline-contents: True
    :level: 2
 
-   * Each thread has its own stack and together with the register
-     values it determines the thread execution state
+   * 每个线程都拥有独立的堆栈，这个堆栈与线程的寄存器的值共同决定了线程的运行状态
 
-   * A thread runs in the context of a process and all threads in the
-     same process share the resources
+   * 线程在进程的上下文中运行，同一进程中的所有线程共享资源
 
-   * The kernel schedules threads not processes and user-level threads
-     (e.g. fibers, coroutines, etc.) are not visible at the kernel level
+   * 内核调度的是线程而不是进程，用户级线程（例如纤程（fiber）、协程（coroutine）等）在内核级别不可见
 
 
-The typical thread implementation is one where the threads is
-implemented as a separate data structure which is then linked to the
-process data structure. For example, the Windows kernel uses such an
-implementation:
+典型的线程实现是将线程实现为单独的数据结构，然后将其链接到进程数据结构。例如，Windows 内核就使用了这样的实现方式：
 
-
-.. slide:: Classic implementation (Windows)
+.. slide:: 典型实现方式（Windows）
    :inline-contents: True
    :level: 2
 
@@ -238,17 +212,12 @@ implementation:
       +---------------------------------------+------------------------------------+
 
 
-Linux uses a different implementation for threads. The basic unit is
-called a task (hence the :c:type:`struct task_struct`) and it is used
-for both tasks and processes. Instead of embedding resources in the
-task structure it has pointers to these resources.
+Linux 采用了不同的线程实现方式。其基本单位被称为“任务”（task）（因此其结构类型名为 :c:type:`struct task_struct` ），它既可以用于任务也可以用于进程。与将资源直接嵌入到任务结构体中的典型实现不同，它包含了指向这些资源的指针。
 
-Thus, if two threads are the same process will point to the same
-resource structure instance. If two threads are in different processes
-they will point to different resource structure instances.
+因此，如果两个线程属于同一个进程，它们将指向相同的资源结构体实例。如果两个线程属于不同进程，它们将指向不同的资源结构体实例。
 
 
-.. slide:: Linux implementation
+.. slide:: Linux 实现
    :inline-contents: True
    :level: 2
 
@@ -274,121 +243,83 @@ they will point to different resource structure instances.
                                          +-------------------+
 
 
-The clone system call
----------------------
+克隆系统调用
+-----------
 
-In Linux a new thread or process is create with the :c:func:`clone`
-system call. Both the :c:func:`fork` system call and the
-:c:func:`pthread_create` function uses the :c:func:`clone`
-implementation.
+在 Linux 中，使用 :c:func:`clone` 系统调用可以创建新的线程或进程。无论是 :c:func:`fork` 系统调用，还是 :c:func:`pthread_create` 函数都使用了 :c:func:`clone` 系统调用来实现。
 
-It allows the caller to decide what resources should be shared with
-the parent and which should be copied or isolated:
+它允许调用者决定与父进程共享哪些资源，以及哪些资源应该被复制或隔离：
 
-.. slide:: The clone system call
+.. slide:: 克隆系统调用
    :inline-contents: True
    :level: 2
 
-   * CLONE_FILES - shares the file descriptor table with the parent
+   * CLONE_FILES——与父进程共享文件描述符表
 
-   * CLONE_VM - shares the address space with the parent
+   * CLONE_VM——与父进程共享地址空间
 
-   * CLONE_FS - shares the filesystem information (root directory,
-     current directory) with the parent
+   * CLONE_FS——与父进程共享文件系统信息（根目录，当前目录）
 
-   * CLONE_NEWNS - does not share the mount namespace with the parent
+   * CLONE_NEWNS——不与父进程共享挂载命名空间（mount namespace）
 
-   * CLONE_NEWIPC - does not share the IPC namespace (System V IPC
-     objects, POSIX message queues) with the parent
+   * CLONE_NEWIPC——不与父进程共享 IPC 命名空间（System V IPC 对象，POSIX 消息队列）
 
-   * CLONE_NEWNET - does not share the networking namespaces (network
-     interfaces, routing table) with the parent
+   * CLONE_NEWNET——不与父进程共享网络命名空间（网络接口，路由表）
 
 
-For example, if `CLONE_FILES | CLONE_VM | CLONE_FS` is used by the
-caller than effectively a new thread is created. If these flags are
-not used than a new process is created.
+例如，如果调用者使用了 `CLONE_FILES | CLONE_VM | CLONE_FS`，则实际上创建了一个新的线程。如果未使用这些标志，则创建了一个新的进程。
 
-Namespaces and "containers"
----------------------------
+命名空间和“容器”
+---------------
 
-"Containers" are a form of lightweight virtual machines that share the
-same kernel instance, as opposed to normal virtualization where a
-hypervisor runs multiple VMs, each with its one kernel
-instance.
+“容器”是一种轻量级虚拟机，它们共享相同的内核实例。这与正常的虚拟化相反，在正常的虚拟化中，一个虚拟机监视程序（hypervisor）运行多个虚拟机，每个虚拟机都有自己的内核实例。
 
-Examples of container technologies are LXC - that allows running
-lightweight "VM" and docker - a specialized container for running a
-single application.
+容器技术的例子包括 LXC（允许运行轻量级的“虚拟机”）和 Docker（一种专门用于运行单个应用程序的容器）。
 
-Containers are built on top of a few kernel features, one of which is
-namespaces. They allow isolation of different resources that would
-otherwise be globally visible. For example, without containers, all
-processes would be visible in /proc. With containers, processes in one
-container will not be visible (in /proc or be killable) to other
-containers.
+容器是建立在一些内核特性之上的，其中之一就是命名空间（namespace）。内核空间技术允许隔离不同的资源，如果不隔离的话这些资源将在全局可见。例如，如果没有容器，所有进程都将在 /proc 中可见。有了容器后，一个容器中的进程对其他容器来说是不可见的（在 /proc 中不可见，也不能被终止）。
 
-To achieve this partitioning, the :c:type:`struct nsproxy` structure
-is used to group types of resources that we want to partition. It
-currently supports IPC, networking, cgroup, mount, networking, PID,
-time namespaces. For example, instead of having a global list for
-networking interfaces, the list is part of a :c:type:`struct net`. The
-system initializes with a default namespace (:c:data:`init_net`) and by
-default all processes will share this namespace. When a new namespace
-is created a new net namespace is created and then new processes can
-point to that new namespace instead of the default one.
+为了实现这种分区，容器技术使用了 :c:type:`struct nsproxy` 结构来分组我们想要分区的资源类型。它目前支持 IPC、网络、cgroup、挂载、PID、时间命名空间。例如，我们不再使用全局的网络接口列表，而是选择将网络接口列表作为 :c:type:`struct net` 结构的一部分。在系统初始化时，会创建一个默认的命名空间，名为 :c:data:`init_net`。默认情况下，所有的进程都会共享这个命名空间。但是，当我们创建一个新的命名空间时，系统会相应地创建一个新的网络命名空间。这样，新的进程就可以选择指向这个新创建的命名空间，而不是默认的命名空间。
 
 
-.. slide:: Namespaces and "containers"
+.. slide:: 命名空间和“容器”
    :inline-contents: False
    :level: 2
 
-   * Containers = a form of lightweight virtual machines
+   * 容器是轻量级虚拟机的一种形式
 
-   * Container based technologies: LXC, docker
+   * 基于容器的技术：LXC、Docker
 
-   * Containers are built of top of kernel namespaces
+   * 容器是建立在内核命名空间之上的
 
-   * Kernel namespaces allows isolation of otherwise globally visible
-     resources
+   * 内核命名空间允许隔离资源，如果不隔离资源的话，这些资源会在全局可见
 
-   * :c:type:`struct nsproxy` has multiple namespaces each of which
-     can be selectively shared between groups of processes
+   * :c:type:`struct nsproxy` 具有多个命名空间，每个命名空间可以在进程组之间选择性地共享
 
-   * At boot initial namespaces are created (e.g. :c:data:`init_net`)
-     that are by default shared between new processes (e.g. list of
-     available network interfaces)
+   * 在启动时初始命名空间会被创建（例如： c::data:`init_net`）。默认情况下，新进程之间共享这些命名空间（例如：可用网络接口的列表）
 
-   * New namespace can be created a runtime and new processes can
-     point to these new namespaces
+   * 可以在运行时创建新的命名空间，并且新进程可以指向这些新的命名空间
 
 
-Accessing the current process
------------------------------
+访问当前进程
+-----------
 
-.. slide:: Accessing the current process
+.. slide:: 访问当前进程
    :inline-contents: True
    :level: 2
 
-   Accessing the current process is a frequent operation:
+   访问当前进程是一个频繁的操作：
 
-   * opening a file needs access to :c:type:`struct task_struct`'s
-     file field
+   * 打开文件需要访问 :c:type:`struct task_struct` 的 file 字段
 
-   * mapping a new file needs access to :c:type:`struct task_struct`'s
-     mm field
+   * 映射新文件需要访问 :c:type:`struct task_struct` 的 mm 字段
 
-   * Over 90% of the system calls needs to access the current process
-     structure so it needs to be fast
+   * 超过 90% 的系统调用需要访问当前进程结构体，因此访问需要很快
 
-   * The :c:macro:`current` macro is available to access to current
-     process's :c:type:`struct task_struct`
+   * :c:macro:`current` 宏可用于访问当前进程的 :c:type:`struct task_struct`
 
-In order to support fast access in multi processor configurations a
-per CPU variable is used to store and retrieve the pointer to the
-current :c:type:`struct task_struct`:
+为了在多处理器配置中实现快速访问，每个 CPU 中都有一个共同的变量，这个变量可用来存储和检索指向当前 :c:type:`struct task_struct` 的指针：
 
-.. slide:: Accessing the current process on x86
+.. slide:: 在 x86 上访问当前进程
    :inline-contents: True
    :level: 2
 
@@ -415,19 +346,18 @@ current :c:type:`struct task_struct`:
          +-----------------------+
 
 
-Previously the following sequence was used as the implementation for
-the :c:macro:`current` macro:
+以前，:c:macro:`current` 宏使用以下序列实现：
 
-.. slide:: Previous implementation for current (x86)
+.. slide:: current 宏的先前实现（x86）
    :inline-contents: True
    :level: 2
 
    .. code-block:: c
 
-      /* how to get the current stack pointer from C */
+      /* 如何用 C 语言获取当前堆栈指针 */
       register unsigned long current_stack_pointer asm("esp") __attribute_used__;
 
-      /* how to get the thread information struct from C */
+      /* 如何用 C 语言获取线程信息结构体 */
       static inline struct thread_info *current_thread_info(void)
       {
          return (struct thread_info *)(current_stack_pointer & ~(THREAD_SIZE – 1));
@@ -436,27 +366,25 @@ the :c:macro:`current` macro:
       #define current current_thread_info()->task
 
 
-Quiz: previous implementation for current (x86)
------------------------------------------------
+测验：current 宏的先前实现（x86）
+--------------------------------
 
-.. slide:: Quiz: previous implementation for current (x86)
+.. slide:: Quiz: current 宏的先前实现（x86）
    :inline-contents: True
    :level: 2
 
-   What is the size of :c:type:`struct thread_info`?
+   结构体 :c:type:`struct thread_info` 的大小是多少？
 
-   Which of the following are potential valid sizes for
-   :c:type:`struct thread_info`: 4095, 4096, 4097?
-
+   下列哪个是可能的有效大小：4095、4096、4097？
 
 
-Context switching
-=================
 
-The following diagram shows an overview of the Linux kernel context
-switch process:
+上下文切换
+==========
 
-.. slide:: Overview the context switching processes
+以下图表展示了 Linux 内核上下文切换过程的概述：
+
+.. slide:: 上下文切换过程概述
    :inline-contents: True
    :level: 2
 
@@ -491,16 +419,9 @@ switch process:
                                                                                           V
 
 
-Note that before a context switch can occur we must do a kernel
-transition, either with a system call or with an interrupt. At that
-point the user space registers are saved on the kernel stack. At some
-point the :c:func:`schedule` function will be called which can decide
-that a context switch must occur from T0 to T1 (e.g. because the
-current thread is blocking waiting for an I/O operation to complete or
-because it's allocated time slice has expired).
+请注意，在发生上下文切换之前，我们必须进行内核转换，这可以通过系统调用或中断来实现。此时，用户空间的寄存器会保存在内核堆栈上。在某个时刻，可能会调用 :c:func:`schedule` 函数，该函数决定从线程 T0 切换到线程 T1（例如，因为当前线程正在阻塞等待 I/O 操作完成，或者因为它的时间片已经耗尽）。
 
-At that point :c:func:`context_switch` will perform architecture
-specific operations and will switch the address space if needed:
+此时，:c:func:`context_switch` 函数将执行特定于体系结构的操作，并在需要时切换地址空间：
 
 
 .. slide:: context_switch
@@ -516,9 +437,8 @@ specific operations and will switch the address space if needed:
           prepare_task_switch(rq, prev, next);
 
           /*
-           * For paravirt, this is coupled with an exit in switch_to to
-           * combine the page table reload and the switch backend into
-           * one hypercall.
+           * paravirt 中，这与 switch_to 中的 exit 配对，
+           * 将页表重载和后端切换合并为一个超级调用（hypercall）。
            */
           arch_start_context_switch(prev);
 
@@ -529,28 +449,25 @@ specific operations and will switch the address space if needed:
            * kernel ->   user   switch + mmdrop() active
            *   user ->   user   switch
            */
-          if (!next->mm) {                                // to kernel
+          if (!next->mm) {                                // 到内核
               enter_lazy_tlb(prev->active_mm, next);
 
               next->active_mm = prev->active_mm;
-              if (prev->mm)                           // from user
+              if (prev->mm)                           // 来自用户
                   mmgrab(prev->active_mm);
               else
                   prev->active_mm = NULL;
-          } else {                                        // to user
+          } else {                                        // 到用户
               membarrier_switch_mm(rq, prev->active_mm, next->mm);
               /*
-               * sys_membarrier() requires an smp_mb() between setting
-               * rq->curr / membarrier_switch_mm() and returning to userspace.
+               * sys_membarrier() 在设置 rq->curr / membarrier_switch_mm() 和返回用户空间之间需要一个 smp_mb()。
                *
-               * The below provides this either through switch_mm(), or in
-               * case 'prev->active_mm == next->mm' through
-               * finish_task_switch()'s mmdrop().
+               * 下面通过 switch_mm() 或者在 'prev->active_mm == next->mm' 的情况下通过 finish_task_switch() 的 mmdrop() 来提供这个功能。
                */
               switch_mm_irqs_off(prev->active_mm, next->mm, next);
 
-              if (!prev->mm) {                        // from kernel
-                  /* will mmdrop() in finish_task_switch(). */
+              if (!prev->mm) {                        // 来自内核
+                  /* 在 finish_task_switch() 中进行 mmdrop()。 */
                   rq->prev_mm = prev->active_mm;
                   prev->active_mm = NULL;
               }
@@ -560,7 +477,7 @@ specific operations and will switch the address space if needed:
 
           prepare_lock_switch(rq, next, rf);
 
-          /* Here we just switch the register state and the stack. */
+          /* 在这里我们只切换寄存器状态和堆栈。 */
           switch_to(prev, next, prev);
           barrier();
 
@@ -568,10 +485,7 @@ specific operations and will switch the address space if needed:
         }
 
 
-Then it will call the architecture specific :c:macro:`switch_to`
-implementation to switch the registers state and kernel stack. Note
-that registers are saved on stack and that the stack pointer is saved
-in the task structure:
+它将调用特定于架构的 :c:macro:`switch_to` 宏实现来切换寄存器状态和内核堆栈。请注意，寄存器被保存在堆栈上，并且堆栈指针被保存在任务结构体中：
 
 .. slide:: switch_to
    :inline-contents: True
@@ -593,21 +507,19 @@ in the task structure:
       .pushsection .text, "ax"
       SYM_CODE_START(__switch_to_asm)
           /*
-           * Save callee-saved registers
-           * This must match the order in struct inactive_task_frame
+           * 保存被调用者保存的寄存器
+           * 其必须与 struct inactive_task_frame 中的顺序匹配
            */
           pushl   %ebp
           pushl   %ebx
           pushl   %edi
           pushl   %esi
           /*
-           * Flags are saved to prevent AC leakage. This could go
-           * away if objtool would have 32bit support to verify
-           * the STAC/CLAC correctness.
+           * 保存标志位以防止 AC 泄漏。如果 objtool 支持 32 位，则可以消除此项需求，以验证 STAC/CLAC 的正确性。
            */
           pushfl
 
-          /* switch stack */
+          /* 切换堆栈 */
           movl    %esp, TASK_threadsp(%eax)
           movl    TASK_threadsp(%edx), %esp
 
@@ -618,18 +530,15 @@ in the task structure:
 
         #ifdef CONFIG_RETPOLINE
           /*
-           * When switching from a shallower to a deeper call stack
-           * the RSB may either underflow or use entries populated
-           * with userspace addresses. On CPUs where those concerns
-           * exist, overwrite the RSB with entries which capture
-           * speculative execution to prevent attack.
+           * 当从较浅的调用堆栈切换到较深的堆栈时，RSB 可能会下溢或使用填充有用户空间地址的条目。
+           * 在存在这些问题的 CPU 上，用捕获推测执行的条目覆盖 RSB，以防止攻击。
            */
           FILL_RETURN_BUFFER %ebx, RSB_CLEAR_LOOPS, X86_FEATURE_RSB_CTXSW
           #endif
 
-          /* Restore flags or the incoming task to restore AC state. */
+          /* 恢复任务的标志位以恢复 AC 状态。 */
           popfl
-          /* restore callee-saved registers */
+          /* 恢复被调用者保存的寄存器 */
           popl    %esi
           popl    %edi
           popl    %ebx
@@ -640,23 +549,18 @@ in the task structure:
         .popsection
 
 
-You can notice that the instruction pointer is not explicitly
-saved. It is not needed because:
+可以注意到指令指针并没有显式保存。这是因为：
 
-  * a task will always resume in this function
+  * 任务将始终在此函数中恢复执行
 
-  * the :c:func:`schedule` (:c:func:`context_switch` is always
-    inlined) caller's return address is saved on the kernel stack
+  * :c:func:`schedule`（:c:func:`context_switch` 总是被内联）调用者的返回地址保存在内核堆栈上
 
-  * a jmp is used to execute :c:func:`__switch_to` which is a function
-    and when it returns it will pop the original (next task) return
-    address from the stack
+  * 使用 jmp 执行 :c:func:`__switch_to`，它是一个函数，当函数返回时，它将从堆栈中弹出原始的（下一个任务的）返回地址
 
 
-The following screencast uses the debugger to setup a breaking in
-__switch_to_asm and examine the stack during the context switch:
+以下屏幕录像使用调试器在 __switch_to_asm 中设置断点，并在上下文切换期间检查堆栈：
 
-.. slide:: Inspecting task_struct
+.. slide:: 检查 task_struct
    :inline-contents: True
    :level: 2
 
@@ -665,38 +569,37 @@ __switch_to_asm and examine the stack during the context switch:
    .. asciicast:: ../res/context_switch.cast
 
 
-Quiz: context switch
---------------------
+测验：上下文切换
+---------------
 
-.. slide:: Quiz: context switch
+.. slide:: 测验：上下文切换
    :inline-contents: True
    :level: 2
 
-   We are executing a context switch. Select all of the statements that are true.
+   假设我们正在执行上下文切换，请选择所有正确的陈述。
 
-   * the ESP register is saved in the task structure
+   * ESP 寄存器被保存在 task 结构中
 
-   * the EIP register is saved in the task structure
+   * EIP 寄存器被保存在 task 结构中
 
-   * general registers are saved in the task structure
+   * 通用寄存器被保存在 task 结构中
 
-   * the ESP register is saved on the stack
+   * ESP 寄存器被保存在堆栈中
 
-   * the EIP register is saved on the stack
+   * EIP 寄存器被保存在堆栈中
 
-   * general registers are saved on the stack
+   * 通用寄存器被保存在堆栈中
 
 
-Blocking and waking up tasks
-============================
+阻塞和唤醒任务
+=============
 
-Task states
------------
+任务状态
+--------
 
-The following diagram shows to the task (threads) states and the
-possible transitions between them:
+以下图表显示了任务（线程）的状态及其之间可能的转换：
 
-.. slide:: Task states
+.. slide:: 任务状态
    :inline-contents: True
    :level: 2
 
@@ -712,8 +615,6 @@ possible transitions between them:
                    |            |               |              |--------+        | TASK_ZOMBIE |
                    +------------+               +--------------+        |        |             |
                      ^                                                  |        +-------------+
-                     |                                                  |
-                     |                                                  |
                      |                                                  |
                      |  signal   +----------------------+               |
                      +-----------|                      |               |
@@ -731,37 +632,28 @@ possible transitions between them:
                                  +----------------------+
 
 
-Blocking the current thread
----------------------------
+阻塞当前线程
+------------
 
-Blocking the current thread is an important operation we need to
-perform to implement efficient task scheduling - we want to run other
-threads while I/O operations complete.
+阻塞当前线程是一项重要的操作，我们需要执行它来实现高效的任务调度——我们希望在 I/O 操作完成时运行其他线程。
 
-In order to accomplish this the following operations take place:
+为了实现这一目标，需要执行以下操作：
 
-.. slide:: Blocking the current thread
+.. slide:: 阻塞当前线程
    :inline-contents: True
    :level: 2
 
-   * Set the current thread state to TASK_UINTERRUPTIBLE or
-     TASK_INTERRUPTIBLE
+   * 将当前线程状态设置为 TASK_UINTERRUPTIBLE 或 TASK_INTERRUPTIBLE
 
-   * Add the task to a waiting queue
+   * 将任务添加到等待队列中
 
-   * Call the scheduler which will pick up a new task from the READY
-     queue
+   * 调用调度程序，从 READY 队列中选择一个新任务
 
-   * Do the context switch to the new task
+   * 进行上下文切换到新任务
 
-Below are some snippets for the :c:macro:`wait_event`
-implementation. Note that the waiting queue is a list with some extra
-information like a pointer to the task struct.
+以下是对 :c:macro:`wait_event` 的实现的一些代码片段。请注意，等待队列是一个带有额外信息（如指向任务结构体的指针）的列表。
 
-Also note that a lot of effort is put into making sure no deadlock can
-occur between :c:macro:`wait_event` and :c:macro:`wake_up`: the task
-is added to the list before checking :c:data:`condition`, signals are
-checked before calling :c:func:`schedule`.
+还请注意，为了确保在 :c:macro:`wait_event` 和 :c:macro:`wake_up` 之间不会发生死锁，任务会在检查 :c:data:`condition` 之前被添加到列表中，并且调用 :c:func:`schedule` 之前会进行信号（signal）检查。
 
 .. slide:: wait_event
    :inline-contents: True
@@ -770,16 +662,14 @@ checked before calling :c:func:`schedule`.
    .. code-block:: c
 
       /**
-       * wait_event - sleep until a condition gets true
-       * @wq_head: the waitqueue to wait on
-       * @condition: a C expression for the event to wait for
+       * wait_event——在条件为真之前一直保持睡眠状态
+       * @wq_head: 等待队列
+       * @condition: 用于等待的事件的 C 表达式
        *
-       * The process is put to sleep (TASK_UNINTERRUPTIBLE) until the
-       * @condition evaluates to true. The @condition is checked each time
-       * the waitqueue @wq_head is woken up.
+       * 进程会进入睡眠状态（TASK_UNINTERRUPTIBLE），直到 @condition 为真为止。
+       * 每次唤醒等待队列 @wq_head 时，都会检查 @condition。
        *
-       * wake_up() has to be called after changing any variable that could
-       * change the result of the wait condition.
+       * 在更改任何可能改变等待条件结果的变量后，必须调用 wake_up()。
        */
       #define wait_event(wq_head, condition)            \
       do {                                              \
@@ -794,21 +684,18 @@ checked before calling :c:func:`schedule`.
                               schedule())
 
       /*
-       * The below macro ___wait_event() has an explicit shadow of the __ret
-       * variable when used from the wait_event_*() macros.
+       * 下面的宏 ___wait_event() 在 wait_event_*() 宏中使用时，有一个显式的 __ret
+       * 变量的影子。
        *
-       * This is so that both can use the ___wait_cond_timeout() construct
-       * to wrap the condition.
+       * 这是为了两者都可以使用 ___wait_cond_timeout() 结构来包装条件。
        *
-       * The type inconsistency of the wait_event_*() __ret variable is also
-       * on purpose; we use long where we can return timeout values and int
-       * otherwise.
+       * wait_event_*() 中 __ret 变量的类型不一致也是有意而为的；我们在可以返回超时值的情况下使用 long，否则使用 int。
        */
       #define ___wait_event(wq_head, condition, state, exclusive, ret, cmd)    \
       ({                                                                       \
           __label__ __out;                                                     \
           struct wait_queue_entry __wq_entry;                                  \
-          long __ret = ret;       /* explicit shadow */                        \
+          long __ret = ret;       /* 显式影子变量 */                        \
                                                                                \
           init_wait_entry(&__wq_entry, exclusive ? WQ_FLAG_EXCLUSIVE : 0);     \
           for (;;) {                                                           \
@@ -843,18 +730,14 @@ checked before calling :c:func:`schedule`.
 
            spin_lock_irqsave(&wq_head->lock, flags);
            if (signal_pending_state(state, current)) {
-               /*
-                * Exclusive waiter must not fail if it was selected by wakeup,
-                * it should "consume" the condition we were waiting for.
-                *
-                * The caller will recheck the condition and return success if
-                * we were already woken up, we can not miss the event because
-                * wakeup locks/unlocks the same wq_head->lock.
-                *
-                * But we need to ensure that set-condition + wakeup after that
-                * can't see us, it should wake up another exclusive waiter if
-                * we fail.
-                */
+            /* 
+            * 如果被唤醒选择的是独占等待者，那么它不能失败，
+            * 它应该“消耗”我们等待的条件。
+            *
+            * 调用者将重新检查条件，并在我们已被唤醒时返回成功，我们不能错过事件，因为唤醒会锁定/解锁相同的 wq_head->lock。
+            *
+            * 但是我们需要确保在设置条件后+之后的唤醒看不到我们，如果我们失败的话，它应该唤醒另一个独占等待者。
+            */
                list_del_init(&wq_entry->entry);
                ret = -ERESTARTSYS;
            } else {
@@ -881,61 +764,47 @@ checked before calling :c:func:`schedule`.
            list_add_tail(&wq_entry->entry, &wq_head->head);
        }
 
-       /**
-        * finish_wait - clean up after waiting in a queue
-	* @wq_head: waitqueue waited on
-	* @wq_entry: wait descriptor
-	*
-	* Sets current thread back to running state and removes
-	* the wait descriptor from the given waitqueue if still
-	* queued.
-	*/
-       void finish_wait(struct wait_queue_head *wq_head, struct wait_queue_entry *wq_entry)
-       {
-           unsigned long flags;
+      /**
+      * finish_wait - 在队列中等待后进行清理
+      * @wq_head: 等待的等待队列头
+      * @wq_entry: 等待描述符
+      *
+      * 将当前线程设置回运行状态，并从给定的等待队列中移除等待描述符（如果仍在队列中）。
+      */
+      void finish_wait(struct wait_queue_head *wq_head, struct wait_queue_entry *wq_entry)
+      {
+         unsigned long flags;
 
-           __set_current_state(TASK_RUNNING);
-           /*
-            * We can check for list emptiness outside the lock
-            * IFF:
-            *  - we use the "careful" check that verifies both
-            *    the next and prev pointers, so that there cannot
-            *    be any half-pending updates in progress on other
-            *    CPU's that we haven't seen yet (and that might
-            *    still change the stack area.
-            * and
-            *  - all other users take the lock (ie we can only
-            *    have _one_ other CPU that looks at or modifies
-            *    the list).
-            */
-           if (!list_empty_careful(&wq_entry->entry)) {
-               spin_lock_irqsave(&wq_head->lock, flags);
-               list_del_init(&wq_entry->entry);
-               spin_unlock_irqrestore(&wq_head->lock, flags);
-           }
-       }
+         __set_current_state(TASK_RUNNING);
+         /*
+         * 我们可以在锁之外检查链表是否为空，前提是：
+         *  - 我们使用了“careful”检查，验证了 next 和 prev 指针，以确保没有我们还没有看到的其他 CPU 上可能仍在进行的半完成更新（可能仍会更改堆栈区域）。
+         * 并且
+         *  - 所有其他用户都会获取锁（也就是说，只有一个其他 CPU 可以查看或修改链表）。
+         */
+         if (!list_empty_careful(&wq_entry->entry)) {
+            spin_lock_irqsave(&wq_head->lock, flags);
+            list_del_init(&wq_entry->entry);
+            spin_unlock_irqrestore(&wq_head->lock, flags);
+         }
+      }
 
+唤醒任务
+--------
 
+我们可以使用 :c:macro:`wake_up` 原语来唤醒任务。唤醒任务需要执行以下高级操作：
 
-Waking up a task
-----------------
-
-We can wake-up tasks by using the :c:macro:`wake_up` primitive. The
-following high level operations are performed to wake up a task:
-
-.. slide:: Waking up a task
+.. slide:: 唤醒任务
    :inline-contents: True
    :level: 2
 
-   * Select a task from the waiting queue
+   * 从等待队列中选择一个任务
 
-   * Set the task state to TASK_READY
+   * 将任务状态设置为 TASK_READY
 
-   * Insert the task into the scheduler's READY queue
+   * 将任务插入调度器的 READY 队列中
 
-   * On SMP system this is a complex operation: each processor has its
-     own queue, queues need to be balanced, CPUs needs to be signaled
-
+   * 在 SMP 系统上，这是一个复杂的操作：每个处理器都有自己的队列，队列需要平衡，需要向 CPU 发送信号
 
 .. slide:: wake_up
    :inline-contents: True
@@ -944,259 +813,219 @@ following high level operations are performed to wake up a task:
    .. code-block:: c
 
       #define wake_up(x)			__wake_up(x, TASK_NORMAL, 1, NULL)
-
+      
       /**
-       * __wake_up - wake up threads blocked on a waitqueue.
-       * @wq_head: the waitqueue
-       * @mode: which threads
-       * @nr_exclusive: how many wake-one or wake-many threads to wake up
-       * @key: is directly passed to the wakeup function
+       * __wake_up - 唤醒在等待队列上阻塞的线程。
+       * @wq_head: 等待队列
+       * @mode: 哪些线程
+       * @nr_exclusive: 要唤醒的线程数（一次唤醒一个或一次唤醒多个）
+       * @key: 直接传递给唤醒函数
        *
-       * If this function wakes up a task, it executes a full memory barrier before
-       * accessing the task state.
+       * 如果此函数唤醒了一个任务，则在访问任务状态之前执行完全的内存屏障。
        */
       void __wake_up(struct wait_queue_head *wq_head, unsigned int mode,
-		     int nr_exclusive, void *key)
-      {
-          __wake_up_common_lock(wq_head, mode, nr_exclusive, 0, key);
+                     int nr_exclusive, void *key) {
+      	__wake_up_common_lock(wq_head, mode, nr_exclusive, 0, key);
       }
-
+      
       static void __wake_up_common_lock(struct wait_queue_head *wq_head, unsigned int mode,
-			int nr_exclusive, int wake_flags, void *key)
-      {
-	unsigned long flags;
-	wait_queue_entry_t bookmark;
-
-	bookmark.flags = 0;
-	bookmark.private = NULL;
-	bookmark.func = NULL;
-	INIT_LIST_HEAD(&bookmark.entry);
-
-	do {
-		spin_lock_irqsave(&wq_head->lock, flags);
-		nr_exclusive = __wake_up_common(wq_head, mode, nr_exclusive,
-						wake_flags, key, &bookmark);
-		spin_unlock_irqrestore(&wq_head->lock, flags);
-	} while (bookmark.flags & WQ_FLAG_BOOKMARK);
+                                        int nr_exclusive, int wake_flags, void *key) {
+      	unsigned long flags;
+      	wait_queue_entry_t bookmark;
+      
+      	bookmark.flags = 0;
+      	bookmark.private = NULL;
+      	bookmark.func = NULL;
+      	INIT_LIST_HEAD(&bookmark.entry);
+      
+      	do {
+      		spin_lock_irqsave(&wq_head->lock, flags);
+      		nr_exclusive = __wake_up_common(wq_head, mode, nr_exclusive,
+      		                                wake_flags, key, &bookmark);
+      		spin_unlock_irqrestore(&wq_head->lock, flags);
+      	} while (bookmark.flags & WQ_FLAG_BOOKMARK);
       }
-
+      
       /*
-       * The core wakeup function. Non-exclusive wakeups (nr_exclusive == 0) just
-       * wake everything up. If it's an exclusive wakeup (nr_exclusive == small +ve
-       * number) then we wake all the non-exclusive tasks and one exclusive task.
+       * 核心唤醒函数。非独占唤醒（nr_exclusive == 0）会唤醒所有任务。如果是独占唤醒（nr_exclusive == 一个小正数），则唤醒所有非独占任务和一个独占任务。
        *
-       * There are circumstances in which we can try to wake a task which has already
-       * started to run but is not in state TASK_RUNNING. try_to_wake_up() returns
-       * zero in this (rare) case, and we handle it by continuing to scan the queue.
+       * 在某些情况下，我们可能会尝试唤醒已经开始运行但不处于 TASK_RUNNING 状态的任务。在这种（罕见）情况下，try_to_wake_up() 会返回零，我们通过继续扫描队列来处理它。
        */
       static int __wake_up_common(struct wait_queue_head *wq_head, unsigned int mode,
                                   int nr_exclusive, int wake_flags, void *key,
-                        wait_queue_entry_t *bookmark)
-      {
-          wait_queue_entry_t *curr, *next;
-          int cnt = 0;
-
-          lockdep_assert_held(&wq_head->lock);
-
-          if (bookmark && (bookmark->flags & WQ_FLAG_BOOKMARK)) {
-                curr = list_next_entry(bookmark, entry);
-
-                list_del(&bookmark->entry);
-                bookmark->flags = 0;
-          } else
-                curr = list_first_entry(&wq_head->head, wait_queue_entry_t, entry);
-
-          if (&curr->entry == &wq_head->head)
-                return nr_exclusive;
-
-          list_for_each_entry_safe_from(curr, next, &wq_head->head, entry) {
-                unsigned flags = curr->flags;
-                int ret;
-
-                if (flags & WQ_FLAG_BOOKMARK)
-                        continue;
-
-                ret = curr->func(curr, mode, wake_flags, key);
-                if (ret < 0)
-                        break;
-                if (ret && (flags & WQ_FLAG_EXCLUSIVE) && !--nr_exclusive)
-                        break;
-
-                if (bookmark && (++cnt > WAITQUEUE_WALK_BREAK_CNT) &&
-                                (&next->entry != &wq_head->head)) {
-                        bookmark->flags = WQ_FLAG_BOOKMARK;
-                        list_add_tail(&bookmark->entry, &next->entry);
-                        break;
-                }
-          }
-
-          return nr_exclusive;
+                                  wait_queue_entry_t *bookmark) {
+      	wait_queue_entry_t *curr, *next;
+      	int cnt = 0;
+      
+      	lockdep_assert_held(&wq_head->lock);
+      
+      	if (bookmark && (bookmark->flags & WQ_FLAG_BOOKMARK)) {
+      		curr = list_next_entry(bookmark, entry);
+      
+      		list_del(&bookmark->entry);
+      		bookmark->flags = 0;
+      	} else
+      		curr = list_first_entry(&wq_head->head, wait_queue_entry_t, entry);
+      
+      	if (&curr->entry == &wq_head->head)
+      		return nr_exclusive;
+      
+      	list_for_each_entry_safe_from(curr, next, &wq_head->head, entry) {
+      		unsigned flags = curr->flags;
+      		int ret;
+      
+      		if (flags & WQ_FLAG_BOOKMARK)
+      			continue;
+      
+      		ret = curr->func(curr, mode, wake_flags, key);
+      		if (ret < 0)
+      			break;
+      		if (ret && (flags & WQ_FLAG_EXCLUSIVE) && !--nr_exclusive)
+      			break;
+      
+      		if (bookmark && (++cnt > WAITQUEUE_WALK_BREAK_CNT) &&
+      		        (&next->entry != &wq_head->head)) {
+      			bookmark->flags = WQ_FLAG_BOOKMARK;
+      			list_add_tail(&bookmark->entry, &next->entry);
+      			break;
+      		}
+      	}
+      
+      	return nr_exclusive;
       }
-
-      int autoremove_wake_function(struct wait_queue_entry *wq_entry, unsigned mode, int sync, void *key)
-      {
-  	  int ret = default_wake_function(wq_entry, mode, sync, key);
-
-	  if (ret)
-              list_del_init_careful(&wq_entry->entry);
-
-	  return ret;
+      
+      int autoremove_wake_function(struct wait_queue_entry *wq_entry, unsigned mode, int sync, void *key) {
+      	int ret = default_wake_function(wq_entry, mode, sync, key);
+      
+      	if (ret)
+      		list_del_init_careful(&wq_entry->entry);
+      
+      	return ret;
       }
-
+      
       int default_wake_function(wait_queue_entry_t *curr, unsigned mode, int wake_flags,
-			  void *key)
-      {
-          WARN_ON_ONCE(IS_ENABLED(CONFIG_SCHED_DEBUG) && wake_flags & ~WF_SYNC);
-          return try_to_wake_up(curr->private, mode, wake_flags);
+                                void *key) {
+      	WARN_ON_ONCE(IS_ENABLED(CONFIG_SCHED_DEBUG) && wake_flags & ~WF_SYNC);
+      	return try_to_wake_up(curr->private, mode, wake_flags);
       }
-
+      
       /**
-       * try_to_wake_up - wake up a thread
-       * @p: the thread to be awakened
-       * @state: the mask of task states that can be woken
-       * @wake_flags: wake modifier flags (WF_*)
+       * try_to_wake_up——唤醒线程
+       * @p: 要唤醒的线程
+       * @state: 可以被唤醒的任务状态的掩码
+       * @wake_flags: 唤醒修改标志 (WF_*)
        *
-       * Conceptually does:
+       * 概念上执行以下操作：
        *
-       *   If (@state & @p->state) @p->state = TASK_RUNNING.
+       *   如果 (@state & @p->state)，则 @p->state = TASK_RUNNING。
        *
-       * If the task was not queued/runnable, also place it back on a runqueue.
+       * 如果任务没有放进队列/可运行，还将其放回运行队列。
        *
-       * This function is atomic against schedule() which would dequeue the task.
+       * 此函数对 schedule() 是原子性的，后者会让该任务出列。
        *
-       * It issues a full memory barrier before accessing @p->state, see the comment
-       * with set_current_state().
+       * 在访问 @p->state 之前，它会触发完整的内存屏障，请参阅 set_current_state() 的注释。
        *
-       * Uses p->pi_lock to serialize against concurrent wake-ups.
+       * 使用 p->pi_lock 来序列化与并发唤醒的操作。
        *
-       * Relies on p->pi_lock stabilizing:
+       * 依赖于 p->pi_lock 来稳定下来：
        *  - p->sched_class
        *  - p->cpus_ptr
        *  - p->sched_task_group
-       * in order to do migration, see its use of select_task_rq()/set_task_cpu().
+       * 以便进行迁移，请参阅 select_task_rq()/set_task_cpu() 的使用。
        *
-       * Tries really hard to only take one task_rq(p)->lock for performance.
-       * Takes rq->lock in:
-       *  - ttwu_runnable()    -- old rq, unavoidable, see comment there;
-       *  - ttwu_queue()       -- new rq, for enqueue of the task;
-       *  - psi_ttwu_dequeue() -- much sadness :-( accounting will kill us.
+       * 尽力只获取一个 task_rq(p)->lock 以提高性能。
+       * 在以下情况下获取 rq->lock：
+       *  - ttwu_runnable()    -- 旧的 rq，不可避免的，参见该处的注释；
+       *  - ttwu_queue()       -- 新的 rq，用于任务入队；
+       *  - psi_ttwu_dequeue() -- 非常遗憾 :-(，计数将会伤害我们。
        *
-       * As a consequence we race really badly with just about everything. See the
-       * many memory barriers and their comments for details.
+       * 因此，我们与几乎所有操作都存在竞争。有关详细信息，请参阅许多内存屏障及其注释。
        *
-       * Return: %true if @p->state changes (an actual wakeup was done),
-       *	   %false otherwise.
+       * 返回值：如果 @p->state 改变（实际进行了唤醒），则为 %true，否则为 %false。
        */
-       static int
-       try_to_wake_up(struct task_struct *p, unsigned int state, int wake_flags)
-       {
-           ...
+      static int
+      try_to_wake_up(struct task_struct *p, unsigned int state, int wake_flags) 
+      {
+            ...
 
 
-Preempting tasks
-================
+任务抢占
+========
 
-Up until this point we look at how context switches occurs voluntary
-between threads. Next we will look at how preemption is handled. We
-will start wight the simpler case where the kernel is configured as
-non preemptive and then we will move to the preemptive kernel case.
+到目前为止，我们已经讨论了线程之间如何自愿进行上下文切换。接下来，我们将讨论任务抢占的处理方式。我们将从内核配置为非抢占式的简单情况开始，然后再转向抢占式内核的情况。
 
-Non preemptive kernel
----------------------
+非抢占式内核
+-----------
 
-.. slide:: Non preemptive kernel
+.. slide:: 非抢占式内核
    :inline-contents: True
    :level: 2
 
-   * At every tick the kernel checks to see if the current process has
-     its time slice consumed
+   * 每个时钟滴答，内核会检查当前进程是否已经用完了它的时间片
 
-   * If that happens a flag is set in interrupt context
+   * 如果发生这种情况，会在中断上下文中设置一个标志位
 
-   * Before returning to userspace the kernel checks this flag and
-     calls :c:func:`schedule` if needed
+   * 在返回用户空间之前，内核会检查这个标志位，并在需要时调用 :c:func:`schedule` 函数
 
-   * In this case tasks are not preempted while running in kernel mode
-     (e.g. system call) so there are no synchronization issues
+   * 在这种情况下，任务在内核模式下运行（例如系统调用）时不会被抢占，因此不存在同步问题
 
 
-Preemptive kernel
------------------
+抢占式内核
+----------
 
-In this case the current task can be preempted even if we are running
-in kernel mode and executing a system call. This requires using a
-special synchronization primitives: :c:macro:`preempt_disable` and
-:c:macro:`preempt_enable`.
+在这种情况下，即使我们在内核模式下执行系统调用，当前任务也可以被抢占。这需要使用特殊的同步原语：:c:macro:`preempt_disable` 和 :c:macro:`preempt_enable`。
 
-In order to simplify handling for preemptive kernels and since
-synchronization primitives are needed for the SMP case anyway,
-preemption is disabled automatically when a spinlock is used.
+为了简化抢占式内核的处理，并且由于在 SMP （对称多处理） 情况下需要使用同步原语，当使用自旋锁时会自动禁用抢占。
 
-As before, if we run into a condition that requires the preemption of
-the current task (its time slices has expired) a flag is set. This
-flag is checked whenever the preemption is reactivated, e.g. when
-exiting a critical section through a :c:func:`spin_unlock` and if
-needed the scheduler is called to select a new task.
+与之前一样，如果我们遇到需要抢占当前任务的条件（例如时间片用完），会设置一个标志位。每当重新激活抢占时，例如通过 :c:func:`spin_unlock` 退出临界区时，会检查这个标志位，并在需要时调用调度器以选择一个新的任务。
 
 
-.. slide:: Preemptive kernel
+.. slide:: 抢占式内核
    :inline-contents: False
    :level: 2
 
-   * Tasks can be preempted even when running in kernel mode
+   * 即使在内核模式下运行，任务也可以被抢占
 
-   * It requires new synchronization primitives to be used in critical
-     sections: :c:macro:`preempt_disable` and
-     :c:macro:`preempt_enable`
+   * 在临界区中需要使用新的同步原语：:c:macro:`preempt_disable` 和 :c:macro:`preempt_enable`
 
-   * Spinlocks also disable preemption
+   * 自旋锁也会禁用抢占
 
-   * When a thread needs to be preempted a flag is set and action is
-     taken (e.g. scheduler is called) when preemption is reactivated
+   * 当一个线程需要被抢占时，会设置一个标志位，并在重新激活抢占时采取相应措施（例如调用调度器）来选择一个新的任务。
 
 
-Process context
+进程上下文
 ===============
 
-Now that we have examined the implementation of processes and threads
-(tasks), how context switching occurs, how we can block, wake-up and
-preempt tasks, we can finally define what the process context is what
-are its properties:
+在我们研究了进程和线程（任务）的实现、上下文切换的方式以及如何阻塞、唤醒和抢占任务之后，我们最终可以定义进程上下文及其属性：
 
-.. slide:: Process context
+.. slide:: 进程上下文
    :inline-contents: True
    :level: 2
 
-   The kernel is executing in process context when it is running a
-   system call.
+   当内核执行系统调用时，它处于进程上下文中。
 
-   In process context there is a well defined context and we can
-   access the current process data with :c:macro:`current`
+   在进程上下文中，存在一个明确定义的上下文，我们可以使用 :c:macro:`current` 来访问当前进程的数据。
 
-   In process context we can sleep (wait on a condition).
+   在进程上下文中，我们可以睡眠（等待条件）。
 
-   In process context we can access the user-space (unless we are
-   running in a kernel thread context).
+   在进程上下文中，我们可以访问用户空间（除非我们在内核线程上下文中运行）。
 
 
-Kernel threads
---------------
+内核线程
+--------
 
-.. slide:: Kernel threads
+.. slide:: 内核线程
    :inline-contents: True
    :level: 2
 
-   Sometimes the kernel core or device drivers need to perform blocking
-   operations and thus they need to run in process context.
+   有时候内核核心或设备驱动程序需要执行阻塞操作，因此需要在进程上下文中运行。
 
-   Kernel threads are used exactly for this and are a special class of
-   tasks that don't "userspace" resources (e.g. no address space or
-   opened files).
+   内核线程就是为此而使用的一种特殊类别的任务，它们不使用“用户空间”资源（例如没有地址空间或打开的文件）。
 
 
-The following screencast takes a closer look at kernel threads:
+以下屏幕录像将更详细地介绍内核线程：
 
-.. slide:: Inspecting kernel threads
+.. slide:: 检查内核线程
    :inline-contents: True
    :level: 2
 
@@ -1205,20 +1034,17 @@ The following screencast takes a closer look at kernel threads:
    .. asciicast:: ../res/kernel_threads.cast
 
 
-Using gdb scripts for kernel inspection
-=======================================
+使用 gdb 脚本进行内核检查
+========================
 
-The Linux kernel comes with a predefined set of gdb extra commands we
-can use to inspect the kernel during debugging. They will
-automatically be loaded as long gdbinit is properly setup
+Linux 内核附带了一组预定义的 gdb 扩展命令，我们可以在调试过程中使用它们来检查内核。只要正确设置了 gdbinit，它们就会自动加载。
 
 .. code-block:: sh
 
    ubuntu@so2:/linux/tools/labs$ cat ~/.gdbinit
    add-auto-load-safe-path /linux/scripts/gdb/vmlinux-gdb.py
 
-All of the kernel specific commands are prefixed with lx-. You can use
-TAB in gdb to list all of them:
+所有与内核相关的命令都以 lx- 为前缀。在 gdb 中可以使用 TAB 键列出所有这些命令：
 
 .. code-block:: sh
 
@@ -1231,10 +1057,7 @@ TAB in gdb to list all of them:
    lx-device-list-class  lx-list-check
    lx-device-list-tree   lx-lsmod
 
-The implementation of the commands can be found at
-`script/gdb/linux`. Lets take a closer look at the lx-ps
-implementation:
-
+这些命令的实现可以在 `script/gdb/linux` 目录中找到。让我们仔细看一下 lx-ps 命令的实现：
 
 .. code-block:: python
 
@@ -1277,15 +1100,14 @@ implementation:
 
 
 
-Quiz: Kernel gdb scripts
+测验：内核 gdb 脚本
 ------------------------
 
-.. slide:: Quiz: Kernel gdb scripts
+.. slide:: 测验：内核 gdb 脚本
    :inline-contents: True
    :level: 2
 
-   What is the following change of the lx-ps script trying to
-   accomplish?
+   下面对 lx-ps 脚本的修改是为了实现什么目的？
 
    .. code-block:: diff
 
