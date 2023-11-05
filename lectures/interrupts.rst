@@ -729,3 +729,109 @@ Linux 系统限制软中断的使用，其仅由少数具有低延迟要求和�
 
          NR_SOFTIRQS
       };
+
+
+网络包泛洪示例
+--------------
+
+下面的屏幕录像将展示我们向系统发送大量数据包时会发生什么。由于数据包处理的一部分发生在软中断中，CPU 预计会花费大部分时间运行软中断，但其中大部分应该是在 `ksoftirqd` 线程的上下文中进行的。
+
+.. slide:: 网络包泛洪示例
+   :inline-contents: True
+   :level: 2
+
+   |_|
+
+   .. asciicast:: ../res/ksoftirqd-packet-flood.cast
+
+
+任务（tasklet）
+-----------------
+
+.. slide:: 任务
+   :inline-contents: True
+   :level: 2
+
+   任务是在中断上下文中运行的一种动态类型（不限于固定数量）的延迟工作。
+
+   任务的 API：
+
+   * 初始化：:c:func:`tasklet_init`
+   * 激活：:c:func:`tasklet_schedule`
+   * 屏蔽：:c:func:`tasklet_disable` 、:c:func:`tasklet_enable`
+
+   任务是基于两个专用软中断实现的：:c:macro:`TASKLET_SOFITIRQ` 和 :c:macro:`HI_SOFTIRQ`。
+
+   任务也是串行化的，即同一个任务只能在一个处理器上执行。
+
+工作队列
+-----------
+
+.. slide:: 工作队列
+   :inline-contents: True
+   :level: 2
+
+   工作队列是一种在进程上下文中运行的延迟工作。
+
+   它们是在内核线程的基础上实现的。
+
+   工作队列 API:
+
+    * 初始化：:c:macro:`INIT_WORK`
+    * 激活：:c:func:`schedule_work`
+
+定时器
+----------
+
+.. slide:: 定时器
+   :inline-contents: True
+   :level: 2
+
+   定时器是建立在:c:macro:`TIMER_SOFTIRQ`之上的。
+
+   定时器 API:
+
+    * 初始化：:c:func:`setup_timer`
+    * 激活：:c:func:`mod_timer`
+
+可延迟操作摘要
+--------------
+
+以下是总结了 Linux 可延迟操作的速查表：
+
+
+.. slide:: 可延迟操作摘要
+   :inline-contents: True
+   :level: 2
+
+    * 软中断（softIRQ）
+
+      * 在中断上下文中运行
+      * 静态分配
+      * 同一个处理程序可以在多个核心上并行运行
+
+    * 任务（tasklet）
+
+      * 在中断上下文中运行
+      * 可以动态分配
+      * 同一个处理程序运行是串行化的
+
+    * 工作队列（workqueues）
+
+      * 在进程上下文中运行
+
+测验：Linux 中断处理
+-------------------
+
+.. slide:: 测验：Linux 中断处理
+   :inline-contents: True
+   :level: 2
+
+   以下哪个中断处理阶段在 CPU 级别上禁用了中断？
+
+   * 临界（Critical）
+
+   * 立即（Immediate）
+
+   * 延迟（Deferred）
+
