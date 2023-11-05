@@ -745,24 +745,24 @@ Linux 系统限制软中断的使用，其仅由少数具有低延迟要求和�
    .. asciicast:: ../res/ksoftirqd-packet-flood.cast
 
 
-任务队列（tasklet）
+任务（tasklet）
 -----------------
 
-.. slide:: 任务队列
+.. slide:: 任务
    :inline-contents: True
    :level: 2
 
-任务队列是在中断上下文中运行的一种动态类型（不限于固定数量）的延迟工作。
+任务是在中断上下文中运行的一种动态类型（不限于固定数量）的延迟工作。
 
-任务队列的 API：
+任务的 API：
 
 * 初始化：:c:func:`tasklet_init`
 * 激活：:c:func:`tasklet_schedule`
 * 屏蔽：:c:func:`tasklet_disable` 、:c:func:`tasklet_enable`
 
-任务片是基于两个专用软中断实现的：:c:macro:`TASKLET_SOFITIRQ` 和 :c:macro:`HI_SOFTIRQ`。
+任务是基于两个专用软中断实现的：:c:macro:`TASKLET_SOFITIRQ` 和 :c:macro:`HI_SOFTIRQ`。
 
-任务片也是串行化的，即同一个任务片只能在一个处理器上执行。
+任务也是串行化的，即同一个任务只能在一个处理器上执行。
 
 
 工作队列
@@ -811,7 +811,7 @@ Linux 系统限制软中断的使用，其仅由少数具有低延迟要求和�
       * 静态分配
       * 同一个处理程序可以在多个核心上并行运行
 
-    * 任务队列（tasklet）
+    * 任务（tasklet）
 
       * 在中断上下文中运行
       * 可以动态分配
