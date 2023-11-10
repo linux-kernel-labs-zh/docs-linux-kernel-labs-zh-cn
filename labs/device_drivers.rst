@@ -1,59 +1,27 @@
 ========================
-Character device drivers
+字符设备驱动程序
 ========================
 
-Laboratory objectives
+实验目标
 =====================
 
-  * understand the concepts behind character device driver
-  * understand the various operations that can be performed on character devices
-  * working with waiting queues
+  * 理解字符设备驱动程序背后的概念
+  * 理解可以在字符设备上执行的各种操作
+  * 使用等待队列进行工作
 
-Overview
+概述
 ========
 
-In UNIX, hardware devices are accessed by the user through special device
-files. These files are grouped into the /dev directory, and system calls
-``open``, ``read``, ``write``, ``close``, ``lseek``, ``mmap`` etc. are
-redirected by the operating system to the device driver associated with the
-physical device. The device driver is a kernel component (usually a module)
-that interacts with a hardware device.
+在 UNIX 系统中，用户通过特殊的设备文件访问硬件设备。这些文件被组织在 /dev 目录下，并且操作系统会将对这些文件的系统调用（如 ``open``、 ``read``、  ``write``、 ``close``、 ``lseek``、 ``mmap`` 等），重定向到与物理设备关联的设备驱动程序。设备驱动程序是与硬件设备交互的内核组件（通常是一个模块）。
 
-In the UNIX world there are two categories of device files and thus
-device drivers: character and block. This division is done by the speed,
-volume and way of organizing the data to be transferred from the device to the
-system and vice versa. In the first category, there are slow devices, which
-manage a small amount of data, and access to data does not require frequent
-seek queries. Examples are devices such as keyboard, mouse, serial ports,
-sound card, joystick. In general, operations with these devices (read, write)
-are performed sequentially byte by byte. The second category includes devices
-where data volume is large, data is organized on blocks, and search is common.
-Examples of devices that fall into this category are hard drives, cdroms, ram
-disks, magnetic tape drives. For these devices, reading and writing is done at
-the data block level.
+在 UNIX 世界中，设备文件和设备驱动程序分为两个类别：字符设备和块设备。这种划分是根据数据传输的速度、容量和数据组织方式进行的。第一类是一些速度较慢的设备，它们仅处理少量数据，并且对数据的访问不需要频繁的搜索查询，例如键盘、鼠标、串口、声卡、游戏手柄等设备。通常情况下，对这些设备（读取、写入）的操作是按字节顺序逐个执行的。第二类包括数据量大、数据以块为单位组织且搜索频繁的设备。这一类别的设备包括硬盘、光驱、RAM 磁盘以及磁带驱动器等。这些设备的读取和写入是以数据块为单位进行的。
 
-For the two types of device drivers, the Linux kernel offers different APIs.
-If for character devices system calls go directly to device drivers, in case of
-block devices, the drivers do not work directly with system calls. In
-the case of block devices, communication between the user-space and the block
-device driver is mediated by the file management subsystem and the block device
-subsystem. The role of these subsystems is to prepare the device driver's
-necessary resources (buffers), to keep the recently read data in the cache
-buffer, and to order the read and write operations for performance reasons.
+对于这两种类型的设备驱动程序，Linux 内核提供了不同的 API。如果是字符设备，系统调用直接传递给设备驱动程序；而如果是块设备，驱动程序不能直接与系统调用交互。用户空间和块设备驱动程序之间的通信是通过文件管理子系统和块设备子系统进行的。这些子系统的作用是准备设备驱动程序所需的资源（缓冲区），将最近读取的数据保存在缓存缓冲区中，并为了提升性能而对读取和写入操作进行排序。
 
-Majors and minors
+主设备号和次设备号
 =================
 
-In UNIX, the devices traditionally had a unique, fixed identifier associated
-with them. This tradition is preserved in Linux, although identifiers can be
-dynamically allocated (for compatibility reasons, most drivers still use static
-identifiers). The identifier consists of two parts: major and minor. The first
-part identifies the device type (IDE disk, SCSI disk, serial port, etc.)
-and the second one identifies the device (first disk, second serial port,
-etc.). Most times, the major identifies the driver, while the minor identifies
-each physical device served by the driver. In general, a driver will have a
-major associate and will be responsible for all minors associated with that
-major.
+在 UNIX 中，设备通常有一个唯一的、固定的标识符与之关联。这种传统在 Linux 中得以保留，尽管标识符可以动态分配（出于兼容性的原因，大多数驱动程序仍然使用静态标识符）。这个标识符由两部分组成：主设备号（major）和次设备号（minor）。第一部分用于标识设备类型（如 IDE 硬盘、SCSI 硬盘、串口等），而第二部分用于标识设备本身（如第一个硬盘、第二个串口等）。大多数情况下，主设备号用于标识驱动程序，而次设备号用于标识驱动程序所服务的某个物理设备。通常情况下，一个驱动程序会有一个关联的主设备号，并负责处理与该主设备号关联的所有次设备号。
 
 .. code-block:: bash
 
@@ -63,52 +31,33 @@ major.
    crw-rw----  1 root dialout 4, 64 2004-09-18 14:52 /dev/ttyS0
    crw-rw----  1 root dialout 4, 65 2004-09-18 14:52 /dev/ttyS1
 
-As can be seen from the example above, device-type information can be found
-using the ls command. The special character files are identified by the ``c``
-character in the first column of the command output, and the block type by the
-character ``b``. In columns ``5`` and ``6`` of the result  you can see the
-major, respectively the minor for each device.
+如上例所示，可以使用 ls 命令找到设备类型信息。特殊字符文件在命令输出的第一列中通过字符 ``c`` 进行标识，块类型则通过字符 ``b`` 进行标识。在结果的第 ``5`` 和第 ``6`` 列中，可以看到每个设备的主设备号和次设备号。
 
-Certain major identifiers are statically assigned to devices (in the
-``Documentation/admin-guide/devices.txt`` file from the kernel sources). When choosing the
-identifier for a new device, you can use two methods: static (choose a number
-that does not seem to be used already) or dynamically. In /proc/devices are the
-loaded devices, along with the major identifier.
+某些主设备号是静态分配给设备的（可以在内核源代码的 ``Documentation/admin-guide/devices.txt`` 文件中查看）。选择新设备的标识符时，你可以使用两种方法：静态方法（选择一个尚未被使用的数字）或动态方法。/proc/devices 目录中列出了已加载的设备，以及其主设备号。
 
-To create a device type file, use the ``mknod`` command; the command receives the
-type (``block`` or ``character``), ``major`` and ``minor`` of the device
-(``mknod name type major minor``). Thus, if you want to create a character device
-named ``mycdev`` with the major ``42`` and minor ``0``, use the command:
+要创建设备类型文件，请使用 ``mknod`` 命令；该命令的参数为设备的类型 (``block`` 或 ``character``)、主设备号和次设备号 (``mknod name type major minor``)。因此，要想创建一个名为 ``mycdev``、主设备号为 ``42``、次设备号为 ``0`` 的字符设备，可以使用以下命令：
 
 .. code-block:: bash
 
    # mknod /dev/mycdev c 42 0
 
-To create the block device with the name ``mybdev`` with the major 240 and minor 0
-the command will be:
+要创建名为 ``mybdev``、主设备号为 ``240`` 并且次设备号为 ``0`` 的块设备，请使用如下命令：
 
 .. code-block:: bash
 
    # mknod /dev/mybdev b 240 0
 
-Next, we'll refer to character devices as drivers.
+接下来，我们会把字符设备称为驱动程序。
 
-Data structures for a character device
-======================================
+字符设备的数据结构
+==================
 
-In the kernel, a character-type device is represented by
-:c:type:`struct cdev <cdev>`, a structure used to register it in the
-system. Most driver operations use three important structures:
-``struct file_operations``, ``struct file`` and ``struct inode``.
+在内核中，字符设备由 :c:type:`struct cdev <cdev>` 结构表示，该结构用于在系统中注册字符设备。大多数驱动程序操作都用到了三个重要的结构: ``struct file_operations``、 ``struct file`` 和 ``struct inode``。
 
 :c:type:`struct file_operations`
---------------------------------
+---------------------------------
 
-As mentioned above, the character device drivers receive unaltered system calls
-made by users over device-type files. Consequently, implementation of a character
-device driver means implementing the system calls specific to files: ``open``,
-``close``, ``read``, ``write``, ``lseek``, ``mmap``, etc. These operations are
-described in the fields of the ``struct file_operations`` structure:
+如上所述，字符设备驱动程序接收用户对设备类型文件的原始系统调用。因此，要想实现字符设备驱动程序，我们就需要实现特定于文件的系统调用，例如 ``open``、 ``close``、 ``read``、 ``write``、 ``lseek`` 以及 ``mmap`` 等。这些操作在 ``struct file_operations`` 结构的字段中描述：
 
 .. code-block:: c
 
@@ -129,75 +78,43 @@ described in the fields of the ``struct file_operations`` structure:
 
 .. **
 
-It can be noticed that the signature of the function differs from the system
-call that the user uses. The operating system sits between the user and
-the device driver to simplify implementation in the device driver.
+可以看出，函数的签名与用户使用的系统调用不同。操作系统位于用户和设备驱动程序之间，其简化了设备驱动程序的实现。
 
-``open`` does not receive the parameter path or the various parameters that control
-the file opening mode. Similarly, ``read``, ``write``, ``release``, ``ioctl``, ``lseek``
-do not receive as a parameter a file descriptor. Instead, these routines receive as
-parameters two structures: ``file`` and ``inode``. Both structures represent a file,
-but from different perspectives.
+``open`` 函数不接收参数路径或控制文件打开模式的各种参数。同样， ``read``、 ``write``、 ``release``、 ``ioctl``、 ``lseek`` 的参数也不包括文件描述符。相反，这些例程接收两个结构作为参数： ``file`` 和 ``inode``。这两个结构都从不同的角度表示文件。
 
-Most parameters for the presented operations have a direct meaning:
-   * ``file`` and ``inode`` identifies the device type file;
-   * ``size`` is the number of bytes to be read or written;
-   * ``offset`` is the displacement to be read or written (to be updated
-     accordingly);
-   * ``user_buffer`` user buffer from which it reads / writes;
-   * ``whence`` is the way to seek (the position where the search operation starts);
-   * ``cmd`` and ``arg`` are the parameters sent by the users to the ioctl call (IO
-     control).
+所提供操作的大多数参数具有直接的含义：
+   * ``file`` 和 ``inode`` 标识设备类型文件；
+   * ``size`` 是要读取或写入的字节数；
+   * ``offset`` 是要读取或写入的位移（将相应地更新）；
+   * ``user_buffer`` 是要读取/写入的用户缓冲区；
+   * ``whence`` 是寻找的方式（搜索操作开始的位置）；
+   * ``cmd`` 和 ``arg`` 是由用户发送到 ioctl（IO 控制）调用的参数。
 
-``inode`` and ``file`` structures
+``inode`` 和 ``file`` 结构
 ---------------------------------
 
-An ``inode`` represents a file from the point of view of the file system. Attributes
-of an inode are the size, rights, times associated with the file. An inode uniquely
-identifies a file in a file system.
+``inode`` 代表文件系统视角中的文件。inode 的属性包括文件大小、权限和相关时间。单个 inode 在文件系统中唯一标识一个文件。
 
-The ``file`` structure is still a file, but closer to the user's point of view.
-From the attributes of the file structure we list: the inode, the file name,
-the file opening attributes, the file position. All open files at a given time
-have associated a ``file`` structure.
+``file`` 结构仍然代表单个文件，但更接近用户的视角。file 结构的属性中，有 inode、文件名、文件打开属性和文件位置等。在给定时间内，所有打开的文件都有一个关联的 ``file`` 结构。
 
-To understand the differences between inode and file, we will use an analogy
-from object-oriented programming: if we consider a class inode, then the files
-are objects, that is, instances of the inode class. Inode represents the static
-image of the file (the inode has no state), while the file represents the
-dynamic image of the file (the file has state).
+为了更好的理解 inode 和 file 之间的区别，我们可以使用面向对象编程的类比：如果我们将 inode 视为一个类，那么文件就是对象，即 inode 类的实例。inode 表示文件的静态映像（inode 没有状态），而 file 表示文件的动态映像（file 具有状态）。
 
-Returning to device drivers, the two entities have almost always standard ways
-of using: the inode is used to determine the major and minor of the device on
-which the operation is performed, and the file is used to determine the flags
-with which the file was opened, but also to save and access (later) private
-data.
+回到设备驱动程序，这两个实体几乎总是有标准的使用方式：inode 用于确定操作执行的设备的主设备号和次设备号，而 file 用于确定文件的打开标志，还可以保存和（稍后）访问私有数据。
 
-The file structure contains, among many fields:
+file 结构包含许多字段，其中包括：
 
-   * ``f_mode``, which specifies read (``FMODE_READ``) or write
-     (``FMODE_WRITE``);
-   * ``f_flags``, which specifies the file opening flags (``O_RDONLY``,
-     ``O_NONBLOCK``, ``O_SYNC``, ``O_APPEND``, ``O_TRUNC``, etc.);
-   * ``f_op``, which specifies the operations associated with the file (pointer to
-     the ``file_operations`` structure );
-   * ``private_data``, a pointer that can be used by the programmer to store
-     device-specific data; The pointer will be initialized to a memory location
-     assigned by the programmer.
-   * ``f_pos``, the offset within the file
+   * ``f_mode``，指定是读取 (``FMODE_READ``) 还是写入 (``FMODE_WRITE``)；
+   * ``f_flags``，指定文件的打开标志 (``O_RDONLY``、 ``O_NONBLOCK``、 ``O_SYNC``、 ``O_APPEND``、 ``O_TRUNC`` 等)；
+   * ``f_op``，指定与文件关联的操作（指向 ``file_operations`` 结构的指针）；
+   * ``private_data``，一个指针，程序员可以用来存储特定于设备的数据；该指针将被初始化到程序员分配的内存位置。
+   * ``f_pos``，文件内的偏移量。
 
-The inode structure contains, among much information, an ``i_cdev``
-field, which is a pointer to the structure that defines the character
-device (when the inode corresponds to a character device).
+inode 结构包含许多信息，其中包括一个 ``i_cdev`` 字段，它是一个指向定义字符设备的结构的指针（如果 inode 对应于字符设备）。
 
-Implementation of operations
+实现操作
 ============================
 
-To implement a device driver, it is recommended that you create a structure
-that contains information about the device, information used in the module. In
-the case of a driver for a character device, the structure will contain a cdev
-structure field to refer to the device. The following example uses the struct
-my_device_data:
+为了实现设备驱动程序，建议创建一个包含有关设备信息和模块使用的信息的结构体。如果是字符设备驱动程序，则结构体将包含一个指向设备的 cdev 结构体字段。下面的示例使用了名为 my_device_data 的结构体：
 
 .. code-block:: c
 
@@ -206,7 +123,7 @@ my_device_data:
 
    struct my_device_data {
        struct cdev cdev;
-       /* my data starts here */
+       /* 数据从这里开始 */
        //...
    };
 
@@ -231,23 +148,14 @@ my_device_data:
 
 .. **
 
-A structure like ``my_device_data`` will contain the data associated with a device.
-The ``cdev`` field (``cdev`` type) is a character-type device and is used to record it
-in the system and identify the device. The pointer to the ``cdev`` member can be
-found using the ``i_cdev`` field of the ``inode`` structure (using the ``container_of``
-macro). In the private_data field of the file structure, information can be
-stored at open which is then available in the ``read``, ``write``, ``release``, etc.
-routines.
+名为 ``my_device_data`` 的结构包含与设备相关的数据。``cdev`` 字段 (``cdev`` 类型)对应字符设备，用于在系统中记录和识别设备。可以使用 ``inode`` 结构的 ``i_cdev`` 字段（使用 ``container_of`` 宏）找到指向 ``cdev`` 的指针。可以在打开文件时，在 file 结构的 ``private_data`` 字段中存储可用于 ``read``、 ``write``、 ``release`` 等函数的信息。
 
-Registration and unregistration of character devices
-====================================================
+字符设备的注册和注销
+===========================
 
-The registration/unregistration of a device is made by specifying the major and
-minor. The ``dev_t`` type is used to keep the identifiers of a device (both major
-and minor) and can be obtained using the ``MKDEV`` macro.
+要想注册和注销设备，你需要指定主设备号和次设备号。``dev_t`` 类型用于保存设备的标识符（包括主设备号和次设备号），其可以通过使用 `MKDEV` 宏来获取。
 
-For the static assignment and unallocation of device identifiers, the
-``register_chrdev_region`` and ``unregister_chrdev_region`` functions are used:
+要想完成设备标识符的静态分配和释放，可以使用 ``register_chrdev_region`` 和 ``unregister_chrdev_region`` 函数：
 
 .. code-block:: c
 
@@ -258,12 +166,9 @@ For the static assignment and unallocation of device identifiers, the
 
 .. **
 
-It is recommended that device identifiers be dynamically assigned to the
-``alloc_chrdev_region`` function.
+建议将设备标识符动态分配给 ``alloc_chrdev_region`` 函数。
 
-Below sequence reserves ``my_minor_count`` devices, starting with ``my_major``
-major and ``my_first_minor`` minor (if the max value for minor is exceeded,
-move to the next major):
+以下程序准备了 ``my_minor_count`` 个设备，从 ``my_major`` 主设备号和 ``my_first_minor`` 次设备号开始（如果次设备号的最大值溢出了，就会切换到下一个主设备号）：
 
 .. code-block:: c
 
@@ -273,17 +178,14 @@ move to the next major):
    err = register_chrdev_region(MKDEV(my_major, my_first_minor), my_minor_count,
                                 "my_device_driver");
    if (err != 0) {
-       /* report error */
+       /* 报告错误 */
        return err;
    }
    ...
 
 .. **
 
-After assigning the identifiers, the character device will have to be
-initialized (``cdev_init``) and the kernel will have to be notified(``cdev_add``). The
-``cdev_add`` function must be called only after the device is ready to receive
-calls. Removing a device is done using the ``cdev_del`` function.
+在分配标识符之后，字符设备需要进行初始化（使用 ``cdev_init`` 函数），并通知内核（使用 ``cdev_add`` 函数）。只有在设备准备好接收调用时才能调用 ``cdev_add`` 函数。使用 ``cdev_del`` 函数可以移除设备。
 
 .. code-block:: c
 
@@ -295,7 +197,7 @@ calls. Removing a device is done using the ``cdev_del`` function.
 
 .. **
 
-The following sequence registers and initializes MY_MAX_MINORS devices:
+以下程序注册并初始化 MY_MAX_MINORS 个设备：
 
 .. code-block:: c
 
@@ -307,7 +209,7 @@ The following sequence registers and initializes MY_MAX_MINORS devices:
 
     struct my_device_data {
         struct cdev cdev;
-        /* my data starts here */
+        /* 数据从这里开始 */
         //...
     };
 
@@ -329,12 +231,12 @@ The following sequence registers and initializes MY_MAX_MINORS devices:
         err = register_chrdev_region(MKDEV(MY_MAJOR, 0), MY_MAX_MINORS,
                                      "my_device_driver");
         if (err != 0) {
-            /* report error */
+            /* 报告错误 */
             return err;
         }
 
         for(i = 0; i < MY_MAX_MINORS; i++) {
-            /* initialize devs[i] fields */
+            /* 初始化 devs[i] 字段 */
             cdev_init(&devs[i].cdev, &my_fops);
             cdev_add(&devs[i].cdev, MKDEV(MY_MAJOR, i), 1);
         }
@@ -344,7 +246,7 @@ The following sequence registers and initializes MY_MAX_MINORS devices:
 
 .. **
 
-While the following sequence deletes and unregisters them:
+以下代码删除并注销它们：
 
 .. code-block:: c
 
@@ -353,7 +255,7 @@ While the following sequence deletes and unregisters them:
        int i;
 
        for(i = 0; i < MY_MAX_MINORS; i++) {
-           /* release devs[i] fields */
+           /* 释放 devs[i] 字段 */
            cdev_del(&devs[i].cdev);
        }
        unregister_chrdev_region(MKDEV(MY_MAJOR, 0), MY_MAX_MINORS);
@@ -361,27 +263,14 @@ While the following sequence deletes and unregisters them:
 
 .. **
 
-.. note:: Initialization of the struct my_fops used the initialization
-          of members by name, defined in C99 standard (see designated
-          initializers and the file_operations structure). Structure
-          members who do not explicitly appear in this initialization
-          will be set to the default value for their type. For
-          example, after the initialization above, ``my_fops.mmap`` will
-          be NULL.
+.. note:: ``my_fops`` 结构的初始化使用了 C99 标准中的按名称初始化成员的方法（参见指定初始化器和 file_operations 结构）。未在此初始化中显式出现的结构成员将被设置为其类型的默认值。例如，在上述初始化之后，``my_fops.mmap`` 将为 NULL。
 
 .. _access_to_process_address_space:
 
-Access to the address space of the process
+访问进程地址空间
 ==========================================
 
-A driver for a device is the interface between an application and hardware. As
-a result, we often have to access user-space data. Accessing it can not be done
-directly (by dereferencing a user-space pointer). Direct access of a
-user-space pointer can lead to incorrect behavior (depending on architecture, a
-user-space pointer may not be valid or mapped to kernel-space), a kernel oops
-(the user-mode pointer can refer to a non-resident memory area) or security
-issues. Proper access to user-space data is done by calling the macros /
-functions below:
+设备的驱动程序是应用程序与硬件之间的接口。因此，我们经常需要访问用户空间数据。直接访问用户空间数据是不可行的（通过解引用用户空间指针）。直接访问用户空间指针可能导致不正确的行为（根据体系结构，用户空间指针可能无效或映射到内核空间）、内核 oops（用户态指针可能引用非驻留内存区域）或安全问题。请通过调用下面的宏/函数来正确访问用户空间数据：
 
 .. code-block:: c
 
@@ -394,44 +283,34 @@ functions below:
 
 .. **
 
-All macros / functions return 0 in case of success and another value in case of
-error and have the following roles:
+这些宏/函数成功后返回 0，错误时返回其他值，并具有以下作用：
 
-   * ``put_user`` store the value ``val`` to user-space address ``address``;
-     Type can be one on 8, 16, 32, 64 bit (the maximum supported type depends on the
-     hardware platform);
-   * ``get_user`` analogue to the previous function, only that val will be set to a
-     value identical to the value at the user-space address given by address;
-   * ``copy_to_user`` copies ``n`` bytes from the kernel-space, from the address
-     referenced by ``from`` in user-space to the address referenced by ``to``;
-   * ``copy_from_user`` copies ``n`` bytes from user-space from the address
-     referenced by ``from`` in kernel-space to the address referenced by ``to``.
+* ``put_user`` 将值 ``val`` 存储到用户空间地址 ``address``；类型可以是 8 位、16 位、32 位，也可以是 64 位（最大的支持类型取决于硬件平台）；
+* ``get_user`` 类似于前一个函数，只是将值设置为与用户空间地址 ``address`` 处的值相同的值；
+* ``copy_to_user`` 从 ``from`` 引用的内核空间地址开始复制 ``n`` 字节到由 ``to`` 引用的用户空间地址；
+* ``copy_from_user`` 从 ``from`` 引用的用户空间地址开始复制 ``n`` 字节到由 ``to`` 引用的内核空间地址；
 
-A common section of code that works with these functions is:
+以下是这些函数的常用代码示例：
 
 .. code-block:: c
 
    #include <asm/uaccess.h>
 
    /*
-    * Copy at most size bytes to user space.
-    * Return ''0'' on success and some other value on error.
-    */
+   * 将最多 size 字节复制到用户空间。
+   * 成功则返回 0，错误则返回其他值。
+   */
    if (copy_to_user(user_buffer, kernel_buffer, size))
-       return -EFAULT;
+      return -EFAULT;
    else
-       return 0;
+      return 0;
 
-Open and release
-================
+打开和释放
+===========
 
-The ``open`` function performs the initialization of a device. In most cases,
-these operations refer to initializing the device and filling in specific data
-(if it is the first open call). The release function is about releasing
-device-specific resources: unlocking specific data and closing the device if
-the last call is close.
+``open`` 函数执行设备的初始化。在大多数情况下，这些操作涉及初始化设备并填充特定数据（如果是第一次打开调用）。*释放函数*用于释放设备特定资源：在调用全部完成后，解除对特定数据的锁定并关闭设备。
 
-In most cases, the open function will have the following structure:
+在大多数情况下，*打开函数*的结构如下所示：
 
 .. code-block:: c
 
@@ -440,10 +319,10 @@ In most cases, the open function will have the following structure:
        struct my_device_data *my_data =
                 container_of(inode->i_cdev, struct my_device_data, cdev);
 
-       /* validate access to device */
+       /* 验证设备访问权限 */
        file->private_data = my_data;
 
-       /* initialize device */
+       /* 初始化设备 */
        ...
 
        return 0;
@@ -451,77 +330,56 @@ In most cases, the open function will have the following structure:
 
 .. **
 
-A problem that occurs when implementing the ``open`` function is access control.
-Sometimes a device needs to be opened once at a time; More specifically, do not
-allow the second open before the release. To implement this restriction, you
-choose a way to handle an open call for an already open device: it can return
-an error (``-EBUSY``), block open calls until a release operation, or shut down
-the device before do the open.
+实施 ``open`` 函数时会遇到访问控制的问题。有时候一个设备在同一时刻需要只打开一次；更具体地说，不允许在释放之前进行第二次打开。为了实现这种限制，你可以选择一种处理已经打开的设备的打开调用的方法：它可以返回一个错误 (``-EBUSY``)，阻塞打开调用直到进行释放操作，或者在执行打开操作之前关闭设备。
 
-At the user-space call of the open and close functions on the device, call
-my_open and my_release in the driver. An example of a user-space call:
+在用户空间对设备调用打开和关闭函数时，会调用驱动程序中的 my_open 和 my_release 函数。以下是一个用户空间调用的示例：
 
 .. code-block:: c
 
     int fd = open("/dev/my_device", O_RDONLY);
     if (fd < 0) {
-        /* handle error */
+        /* 处理错误 */
     }
 
-    /* do work */
+    /* 执行工作 */
     //..
 
     close(fd);
 
 .. **
 
-Read and write
+读取和写入
 ==============
 
-The read and write operations are reaching the device driver as a
-result of an user-space program calling the read or write system calls:
+用户空间程序调用读取或写入系统调用，会导致设备驱动程序的读和写操作。
 
 .. code-block:: c
 
     if (read(fd, buffer, size) < 0) {
-        /* handle error */
+        /* 处理错误 */
     }
 
     if (write(fd, buffer, size) < 0) {
-        /* handle error */
+        /* 处理错误 */
     }
 
 .. **
 
-The ``read`` and ``write`` functions transfer data between the device and the
-user-space: the read function reads the data from the device and transfers it
-to the user-space, while writing reads the user-space data and writes it to the
-device. The buffer received as a parameter is a user-space pointer, which is
-why it is necessary to use the ``copy_to_user`` or ``copy_from_user`` functions.
+``read`` 和 ``write`` 函数会在设备和用户空间之间传输数据：read 函数从设备读取数据并将其传输到用户空间，而 write 函数则读取用户空间的数据并将其写入设备。参数 buffer（缓冲区）是一个用户空间指针，这就是为什么需要使用 ``copy_to_user`` 或 ``copy_from_user`` 函数。
 
-The value returned by read or write can be:
+read 或 write 返回的值可以是：
 
-  * the number of bytes transferred; if the returned value is less than the size
-    parameter (the number of bytes requested), then it means that a partial
-    transfer was made. Most of the time, the user-space app calls the system call
-    (read or write) function until the required data number is transferred.
-  * 0 to mark the end of the file in the case of read ; if write returns the
-    value 0 then it means that no byte has been written and that no error has
-    occurred; In this case, the user-space application retries the write call.
-  * a negative value indicating an error code.
+  * 传输的字节数；如果返回的值小于参数 size（请求的字节数），则表示只传输了部分数据。大多数情况下，用户空间应用程序会持续调用系统调用（read 或 write）函数，直到所需的数据量全部传输完成为止。
+  * 如果是 read，返回值为 0 表示文件读到底了；如果 write 返回值为 0，则表示没有写入任何字节且没有发生错误；在这种情况下，用户空间应用程序会重新尝试写入调用。
+  * 负值表示程序错误。
 
-To perform a data transfer consisting of several partial transfers, the
-following operations should be performed:
+要执行由多次部分传输组成的数据传输，应执行以下操作：
 
-  * transfer the maximum number of possible bytes between the buffer received
-    as a parameter and the device (writing to the device/reading from the device
-    will be done from the offset received as a parameter);
-  * update the offset received as a parameter to the position from which the
-    next read / write data will begin;
-  * return the number of bytes transferred.
+  * 在作为参数接收的缓冲区和设备之间传输尽可能多的字节（从作为参数接收的偏移量开始进行设备写入/读取）；
+  * 更新作为参数接收的偏移量，以表示下一次读取/写入数据的位置；
+  * 返回传输的字节数。
 
-The sequence below shows an example for the read function that takes
-into account the internal buffer size, user buffer size and the offset:
+下面的示例展示了考虑了内部缓冲区大小、用户缓冲区大小和偏移量的 read 函数的程序：
 
 .. code-block:: c
 
@@ -534,7 +392,7 @@ into account the internal buffer size, user buffer size and the offset:
        if (len <= 0)
            return 0;
 
-       /* read data from my_data->buffer to user buffer */
+       /* 从 my_data->buffer 读取数据到用户缓冲区 */
        if (copy_to_user(user_buffer, my_data->buffer + *offset, len))
            return -EFAULT;
 
@@ -544,24 +402,19 @@ into account the internal buffer size, user buffer size and the offset:
 
 .. **
 
-The images below illustrate the read operation and how data is
-transferred between the user-space and the driver:
+下面的图片展示了读操作以及数据如何在用户空间和驱动程序之间传输：
 
-   1. when the driver has enough data available (starting with the OFFSET
-      position) to accurately transfer the required size (SIZE) to the user.
-   2. when a smaller amount is transferred than required.
+1. 驱动程序有足够的可用数据（从偏移位置开始），以准确地传输所需大小（SIZE）给用户。
+2. 传输的数量比所需的少。
 
 .. image:: ../res/read.png
    :width: 49 %
 .. image:: ../res/read2.png
    :width: 49 %
 
-We can look at the read operation implemented by the driver as a response to a
-user-space read request. In this case, the driver is responsible for advancing
-the offset according to how much it reads and returning the read size (which
-may be less than what is required).
+我们可以将驱动程序实现的读操作视为对用户空间读取请求的响应。在这种情况下，驱动程序负责根据其读取的量推进偏移，并返回读取的大小（可能小于所需大小）。
 
-The structure of the write function is similar:
+写函数的结构类似：
 
 .. code-block:: c
 
@@ -574,7 +427,7 @@ The structure of the write function is similar:
        if (len <= 0)
            return 0;
 
-       /* read data from user buffer to my_data->buffer */
+       /* 将数据从用户缓冲区读到 my_data->buffer */
        if (copy_from_user(my_data->buffer + *offset, user_buffer, len))
            return -EFAULT;
 
@@ -584,9 +437,7 @@ The structure of the write function is similar:
 
 .. **
 
-The write operation will respond to a write request from user-space. In
-this case, depending on the maximum driver capacity (MAXSIZ), it can
-write more or less than the required size.
+写操作将响应来自用户空间的写请求。在这种情况下，根据驱动程序的最大容量（MAXSIZ），它可以写入比所需大小更多或更少的数据。
 
 .. image:: ../res/write.png
    :width: 49 %
@@ -598,12 +449,7 @@ write more or less than the required size.
 ioctl
 =====
 
-In addition to read and write operations, a driver needs the ability to perform
-certain physical device control tasks. These operations are accomplished by
-implementing a ``ioctl`` function. Initially, the ioctl system call used Big Kernel
-Lock. That's why the call was gradually replaced with its unlocked version
-called ``unlocked_ioctl``. You can read more on LWN:
-http://lwn.net/Articles/119652/
+除了读和写操作之外，驱动程序需要能够执行某些物理设备控制任务。这些操作通过实现一个名为 ``ioctl`` 的函数来完成。最初，ioctl 系统调用使用了 Big Kernel Lock。因此，其无锁版本 ``unlocked_ioctl`` 逐渐替代了该调用。你可以在 LWN 上阅读更多信息：http://lwn.net/Articles/119652/
 
 .. code-block:: c
 
@@ -611,23 +457,16 @@ http://lwn.net/Articles/119652/
 
 .. **
 
-``cmd`` is the command sent from user-space. If a value is being sent from the
-user-space call, it can be accessed directly. If a buffer is fetched, the arg
-value will be a pointer to it, and must be accessed through the ``copy_to_user``
-or ``copy_from_user``.
+``cmd`` 是从用户空间发送的命令。如果用户空间调用发送了一个值，可以通过 ``cmd`` 直接访问它。如果获取了一个缓冲区，那么 arg 的值将是指向它的指针，并且必须通过 ``copy_to_user`` 或 ``copy_from_user`` 进行访问。
 
-Before implementing the ``ioctl`` function, the numbers corresponding to the
-commands must be chosen. One method is to choose consecutive numbers starting
-at 0, but it is recommended to use ``_IOC(dir, type, nr, size)`` macro definition
-to generate ioctl codes. The macro definition parameters are as follows:
+在实现 ``ioctl`` 函数之前，必须选择与命令对应的数字。一种方法是从 0 开始选择连续的数字，但我们建议使用 ``_IOC(dir, type, nr, size)`` 宏定义来生成 ioctl 代码。宏定义的参数如下：
 
-   * ``dir`` represents the data transfer (``_IOC_NONE`` , ``_IOC_READ``,
-     ``_IOC_WRITE``).
-   * ``type`` represents the magic number (``Documentation/ioctl/ioctl-number.txt``);
-   * ``nr`` is the ioctl code for the device;
-   * ``size`` is the size of the transferred data.
+   * ``dir`` 表示数据传输 (``_IOC_NONE`` , ``_IOC_READ`` , ``_IOC_WRITE``)。
+   * ``type`` 表示魔数 (``Documentation/ioctl/ioctl-number.txt``)；
+   * ``nr`` 是设备的 ioctl 代码；
+   * ``size`` 是传输数据的大小。
 
-The following example shows an implementation for a ``ioctl`` function:
+下面的示例展示了 ``ioctl`` 函数的实现：
 
 .. code-block:: c
 
@@ -647,7 +486,7 @@ The following example shows an implementation for a ``ioctl`` function:
                               sizeof(my_ioctl_data)) )
                return -EFAULT;
 
-           /* process data and execute command */
+           /* 处理数据以及执行命令 */
 
            break;
        default:
@@ -659,29 +498,22 @@ The following example shows an implementation for a ``ioctl`` function:
 
 .. **
 
-At the user-space call for the ioctl function, the my_ioctl function of the
-driver will be called. An example of such a user-space call:
+用户空间调用 ioctl 函数时，将调用驱动程序的 my_ioctl 函数。以下是用户空间调用的示例：
 
 .. code-block:: c
 
     if (ioctl(fd, MY_IOCTL_IN, buffer) < 0) {
-        /* handle error */
+        /* 处理错误 */
     }
 
 .. **
 
-Waiting queues
+等待队列
 ==============
 
-It is often necessary for a thread to wait for an operation to finish,
-but it is desirable that this wait is not busy-waiting. Using waiting
-queues we can block a thread until an event occurs. When the condition
-is satisfied, elsewhere in the kernel, in another process, in an
-interrupt or deferrable work, we will wake up the process.
+许多情况下，线程需要等待某个操作完成。但最好避免忙等待。通过使用等待队列，我们可以阻塞一个线程，直到发生某个事件再激活这个线程。当条件满足时（可能是内核中的其他地方、另一个进程、中断或可延迟工作）我们会唤醒该进程。
 
-A waiting queue is a list of processes that are waiting for a specific
-event. A queue is defined with the ``wait_queue_head_t`` type and can
-be used by the functions/macros:
+等待队列是一个等待特定事件的进程列表。队列使用 ``wait_queue_head_t`` 类型定义，并可通过以下函数/宏使用：
 
 .. code-block:: c
 
@@ -705,25 +537,15 @@ be used by the functions/macros:
 
 .. **
 
-The roles of the macros / functions above are:
+上述宏/函数的作用如下：
 
-   * :c:func:`init_waitqueue_head` initializes the queue; to initialize the
-     queue at compile time, you can use the :c:macro:`DECLARE_WAIT_QUEUE_HEAD` macro;
-   * :c:func:`wait_event` and :c:func:`wait_event_interruptible` adds the current thread to the
-     queue while the condition is false, sets it to TASK_UNINTERRUPTIBLE or
-     TASK_INTERRUPTIBLE and calls the scheduler to schedule a new thread; Waiting
-     will be interrupted when another thread will call the wake_up function;
-   * :c:func:`wait_event_timeout` and :c:func:`wait_event_interruptible_timeout` have the same
-     effect as the above functions, only waiting can be interrupted at the end of
-     the timeout received as a parameter;
-   * :c:func:`wake_up` puts all threads off from state TASK_INTERRUPTIBLE and
-     TASK_UNINTERRUPTIBLE in TASK_RUNNING status; Remove these threads from the
-     queue;
-   * :c:func:`wake_up_interruptible` same action, but only threads with TASK_INTERRUPTIBLE
-     status are woken up.
+   * :c:func:`init_waitqueue_head` 初始化等待队列；如果是要在编译期间初始化队列，可以使用 :c:macro:`DECLARE_WAIT_QUEUE_HEAD` 宏；
+   * :c:func:`wait_event` 和 :c:func:`wait_event_interruptible` 在条件为假时将当前线程加入队列，将其设置为 TASK_UNINTERRUPTIBLE 或 TASK_INTERRUPTIBLE，并调用调度程序以安排新线程；当另一个线程调用 wake_up 函数时，等待将被中断；
+   * :c:func:`wait_event_timeout` 和 :c:func:`wait_event_interruptible_timeout` 具有与上述函数相同的效果，只是等待也可以在参数 timeout（超时）结束时被中断；
+   * :c:func:`wake_up` 将所有处于 TASK_INTERRUPTIBLE 和 TASK_UNINTERRUPTIBLE 状态的线程切换到 TASK_RUNNING 状态；从队列中移除这些线程；
+   * :c:func:`wake_up_interruptible` 执行相同的操作，但只唤醒处于 TASK_INTERRUPTIBLE 状态的线程。
 
-A simple example is that of a thread waiting to change the value of a flag. The
-initializations are done by the sequence:
+举个简单的示例，线程等待某个标志位的值的改变。以下代码实现初始化：
 
 .. code-block:: c
 
@@ -736,15 +558,15 @@ initializations are done by the sequence:
 
 .. **
 
-A thread will wait for the flag to be changed to a value other than zero:
+某个线程等待标志的值变为非零：
 
 .. code-block:: c
 
    wait_event_interruptible(wq, flag != 0);
 
-.. **
+..
 
-While another thread will change the flag value and wake up the waiting threads:
+而另一个线程将改变标志（flag）的值并唤醒等待中的线程：
 
 .. code-block:: c
 
@@ -753,17 +575,16 @@ While another thread will change the flag value and wake up the waiting threads:
 
 .. **
 
-Exercises
+练习
 =========
 
 .. include:: ../labs/exercises-summary.hrst
-.. |LAB_NAME| replace:: device_drivers
+.. |LAB_NAME| replace:: 设备驱动
 
-0. Intro
---------
+0. 简介
+-------
 
-Using `LXR <http://elixir.free-electrons.com/linux/latest/source>`_ find the definitions
-of the following symbols in the Linux kernel:
+使用 `LXR <http://elixir.free-electrons.com/linux/latest/source>`_ 查找 Linux 内核中以下符号的定义：
 
     * :c:type:`struct file`
     * :c:type:`struct file_operations`
@@ -771,95 +592,79 @@ of the following symbols in the Linux kernel:
     * :c:func:`vfs_read`
 
 
-1. Register/unregister
-----------------------
+1. 注册/注销
+---------------
 
-The driver will control a single device with the ``MY_MAJOR`` major and
-``MY_MINOR`` minor (the macros defined in the kernel/so2_cdev.c file).
+驱动程序控制一个具有 ``MY_MAJOR`` 主设备号和 ``MY_MINOR`` 次设备号的设备（这些宏定义在 kernel/so2_cdev.c 文件中）。
 
-   1. Create **/dev/so2_cdev** character device node using **mknod**.
+   1. 使用 **mknod** 创建 **/dev/so2_cdev** 字符设备节点。
 
-      .. hint:: Read `Majors and minors`_ section in the lab.
+      .. hint:: 阅读实验中的 `主设备号和次设备号`_ 部分。
 
-   2. Implement the registration and deregistration of the device with the name
-      ``so2_cdev``, respectively in the init and exit module functions. Implement **TODO 1**.
+   2. 在 init 和 exit 模块函数中实现设备的注册和注销，设备名称应为 ``so2_cdev``。实现 **TODO 1**。
 
-      .. hint:: Read the section `Registration and unregistration of character devices`_
+      .. hint:: 阅读 `字符设备的注册和注销`_ 部分。
 
-   3. Display, using ``pr_info``, a message after the registration and unregistration
-      operations to confirm that they were successful. Then load the module into the kernel:
+   3. 通过 ``pr_info`` 函数使得在注册和注销操作后显示一条消息，以确认它们是否成功。然后将模块加载到内核中：
 
       .. code-block:: bash
 
          $ insmod so2_cdev.ko
 
-      And see character devices in ``/proc/devices``:
+      并查看 ``/proc/devices`` 中的字符设备：
 
       .. code-block:: bash
 
          $ cat /proc/devices | less
 
-      Identify the device type registered with major 42 . Note that ``/proc/devices``
-      contains only the device types (major) but not the actual devices (i.e. minors).
+      确定使用主设备号 42 注册的设备类型。请注意，``/proc/devices`` 仅包含设备类型（主设备号），而不包含实际设备（即次设备号）。
 
-      .. note:: Entries in /dev are not created by loading the module. These can be created
-                in two ways:
+      .. note:: /dev 中的条目不会通过加载模块来创建。可以通过两种方式创建：
 
-                * manually, using the ``mknod`` command as we did above.
-                * automatically using udev daemon
+                * 手动使用 ``mknod`` 命令，就像我们上面所做的那样。
+                * 使用 udev 守护进程自动创建
 
-   4. Unload the kernel module
+   4. 卸载内核模块
 
       .. code-block:: bash
 
          rmmod so2_cdev
 
-2. Register an already registered major
+2. 注册一个已注册的主设备号
 ---------------------------------------
 
-Modify **MY_MAJOR** so that it points to an already used major number.
+修改 **MY_MAJOR**，使其指向已经使用的主设备号。
 
-.. hint:: See ``/proc/devices`` to get an already assigned major.
+.. hint:: 查看 ``/proc/devices`` 来获取一个已分配的主设备号。
 
-See `errno-base.h <http://elixir.free-electrons.com/linux/v4.9/source/include/uapi/asm-generic/errno-base.h>`_
-and figure out what does the error code mean.
-Return to the initial configuration of the module.
+参考 `errno-base.h <http://elixir.free-electrons.com/linux/v4.9/source/include/uapi/asm-generic/errno-base.h>`_ 并找出错误码的含义。恢复模块的初始配置。
 
-3. Open and close
+3. 打开和关闭
 -----------------
 
-Run ``cat /dev/so2_cdev`` to read data from our char device.
-Reading does not work because the driver does not have the open function implemented.
-Follow comments marked with TODO 2 and implement them.
+运行 ``cat /dev/so2_cdev`` ，从我们的字符设备中读取数据。由于驱动程序没有实现打开函数，因此读取操作无法正常工作。按照标记为 TODO 2 的注释进行操作并实现以下内容。
 
-   1. Initialize your device
+   1. 初始化设备
 
-      * add a cdev struct field to ``so2_device_data`` structure.
-      * Read the section `Registration and unregistration of character devices`_ in the lab.
+      * 在 ``so2_device_data`` 结构体中添加一个 cdev 字段。
+      * 阅读实验中的 `字符设备的注册和注销`_ 部分。
 
-   2. Implement the open and release functions in the driver.
-   3. Display a message in the open and release functions.
-   4. Read again ``/dev/so2_cdev`` file. Follow the messages displayed by the kernel.
-      We still get an error because ``read`` function is not yet implemented.
+   2. 在驱动程序中实现打开和释放函数。
+   3. 在打开和释放函数中显示一条消息。
+   4. 再次读取 ``/dev/so2_cdev`` 文件。按照内核显示的消息进行操作。由于尚未实现 ``read`` 函数，因此仍会出现错误。
 
-.. note:: The prototype of a device driver's operations is in the ``file_operations``
-          structure. Read `Open and release`_ section.
+.. note:: 设备驱动程序操作的原型在 ``file_operations`` 结构体中。请阅读 `打开和释放`_ 部分。
 
-4. Access restriction
+4. 访问限制
 ---------------------
 
-Restrict access to the device with atomic variables, so that a single process
-can open the device at a time. The rest will receive the "device busy" error
-(``-EBUSY``). Restricting access will be done in the open function displayed by
-the driver. Follow comments marked with **TODO 3** and implement them.
+使用原子变量限制设备访问，以便一次只能有一个进程打开该设备。其他进程将收到“设备忙”错误 (``-EBUSY``)。限制访问将在驱动程序中的打开函数中完成。按照标记为 **TODO 3** 的注释进行操作并实现以下内容。
 
-   1. Add an ``atomic_t`` variable to the device structure.
-   2. Initialize the variable at module initialization.
-   3. Use the variable in the open function to restrict access to the device. We
-      recommend using :c:func:`atomic_cmpxchg`.
-   4. Reset the variable in the release function to retrieve access to the device.
-   5. To test your deployment, you'll need to simulate a long-term use of your
-      device. To simulate a sleep, call the scheduler at the end of the device opening:
+   1. 在设备结构体中添加 ``atomic_t`` 变量。
+   2. 在模块初始化时对该变量进行初始化。
+   3. 在打开函数中使用该变量限制对设备的访问。我们建议使用 :c:func:`atomic_cmpxchg`。
+   4. 在释放函数中重置该变量以恢复对设备的访问权限。
+   5. 要测试你的部署，你需要模拟对设备的长期使用。要模拟休眠，请在设备打开操作的末尾调用调度器：
 
 .. code-block:: bash
 
@@ -868,170 +673,123 @@ the driver. Follow comments marked with **TODO 3** and implement them.
 
 .. **
 
-   6. Test using ``cat /dev/so2_cdev`` & ``cat /dev/so2_cdev``.
+   6. 使用 ``cat /dev/so2_cdev`` 和 ``cat /dev/so2_cdev`` 进行测试。
 
+.. note:: atomic_cmpxchg 函数的优点在于它可以在一个原子操作中检查变量的旧值并将其设置为新值。详细了解 `atomic_cmpxchg <https://www.khronos.org/registry/OpenCL/sdk/1.1/docs/man/xhtml/atomic_cmpxchg.html>`_。这里有一个使用示例 `<http://elixir.free-electrons.com/linux/v4.9/source/lib/dump_stack.c#L24>`_ 。
 
-.. note:: The advantage of the atomic_cmpxchg function is that it can check the
-          old value of the variable and set it up to a new value, all in one
-          atomic operation. Read more details about `atomic_cmpxchg <https://www.khronos.org/registry/OpenCL/sdk/1.1/docs/man/xhtml/atomic_cmpxchg.html>`_
-          An example of use is `here <http://elixir.free-electrons.com/linux/v4.9/source/lib/dump_stack.c#L24>`_.
+5. 读操作
+----------
 
-5. Read operation
------------------
+在驱动程序中实现读取函数。按照标有 ``TODO 4`` 的注释并实现以下步骤：
 
-Implement the read function in the driver. Follow comments marked with ``TODO 4`` and implement them.
+   1. 在 ``so2_device_data`` 结构中保持一个缓冲区，并用 ``MESSAGE`` 宏的值进行初始化。缓冲区的初始化在模块的 ``init`` 函数中完成。
+   2. 在读取调用时，将内核空间缓冲区的内容复制到用户空间缓冲区。
 
-   1. Keep a buffer in ``so2_device_data`` structure initialized with the value of ``MESSAGE`` macro.
-      Initializing this buffer will be done in module ``init`` function.
-   2. At a read call, copy the contents of the kernel space buffer into the user
-      space buffer.
+      * 使用 :c:func:`copy_to_user` 函数将信息从内核空间复制到用户空间。
+      * 暂时忽略大小和偏移参数。可以假设用户空间的缓冲区足够大，不需要检查读取函数的大小参数的有效性。
+      * 读取调用返回的值是从内核空间缓冲区传输到用户空间缓冲区的字节数。
 
-      * Use the :c:func:`copy_to_user` function to copy information from kernel space to
-        user space.
-      * Ignore the size and offset parameters at this time. You can assume that
-        the buffer in user space is large enough. You do not need to check the
-        validity of the size argument of the read function.
-      * The value returned by the read call is the number of bytes transmitted
-        from the kernel space buffer to the user space buffer.
+   3. 实现完成后，使用 ``cat /dev/so2_cdev`` 进行测试。
 
-   3. After implementation, test using ``cat /dev/so2_cdev``.
+.. note:: 命令 ``cat /dev/so2_cdev`` 不会结束（使用Ctrl+C）。请阅读 `读和写`_ 和 `访问进程的地址空间`_ 部分。如果要显示偏移值，请使用以下形式的构造: ``pr_info("Offset: %lld \n", *offset)``；偏移值的数据类型 ``loff_t`` 是 ``long long int`` 的 typedef。
 
-.. note:: The command ``cat /dev/so2_cdev`` does not end (use Ctrl+C).
-          Read the `read and write`_ sections and `Access to the address space of the process`_
-          If you want to display the offset value use a construction of the form:
-          ``pr_info("Offset: %lld \n", *offset)``; The data type loff_t (used by offset ) is a typedef for long long int.
+``cat`` 命令一直读取到文件的末尾，文件通过读取返回值为 0 来表示读到末尾了。因此，为了正确实现，你需要更新并使用读函数中接收的偏移参数，并在用户达到缓冲区末尾时返回 0。
 
-The ``cat`` command reads to the end of the file, and the end of the file is
-signaled by returning the value 0 in the read. Thus, for a correct implementation,
-you will need to update and use the offset received as a parameter in the read
-function and return the value 0 when the user has reached the end of the buffer.
+修改驱动程序以使 ``cat`` 命令结束：
 
-Modify the driver so that the ``cat`` commands ends:
+    1. 使用大小参数。
+    2. 对于每次读取，相应地更新偏移参数。
+    3. 确保读取函数返回已复制到用户缓冲区的字节数。
 
-    1. Use the size parameter.
-    2. For every read, update the offset parameter accordingly.
-    3. Ensure that the read function returns the number of bytes that were copied
-       into the user buffer.
+.. note:: 通过解引用偏移参数，可以读取并移动在文件中的当前位置。每次成功进行读取后都需要更新其值。
 
-.. note:: By dereferencing the offset parameter it is possible to read and move the current
-          position in the file. Its value needs to be updated every time a read is done
-          successfully.
+6. 写操作
+----------
 
-6. Write operation
-------------------
+添加将消息写入内核缓冲区以替换预定义消息的功能。在驱动程序中实现写函数。按照标有 ``TODO 5`` 的注释进行操作。
 
-Add the ability to write a message into kernel buffer to replace the predefined message. Implement
-the write function in the driver. Follow comments marked with ``TODO 5``
+此时忽略偏移参数。你可以假设驱动程序缓冲区足够大。你无需检查写函数大小参数的有效性。
 
-Ignore the offset parameter at this time. You can assume that the driver buffer is
-large enough. You do not need to check the validity of the write function size
-argument.
-
-.. note:: The prototype of a device driver's operations is in the file_operations
-          structure.
-          Test using commands:
+.. 注意:: 设备驱动程序操作的原型位于 file_operations 结构中。使用以下命令进行测试：
 
           .. code-block:: bash
 
              echo "arpeggio"> /dev/so2_cdev
              cat /dev/so2_cdev
 
-          Read the `read and write`_ sections and `Access to the address space of the process`_
+          请阅读 `读和写`_ 小节和 `访问进程地址空间`_ 小节。
 
-7. ioctl operation
-------------------
+7. ioctl 操作
+-------------
 
-For this exercise, we want to add the ioctl ``MY_IOCTL_PRINT`` to display the
-message from the ``IOCTL_MESSAGE`` macro in the driver.
-Follow the comments marked with ``TODO 6``
+对于这个练习，我们希望在驱动程序中添加 ioctl ``MY_IOCTL_PRINT`` 来显示来自宏 ``IOCTL_MESSAGE`` 的消息。按照标有 ``TODO 6`` 的注释进行操作。
 
-For this:
+为此：
 
-   1. Implement the ioctl function in the driver.
-   2. We need to use ``user/so2_cdev_test.c`` to call the
-      ioctl function with the appropriate parameters.
-   3. To test, we will use an user-space program (``user/so2_cdev_test.c``)
-      which will call the ``ioctl`` function with the required arguments.
+   1. 在驱动程序中实现 ioctl 函数。
+   2. 我们需要使用 ``user/so2_cdev_test.c`` 调用 ioctl 函数，并传递适当的参数。
+   3. 为了进行测试，我们将使用一个用户空间程序 (``user/so2_cdev_test.c``) 来调用具有所需参数的 ``ioctl`` 函数。
 
-.. note:: The macro ``MY_IOCTL_PRINT`` is defined in the file ``include/so2_cdev.h``,
-          which is shared between the kernel module and the user-space program.
+.. 注意:: 宏 ``MY_IOCTL_PRINT`` 在文件 ``include/so2_cdev.h`` 中定义，该文件在内核模块和用户空间程序之间共享。
 
-          Read the `ioctl`_ section in the lab.
+          请阅读实验中的 `ioctl`_ 章节。
 
-.. note:: The user-space code is compiled automatically at ``make build`` and
-          copied at ``make copy``.
+.. 注意:: 用户空间代码在 ``make build`` 时会自动编译，并在 ``make copy`` 时被复制。
 
-          Because we need to compile the program for qemu machine which is 32 bit,
-          if your host is 64 bit then you need to install ``gcc-multilib`` package.
+          由于我们需要为 32 位的 qemu 机器编译程序，如果你的主机是 64 位的，那么你需要安装 ``gcc-multilib`` 软件包。
 
-Extra Exercises
-===============
+额外练习
+========
 
-Ioctl with messaging
---------------------
+带消息的 ioctl
+----------------
 
-Add two ioctl operations to modify the message associated with the
-driver. Use fixed-length buffer ( BUFFER_SIZE ).
+为驱动程序添加两个 ioctl 操作，用于修改与驱动程序关联的消息。应使用固定长度的缓冲区（BUFFER_SIZE）。
 
-  1. Add the ``ioctl`` function from the driver the following operations:
+1. 在驱动程序的 ``ioctl`` 函数中添加以下操作：
 
-     * ``MY_IOCTL_SET_BUFFER`` for writing a message to the device;
-     * ``MY_IOCTL_GET_BUFFER`` to read a message from your device.
+   * ``MY_IOCTL_SET_BUFFER``：用于向设备写入消息；
+   * ``MY_IOCTL_GET_BUFFER``：用于从设备读取消息。
 
-  2. For testing, pass the required command line arguments to the
-     user-space program.
+2. 为进行测试，将所需的命令行参数传递给用户空间程序。
 
-.. note:: Read the `ioctl`_ and `Access to the address space of the process`_
-   sections of the lab.
+.. note:: 阅读实验中的 `ioctl`_ 和 `访问进程地址空间`_ 部分。
 
-Ioctl with waiting queues
--------------------------
+使用等待队列的 ioctl
+-------------------
 
-Add two ioctl operations to the device driver for queuing.
+为设备驱动程序添加两个 ``ioctl`` 操作，用于队列处理。
 
-   1. Add the ``ioctl`` function from the driver the following operations:
+1. 在驱动程序的 ``ioctl`` 函数中添加以下操作：
 
-      * ``MY_IOCTL_DOWN`` to add the process to a queue;
-      * ``MY_IOCTL_UP`` to remove the process from a queue.
+   * ``MY_IOCTL_DOWN``：将进程添加到队列中；
+   * ``MY_IOCTL_UP``：将进程从队列中移除。
 
-   2. Fill the device structure with a ``wait_queue_head_t`` field and a flag.
-   3. Do not forget to initialize the wait queue and flag.
-   4. Remove exclusive access condition from previous exercise
-   5. For testing, pass the required command line arguments to the
-      user-space program.
+2. 在设备结构中填充 ``wait_queue_head_t`` 字段和一个标志。
+3. 不要忘记初始化等待队列和标志。
+4. 从前一个练习中移除独占访问条件。
+5. 为进行测试，将所需的命令行参数传递给用户空间程序。
 
-When the process is added to the queue, it will remain blocked in execution; To
-run the queue command open a new console in the virtual machine with Alt+F2 ;
-You can return to the previous console with Alt+F1. If you're connected via
-SSH to the virtual machine, open a new console.
+当进程被添加到队列中时，它将保持阻塞状态；要运行队列命令，请使用 Alt+F2 打开虚拟机中的新控制台；可以使用 Alt+F1 返回到上一个控制台。如果是通过 SSH 连接到虚拟机的，请打开新的控制台。
 
-.. note:: Read the `ioctl`_ and `Waiting queues`_ sections in the lab.
+.. 注意:: 阅读实验中的 `ioctl`_ 和 `等待队列`_ 部分。
 
-O_NONBLOCK implementation
--------------------------
+O_NONBLOCK 实现
+----------------
 
-.. note:: If a file is open with the ``O_NONBLOCK`` flag, then its
-          operations will be non-blocking.
+.. note:: 如果文件使用 ``O_NONBLOCK`` 标志打开，则其操作将是非阻塞的。
 
-          In case data is not available when performing a read, the following
-          happens:
+          如果在执行读取操作时数据不可用，则会发生以下情况：
 
-           * if the file has been open with ``O_NONBLOCK``, the read call
-             will return ``-EWOULDBLOCK``.
-           * otherwise, the current task (process) will be placed in a waiting
-             queue and will be unblocked as soon as data becomes available
-             (in our case, at write).
+           * 如果文件是使用 ``O_NONBLOCK`` 打开的，读取调用将返回 ``-EWOULDBLOCK``。
+           * 否则，当前任务（进程）将被放入等待队列，并在数据可用时解除阻塞（在我们的情况下，在写入时）。
 
-* To allow unblocking the read operation, remove the exclusive access
-  condition from previous exercises.
-* You can use the queue defined for the previous exercise.
-* You can ignore the file offset.
-* Modify the initial size of data to ``0``, to allow testing.
-* For testing, pass the required command line arguments to the
-  user-space program.
+* 为允许非阻塞的读取操作，从前面的练习中移除独占访问条件。
+* 可以使用前一个练习中定义的队列。
+* 可以忽略文件偏移量。
+* 将数据的初始大小修改为 ``0``，以便进行测试。
+* 为进行测试，将所需的命令行参数传递给用户空间程序。
 
-  * when using the ``n`` option, the test program will change the open flags
-    to ``O_NONBLOCK`` and then perform a ``read``.
+  * 当使用 ``n`` 选项时，测试程序会将打开标志更改为 ``O_NONBLOCK``，然后执行 ``read`` 操作。
 
-* What are the flags used to open the file when running ``cat /dev/so2_dev``?
-
+* 运行 ``cat /dev/so2_dev`` 命令时，打开文件过程中使用了哪些标志？
