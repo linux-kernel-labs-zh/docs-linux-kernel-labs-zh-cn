@@ -73,3 +73,4 @@ Linux 内核教学
    info/vm.rst
    info/extra-vm.rst
    info/contributing.rst
+   info/chinese-localization-info.rst
