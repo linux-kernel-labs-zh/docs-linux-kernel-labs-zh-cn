@@ -14,18 +14,18 @@ jobs:
         uses: actions/checkout@v2
         with:
           path: source
-      - name: checkout hanyujie2002.github.io/linux-zh middle
+      - name: checkout linux-kernel-labs-zh/linux-zh middle
         uses: actions/checkout@v2
         with:
-          repository: hanyujie2002/linux-zh
+          repository: linux-kernel-labs-zh/linux-zh
           path: middle
           token: ${{ secrets.DEPLOY_KEY }}
-      - name: Copy generated middle/Documentation/teaching
+      - name: Copy source file to linux-zh repo
         run: cp -r source/* middle/Documentation/teaching
       - name: Commit and push changes
         run: |
           cd middle
-          git config user.name 'hanyujie2002'
+          git config user.name 'actionBot'
           git config user.email github-actions@github.com
           git add .
           git commit -m "changed at $(date -u)"
