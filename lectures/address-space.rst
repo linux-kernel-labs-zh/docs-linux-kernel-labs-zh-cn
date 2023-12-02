@@ -84,15 +84,15 @@ x86 内存管理单元（MMU）包括分段单元和分页单元。分段单元�
 
    .. ifslides::
 
-         * 选择器: CS、DS、SS、ES、FS、GS
+      * 选择器: CS、DS、SS、ES、FS、GS
 
-         * 索引: 用于索引段描述符表
+      * 索引: 用于索引段描述符表
 
-         * TI: 选择 GDT 或 LDT
+      * TI: 选择 GDT 或 LDT
 
-         * RPL: 仅对 CS 表示（当前）运行的特权级别
+      * RPL: 仅对 CS 表示（当前）运行的特权级别
 
-         * GDTR 和 LDTR 寄存器指向 GDT 和 LDT 的基址
+      * GDTR 和 LDTR 寄存器指向 GDT 和 LDT 的基址
 
 
 索引用于确定应使用描述符表的哪个条目。 `TI` 用于选择全局描述符表（GDT）或局部描述符表（LDT）。这些表实际上是从特殊寄存器 `GDTR`（用于 GDT）和 `LDTR`（用于 LDT）指定的位置开始的数组。
