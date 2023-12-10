@@ -1,83 +1,46 @@
 =============
-Deferred work
+延迟工作
 =============
 
-Lab objectives
+实验目标
 ==============
 
-* Understanding deferred work (i.e. code scheduled to be executed at a
-  later time)
-* Implementation of common tasks that uses deferred work
-* Understanding the peculiarities of synchronization for deferred work
+* 理解延迟工作（即在稍后时间执行的代码）
+* 实现使用延迟工作的常见任务
+* 理解延迟工作的同步特性
 
-Keywords: softirq, tasklet, struct tasklet_struct, bottom-half
-handlers, jiffies, HZ, timer, struct timer_list, spin_lock_bh,
-spin_unlock_bh, workqueue, struct work_struct, kernel thread, events/x
+关键词：softirq、tasklet、struct tasklet_struct、下半部处理程序、jiffies、HZ、timer、struct timer_list、spin_lock_bh、spin_unlock_bh、workqueue、struct work_struct、内核线程、events/x
 
-Background information
+背景信息
 ======================
 
-Deferred work is a class of kernel facilities that allows one to
-schedule code to be executed at a later timer. This scheduled code can
-run either in the process context or in interruption context depending
-on the type of deferred work. Deferred work is used to complement the
-interrupt handler functionality since interrupts have important
-requirements and limitations:
+延迟工作是一类内核功能，允许我们安排代码在稍后的时间执行。这些安排的代码可以在进程上下文或中断上下文中运行，具体取决于延迟工作的类型。延迟工作用于补充中断处理程序的功能，因为中断具有重要的要求和限制：
 
-* The execution time of the interrupt handler must be as small as
-  possible
-* In interrupt context we can not use blocking calls
+* 中断处理程序的执行时间必须尽可能短
+* 在中断上下文中，我们不能使用阻塞调用
 
-Using deferred work we can perform the minimum required work in the
-interrupt handler and schedule an asynchronous action from the
-interrupt handler to run at a later time and execute the rest of the
-operations.
+使用延迟工作，我们可以在中断处理程序中执行最小所需的工作，并安排一个异步操作在稍后的时间运行，以执行其余的操作。
 
-Deferred work that runs in interrupt context is also known as
-bottom-half, since its purpose is to execute the rest of the actions
-from an interrupt handler (top-half).
+在中断上下文中运行的延迟工作也称为下半部（bottom-half），因为其目的是执行中断处理程序（top-half）之外所剩余的操作。
 
-Timers are another type of deferred work that are used to schedule the
-execution of future actions after a certain amount of time has passed.
+定时器（timer）是另一种类型的延迟工作，用于调度在经过一定时间后未来操作的执行。
 
-Kernel threads are not themselves deferred work, but can be used to
-complement the deferred work mechanisms. In general, kernel threads
-are used as "workers" to process events whose execution contains
-blocking calls.
+内核线程本身并不是延迟工作，但可以用来补充延迟工作机制。通常，内核线程用作处理包含阻塞调用的事件的“工作线程（workers）”。
 
-There are three typical operations that are used with all types of
-deferred work:
+所有类型的延迟工作都使用三种典型的操作：
 
-1. **Initialization**. Each type is described by a structure whose
-   fields will have to be initialized. The handler to be scheduled is
-   also set at this time.
-2. **Scheduling**. Schedules the execution of the handler as soon as
-   possible (or after expiry of a timeout).
-3. **Masking** or **Canceling**. Disables the execution of the
-   handler. This action can be either synchronous (which guarantees
-   that the handler will not run after the completion of canceling) or
-   asynchronous.
+1. **初始化**。每种类型都由一个结构描述，其字段需要进行初始化。在此时还设置要调度的处理程序。
+2. **调度**。尽快安排处理程序的执行（或在超时后）。
+3. **屏蔽** 或 **取消**。禁用处理程序的执行。此操作可以是同步的（可保证在取消完成后不再运行处理程序）或异步的。
 
-.. attention:: When doing deferred work cleanup, like freeing the
-	       structures associated with the deferred work or
-	       removing the module and thus the handler code from the
-	       kernel, always use the synchronous type of canceling
-	       the deferred work.
+.. attention:: 在进行延迟工作的清理工作（例如释放与延迟工作相关的结构或从内核中删除模块及其处理程序代码），始终使用同步类型的延迟工作取消。
 
-The main types of deferred work are kernel threads and softirqs. Work
-queues are implemented on top of kernel threads and tasklets and
-timers on top of softirqs. Bottom-half handlers were the first
-implementation of deferred work in Linux, but in the meantime it was
-replaced by softirqs. That is why some functions presented
-contain *bh* in their name.
+主要的延迟工作类型包括内核线程和软中断（softirq）。工作队列是在内核线程之上实现的，而 tasklet 和定时器是在软中断之上实现的。下半部（bottom-half）处理程序是 Linux 中最早的延迟工作实现，但后来被软中断所取代。这就是某些函数名称中含有 *bh* 的原因（译注：bh 即 bottom-half 的首字母缩写）。
 
-Softirqs
-========
+软中断（Softirqs）
+==================
 
-softirqs can not be used by device drivers, they are reserved for
-various kernel subsystems. Because of this there is a fixed number of
-softirqs defined at compile time. For the current kernel version we
-have the following types defined:
+设备驱动程序不能使用软中断，软中断专门为各种内核子系统保留。因此，在编译时定义的软中断的数量是固定的。针对当前内核版本，定义了以下类型：
 
 .. code-block:: c
 
@@ -96,46 +59,27 @@ have the following types defined:
    };
 
 
-Each type has a specific purpose:
+每种类型都有特定的用途：
 
-* *HI_SOFTIRQ* and *TASKLET_SOFTIRQ* - running tasklets
-* *TIMER_SOFTIRQ* - running timers
-* *NET_TX_SOFIRQ* and *NET_RX_SOFTIRQ* - used by the networking subsystem
-* *BLOCK_SOFTIRQ* - used by the IO subsystem
-* *BLOCK_IOPOLL_SOFTIRQ* - used by the IO subsystem to increase performance when the iopoll handler is invoked;
-* *SCHED_SOFTIRQ* - load balancing
-* *HRTIMER_SOFTIRQ* - implementation of high precision timers
-* *RCU_SOFTIRQ* - implementation of RCU type mechanisms [1]_
+* *HI_SOFTIRQ* 和 *TASKLET_SOFTIRQ* ——运行任务（tasklet）
+* *TIMER_SOFTIRQ* ——运行定时器
+* *NET_TX_SOFTIRQ* 和 *NET_RX_SOFTIRQ* ——由网络子系统使用
+* *BLOCK_SOFTIRQ* ——由 IO 子系统使用
+* *BLOCK_IOPOLL_SOFTIRQ* ——当调用 iopoll 处理程序时，由 IO 子系统使用以提高性能
+* *SCHED_SOFTIRQ* ——负载均衡
+* *HRTIMER_SOFTIRQ* ——高精度定时器的实现
+* *RCU_SOFTIRQ* ——RCU 类型机制的实现 [1]_
 
-.. [1] RCU is a mechanism by which destructive operations
-       (e.g. deleting an element from a chained list) are done in two
-       steps: (1) removing references to deleted data and (2) freeing
-       the memory of the element. The second setup is done only after
-       we are sure nobody uses the element anymore. The advantage of
-       this mechanism is that reading the data can be done without
-       synchronization. For more information see
-       Documentation/RCU/rcu.txt.
+.. [1] RCU 是一种机制，用于按照两个步骤执行破坏性操作（例如从链表中删除元素）：（1）移除对已删除数据的引用（2）释放元素的内存。只有在确保没有人再使用该元素后，才执行第二个步骤。此机制的优点是可以无需同步地读取数据。有关更多信息，请参阅 Documentation/RCU/rcu.txt。
 
+*HI_SOFTIRQ* 类型的软中断优先级最高，其次是其他定义的软中断。*RCU_SOFTIRQ* 具有最低优先级。
 
-The highest priority is the *HI_SOFTIRQ* type softirqs, followed in
-order by the other softirqs defined. *RCU_SOFTIRQ* has the lowest
-priority.
+软中断在中断上下文中运行，这意味着它们不能调用阻塞函数。如果软中断处理程序需要调用此类函数，可以调度工作队列来执行这些阻塞调用。
 
-Softirqs are running in interrupt context which means that they can
-not call blocking functions. If the sofitrq handler requires calls to
-such functions, work queues can be scheduled to execute these blocking
-calls.
-
-Tasklets
+tasklet
 --------
 
-A tasklet is a special form of deferred work that runs in interrupt
-context, just like softirqs. The main difference between sofirqs and tasklets
-is that tasklets can be allocated dynamically and thus they can be used
-by device drivers. A tasklet is represented by :c:type:`struct
-tasklet` and as many other kernel structures it needs to be
-initialized before being used. A pre-initialized tasklet can be defined
-as following:
+与软中断类似，任务（tasklet）是一种在中断上下文中运行的延迟工作。任务（tasklet）与软中断之间的主要区别在于，任务（tasklet）可以动态分配，并且因此可以被设备驱动程序使用。任务（tasklet）由 :c:type:`struct tasklet` 表示，与许多其他内核结构一样，需要在使用之前进行初始化。预初始化的任务（tasklet）可以以如下方式定义：
 
 .. code-block:: c
 
@@ -145,8 +89,7 @@ as following:
    DECLARE_TASKLET_DISABLED(tasklet, handler, data);
 
 
-If we want to initialize the tasklet manually we can use the following
-approach:
+如果我们想手动初始化任务（tasklet），可以使用以下方法：
 
 .. code-block:: c
 
@@ -156,10 +99,9 @@ approach:
 
    tasklet_init(&tasklet, handler, data);
 
-The *data* parameter will be sent to the handler when it is executed.
+当执行任务（tasklet）时，*data* 参数将发送给处理程序。
 
-Programming tasklets for running is called scheduling. Tasklets are
-running from softirqs. Tasklets scheduling is done with:
+可以使用调度操作来安排任务（tasklet）的运行。任务（tasklet）是在软中断的基础上执行的。可以使用以下函数进行任务（tasklet）的调度：
 
 .. code-block:: c
 
@@ -167,71 +109,52 @@ running from softirqs. Tasklets scheduling is done with:
 
    void tasklet_hi_schedule(struct tasklet_struct *tasklet);
 
-When using *tasklet_schedule*, a *TASKLET_SOFTIRQ* softirq is
-scheduled and all tasklets scheduled are run. For
-*tasklet_hi_schedule*, a *HI_SOFTIRQ* softirq is scheduled.
+使用 *tasklet_schedule* 函数，将调度一个 *TASKLET_SOFTIRQ* 软中断，并运行所有调度的任务（tasklet）。对于 *tasklet_hi_schedule* 函数，将调度一个 *HI_SOFTIRQ* 软中断。
 
-If a tasklet was scheduled multiple times and it did not run between
-schedules, it will run once.  Once the tasklet has run, it can be
-re-scheduled, and will run again at a later timer. Tasklets can be
-re-scheduled from their handlers.
+如果一个任务（tasklet）被多次调度，并且在多个调度之间这个任务（tasklet）没有运行，它将只运行一次。任务（tasklet）运行后，可以重新调度它，以便在稍后的时间再次运行。任务（tasklet）可以被其处理程序重新安排。
 
-Tasklets can be masked and the following functions can be used:
+任务（tasklet）可以被屏蔽，可以使用以下函数：
 
 .. code-block:: c
 
-   void tasklet_enable(struct tasklet_struct * tasklet);
-   void tasklet_disable(struct tasklet_struct * tasklet);
+   void tasklet_enable(struct tasklet_struct *tasklet);
+   void tasklet_disable(struct tasklet_struct *tasklet);
 
-Remember that since tasklets are running from softirqs, blocking calls
-can not be used in the handler function.
+请记住，由于任务（tasklet）是在软中断的基础上执行的，因此不能在处理程序函数中使用阻塞调用。
 
-Timers
-------
+定时器（Timer）
+--------------
 
-A particular type of deferred work, very often used, are timers. They
-are defined by :c:type:`struct timer_list`. They run in interrupt
-context and are implemented on top of softirqs.
+定时器是一种特殊类型的延迟工作。它们由 :c:type:`struct timer_list` 定义，并在中断上下文中运行，是基于软中断实现的。
 
-To be used, a timer must first be initialized by calling :c:func:`timer_setup`:
+要使用定时器，首先必须调用 :c:func:`timer_setup` 函数进行初始化：
 
 .. code-block:: c
 
    #include <linux/sched.h>
 
-   void timer_setup(struct timer_list * timer,
-		    void (*function)(struct timer_list *),
-		    unsigned int flags);
+   void timer_setup(struct timer_list *timer,
+          void (*function)(struct timer_list *),
+          unsigned int flags);
 
-The above function initializes the internal fields of the structure
-and associates *function* as the timer handler. Since timers are planned
-over softirqs, blocking calls can not be used in the code associated
-with the treatment function.
+上述函数初始化了结构体的内部字段，并将 *function* 关联为定时器处理程序。由于定时器是通过软中断计划的，因此在与处理函数相关的代码中不能使用阻塞调用。
 
-Scheduling a timer is done with :c:func:`mod_timer`:
+使用 :c:func:`mod_timer` 函数进行定时器的调度：
 
 .. code-block:: c
 
    int mod_timer(struct timer_list *timer, unsigned long expires);
 
-Where *expires* is the time (in the future) to run the handler
-function. The function can be used to schedule or reschedule a timer.
+其中 *expires* 是要运行处理函数的时间（未来的时间）。该函数可用于调度或重新调度定时器。
 
-The time unit is *jiffie*. The absolute value of a jiffie
-is dependent on the platform and it can be found using the
-:c:type:`HZ` macro that defines the number of jiffies for 1 second. To
-convert between jiffies (*jiffies_value*) and seconds (*seconds_value*),
-the following formulas are used:
+时间单位为 *jiffie*。一 jiffie 的绝对值取决于平台，并且可以使用 :c:type:`HZ` 宏找到，该宏定义了 1 秒内的 jiffies 数。要在 jiffies (*jiffies_value*) 和秒 (*seconds_value*) 之间进行转换，使用以下公式：
 
 .. code-block:: c
 
    jiffies_value = seconds_value * HZ ;
    seconds_value = jiffies_value / HZ ;
 
-The kernel maintains a counter that contains the number of jiffies
-since the last boot, which can be accessed via the :c:macro:`jiffies`
-global variable or macro. We can use it to calculate a time in the
-future for timers:
+内核维护一个计数器，其中包含自上次引导（boot）以来的 jiffies 数，可以通过全局变量或宏 :c:macro:`jiffies` 访问。我们可以使用它来为定时器计算未来的时间：
 
 .. code-block:: c
 
@@ -243,27 +166,18 @@ future for timers:
    current_jiffies = jiffies;
    next_jiffies = jiffies + seconds * HZ;
 
-To stop a timer, use :c:func:`del_timer` and :c:func:`del_timer_sync`:
+要停止定时器，请使用 :c:func:`del_timer` 和 :c:func:`del_timer_sync` 函数：
 
 .. code-block:: c
 
    int del_timer(struct timer_list *timer);
    int del_timer_sync(struct timer_list *timer);
 
-These functions can be called for both a scheduled timer and an
-unplanned timer. :c:func:`del_timer_sync` is used to eliminate the
-races that can occur on multiprocessor systems, since at the end of
-the call it is guaranteed that the timer processing function does not
-run on any processor.
+这些函数可以用于已调度的定时器和未计划的定时器。:c:func:`del_timer_sync` 用于消除在多处理器系统上可能出现的竞态条件，因为在调用结束时，可以保证定时器处理函数不会在任何处理器上运行。
 
-A frequent mistake in using timers is that we forget to turn off
-timers. For example, before removing a module, we must stop the timers
-because if a timer expires after the module is removed, the handler
-function will no longer be loaded into the kernel and a kernel oops
-will be generated.
+在使用定时器时，常见的错误是忘记关闭定时器。例如，在移除模块之前，我们必须停止定时器，因为如果定时器在模块被移除后过期，处理函数将不再加载到内核中，从而导致内核出错。
 
-The usual sequence used to initialize and schedule a one-second
-timeout is:
+通常用于初始化和调度一秒钟超时的代码是：
 
 .. code-block:: c
 
@@ -271,60 +185,44 @@ timeout is:
 
    void timer_function(struct timer_list *);
 
-   struct timer_list timer ;
+   struct timer_list timer;
    unsigned long seconds = 1;
 
    timer_setup(&timer, timer_function, 0);
    mod_timer(&timer, jiffies + seconds * HZ);
 
-And to stop it:
+停止定时器的方法如下：
 
 .. code-block:: c
 
    del_timer_sync(&timer);
 
-Locking
--------
+锁定（Locking）
+------------
 
-For synchronization between code running in process context (A) and
-code running in softirq context (B) we need to use special locking
-primitives. We must use spinlock operations augmented with
-deactivation of bottom-half handlers on the current processor in (A),
-and in (B) only basic spinlock operations. Using spinlocks makes sure
-that we don't have races between multiple CPUs while deactivating the
-softirqs makes sure that we don't deadlock in the softirq is scheduled
-on the same CPU where we already acquired a spinlock.
+为了在运行在进程上下文（A）的代码和运行在软中断上下文（B）的代码之间进行同步，我们需要使用特殊的锁原语。我们必须在（A）中使用自旋锁操作，并禁用底半部处理程序，在（B）中只使用基本的自旋锁操作。使用自旋锁可以确保在禁用软中断后，多个 CPU 之间不会发生竞争，而禁用软中断可以确保在已经获取自旋锁的 CPU 上调度软中断时不会发生死锁。
 
-We can use the :c:func:`local_bh_disable` and
-:c:func:`local_bh_enable` to disable and enable softirqs handlers (and
-since they run on top of softirqs also timers and tasklets):
+我们可以使用 :c:func:`local_bh_disable` 和 :c:func:`local_bh_enable` 来禁用和启用软中断处理程序（并且由于定时器和任务（tasklet）在软中断之上运行，还包括它们）：
 
 .. code-block:: c
 
    void local_bh_disable(void);
    void local_bh_enable(void);
 
-Nested calls are allowed, the actual reactivation of the softirqs is
-done only when all local_bh_disable() calls have been complemented by
-local_bh_enable() calls:
+允许嵌套调用，当所有的 local_bh_disable() 调用都有相应的 local_bh_enable() 调用时，才会实际重新启用软中断：
 
 .. code-block:: c
 
-   /* We assume that softirqs are enabled */
-   local_bh_disable();  /* Softirqs are now disabled */
-   local_bh_disable();  /* Softirqs remain disabled */
+   /* 假设软中断已启用 */
+   local_bh_disable();  /* 现在禁用了软中断 */
+   local_bh_disable();  /* 软中断仍处于禁用状态 */
 
-   local_bh_enable();  /* Softirqs remain disabled */
-   local_bh_enable();  /* Softirqs are now enabled */
+   local_bh_enable();  /* 软中断仍处于禁用状态 */
+   local_bh_enable();  /* 现在启用了软中断 */
 
-.. attention:: These above calls will disable the softirqs only on the
-   local processor and they are usually not safe to use, they must be
-   complemented with spinlocks.
+.. attention:: 上述调用只会在本地处理器上禁用软中断，通常不安全，必须与自旋锁配合使用。
 
-
-Most of the time device drivers will use special versions of spinlocks
-calls for synchronization like :c:func:`spin_lock_bh` and
-:c:func:`spin_unlock_bh`:
+大多数情况下，设备驱动程序将使用用于同步的特殊版本的自旋锁调用，如 :c:func:`spin_lock_bh` 和 :c:func:`spin_unlock_bh`：
 
 .. code-block:: c
 
@@ -332,27 +230,17 @@ calls for synchronization like :c:func:`spin_lock_bh` and
    void spin_unlock_bh(spinlock_t *lock);
 
 
-Workqueues
-==========
+工作队列
+======================
 
-Workqueues are used to schedule actions to run in process context. The
-base unit with which they work is called work. There are two types of
-work:
+工作队列（workqueue）用于在进程上下文中调度要执行的操作。它们所处理的基本单元称为工作项（work）。有两种类型的工作项：
 
-* :c:type:`struct work_struct` - it schedules a task to run at
-  a later time
-* :c:type:`struct delayed_work` - it schedules a task to run after at
-  least a given time interval
+* :c:type:`struct work_struct` ——它安排一个任务在稍后的时间运行
+* :c:type:`struct delayed_work` ——它安排一个任务在至少给定的时间间隔之后运行
 
-A delayed work uses a timer to run after the specified time
-interval. The calls with this type of work are similar to those for
-:c:type:`struct work_struct`, but has **_delayed** in the functions
-names.
+延迟工作项使用定时器在指定的时间间隔后运行。这种类型的工作项的调用方式与 :c:type:`struct work_struct` 类似，但在函数名称中有 **_delayed**。
 
-Before using them a work item must be initialized. There are two types
-of macros that can be used, one that declares and initializes the work
-item at the same time and one that only initializes the work item (and
-the declaration must be done separately):
+在使用工作项之前，必须对其进行初始化。有两种可以使用的宏类型，一种在同时声明和初始化工作项，另一种仅初始化工作项（声明必须单独进行）：
 
 .. code-block:: c
 
@@ -364,11 +252,9 @@ the declaration must be done separately):
    INIT_WORK(struct work_struct *work, void(*function)(struct work_struct *));
    INIT_DELAYED_WORK(struct delayed_work *work, void(*function)(struct work_struct *));
 
-:c:func:`DECLARE_WORK` and :c:func:`DECLARE_DELAYED_WORK` declare and
-initialize a work item, and :c:func:`INIT_WORK` and
-:c:func:`INIT_DELAYED_WORK` initialize an already declared work item.
+:c:func:`DECLARE_WORK` 和 :c:func:`DECLARE_DELAYED_WORK` 声明并初始化工作项，而 :c:func:`INIT_WORK` 和 :c:func:`INIT_DELAYED_WORK` 则初始化已经声明的工作项。
 
-The following sequence declares and initiates a work item:
+以下代码声明并初始化工作项：
 
 .. code-block:: c
 
@@ -378,7 +264,7 @@ The following sequence declares and initiates a work item:
 
    DECLARE_WORK(my_work, my_work_handler);
 
-Or, if we want to initialize the work item separately:
+或者，如果我们想要单独初始化工作项：
 
 .. code-block:: c
 
@@ -388,8 +274,7 @@ Or, if we want to initialize the work item separately:
 
    INIT_WORK(&my_work, my_work_handler);
 
-Once declared and initialized, we can schedule the task using
-:c:func:`schedule_work` and :c:func:`schedule_delayed_work`:
+一旦声明并初始化完成，我们就可以使用 :c:func:`schedule_work` 和 :c:func:`schedule_delayed_work` 来安排任务：
 
 .. code-block:: c
 
@@ -397,48 +282,35 @@ Once declared and initialized, we can schedule the task using
 
    schedule_delayed_work(struct delayed_work *work, unsigned long delay);
 
-:c:func:`schedule_delayed_work` can be used to plan a work item for
-execution with a given delay. The delay time unit is jiffies.
+:c:func:`schedule_delayed_work` 可以用于计划在给定延迟后执行工作项。延迟时间的单位是 jiffies。
 
-Work items can not be masked but they can be canceled by calling
-:c:func:`cancel_delayed_work_sync` or :c:func:`cancel_work_sync`:
+工作项无法被屏蔽，但可以通过调用 :c:func:`cancel_delayed_work_sync` 或 :c:func:`cancel_work_sync` 来取消它们：
 
 .. code-block:: c
 
    int cancel_work_sync(struct delayed_work *work);
    int cancel_delayed_work_sync(struct delayed_work *work);
 
-The call only stops the subsequent execution of the work item. If the
-work item is already running at the time of the call, it will continue
-to run. In any case, when these calls return, it is guaranteed that
-the task will no longer run.
+这些调用只会停止工作项的后续执行。如果在调用时工作项已经在运行，它将继续运行。无论如何，当这些调用返回时，可以确保该任务不再运行。
 
-.. attention:: While there are versions of these functions that are
-	       not synchronous (.e.g. :c:func:`cancel_work`) do not
-	       use them when you are performing cleanup work otherwise
-	       race condition could occur.
+.. attention:: 尽管这些函数也有非同步版本（例如 :c:func:`cancel_work`），但在执行清理工作时不要使用它们，否则可能会出现竞态条件。
 
-We can wait for a workqueue to complete running all of its work items by calling :c:func:`flush_scheduled_work`:
+我们可以通过调用 :c:func:`flush_scheduled_work` 来等待工作队列完成所有工作项的运行：
 
 .. code-block:: c
 
    void flush_scheduled_work(void);
 
-This function is blocking and, therefore, can not be used in interrupt
-context. The function will wait for all work items to be completed.
-For delayed work items, :c:type:`cancel_delayed_work` must be called
-before :c:func:`flush_scheduled_work`.
+此函数是阻塞的，因此不能在中断上下文中使用。该函数将等待所有工作项完成。对于延迟工作项，在调用 :c:func:`flush_scheduled_work` 之前必须调用 :c:type:`cancel_delayed_work`。
 
-Finally, the following functions can be used to schedule work items on
-a particular processor (:c:func:`schedule_delayed_work_on`), or on all
-processors (:c:func:`schedule_on_each_cpu`):
+最后，以下函数可用于在特定处理器上调度工作项 (:c:func:`schedule_delayed_work_on`)，或在所有处理器上调度工作项 (:c:func:`schedule_on_each_cpu`)：
 
 .. code-block:: c
 
    int schedule_delayed_work_on(int cpu, struct delayed_work *work, unsigned long delay);
    int schedule_on_each_cpu(void(*function)(struct work_struct *));
 
-A usual sequence to initialize and schedule a work item is the following:
+初始化和调度工作项的常用代码如下：
 
 .. code-block:: c
 
@@ -450,15 +322,13 @@ A usual sequence to initialize and schedule a work item is the following:
 
    schedule_work(&my_work);
 
-And for waiting for termination of a work item:
+等待工作项终止的方法如下：
 
 .. code-block:: c
 
    flush_scheduled_work();
 
-As you can see, the *my_work_handler* function receives the task as
-the parameter. To be able to access the module's private data, you can
-use :c:func:`container_of`:
+正如你所见，*my_work_handler* 函数接收任务项作为参数。为了能够访问模块的私有数据，可以使用 :c:func:`container_of`：
 
 .. code-block:: c
 
@@ -475,10 +345,7 @@ use :c:func:`container_of`:
       // ...
    }
 
-Scheduling work items with the functions above will run the handler in
-the context of a kernel thread called *events/x*, where x is the
-processor number. The kernel will initialize a kernel thread (or a
-pool of workers) for each processor present in the system:
+使用上述函数调度工作项将在内核线程的上下文中运行处理程序，该线程称为 *events/x*，其中 x 是处理器编号。内核将为系统中每个处理器初始化一个内核线程（或工作池）：
 
 .. code-block:: shell
 
@@ -486,116 +353,96 @@ pool of workers) for each processor present in the system:
    PID TTY TIME CMD
    1?  00:00:00 init
    2 ?  00:00:00 ksoftirqd / 0
-   3 ?  00:00:00 events / 0 <--- kernel thread that runs work items
+   3 ?  00:00:00 events / 0 <--- 运行工作项的内核线程
    4 ?  00:00:00 khelper
    5 ?  00:00:00 kthread
    7?  00:00:00 kblockd / 0
    8?  00:00:00 kacpid
 
-The above functions use a predefined workqueue (called events), and
-they run in the context of the *events/x* thread, as noted
-above. Although this is sufficient in most cases, it is a shared
-resource and large delays in work items handlers can cause delays for
-other queue users. For this reason there are functions for creating
-additional queues.
+上述函数使用预定义的工作队列（称为 events），它们在 *events/x* 线程的上下文中运行，如上所述。尽管在大多数情况下这已经足够，但它是一个共享资源，在工作项处理程序中出现较长的延迟可能会导致其他队列使用者的延迟。因此，有一些函数用于创建额外的队列。
 
-A workqueue is represented by :c:type:`struct workqueue_struct`. A new
-workqueue can be created with these functions:
+工作队列由 :c:type:`struct workqueue_struct` 表示。可以使用以下函数创建一个新的工作队列：
 
 .. code-block:: c
 
    struct workqueue_struct *create_workqueue(const char *name);
    struct workqueue_struct *create_singlethread_workqueue(const char *name);
 
-:c:func:`create_workqueue` uses one thread for each processor in the
-system, and :c:func:`create_singlethread_workqueue` uses a single
-thread.
+:c:func:`create_workqueue` 为系统中的每个处理器使用一个线程，而 :c:func:`create_singlethread_workqueue` 则使用单个线程。
 
-To add a task in the new queue, use :c:func:`queue_work` or
-:c:func:`queue_delayed_work`:
+要将任务添加到新队列中，请使用 :c:func:`queue_work` 或 :c:func:`queue_delayed_work`：
 
 .. code-block:: c
 
-   int queue_work(struct workqueue_struct * queue, struct work_struct *work);
+   int queue_work(struct workqueue_struct *queue, struct work_struct *work);
 
    int queue_delayed_work(struct workqueue_struct *queue,
-			  struct delayed_work * work , unsigned long delay);
+                          struct delayed_work *work, unsigned long delay);
 
-:c:func:`queue_delayed_work` can be used to plan a work for execution
-with a given delay. The time unit for the delay is jiffies.
+:c:func:`queue_delayed_work` 可以用于计划延迟执行的工作项。延迟的时间单位是 jiffies。
 
-To wait for all work items to finish call :c:func:`flush_workqueue`:
+要等待所有工作项完成，请调用 :c:func:`flush_workqueue`：
 
 .. code-block:: c
 
-   void flush_workqueue(struct worksqueue_struct * queue);
+   void flush_workqueue(struct workqueue_struct *queue);
 
-And to destroy the workqueue call :c:func:`destroy_workqueue`
+要销毁工作队列，请调用 :c:func:`destroy_workqueue`：
 
 .. code-block:: c
 
    void destroy_workqueue(struct workqueue_struct *queue);
 
-The next sequence declares and initializes an additional workqueue,
-declares and initializes a work item and adds it to the queue:
+下面的示例代码声明并初始化一个额外的工作队列，声明并初始化一个工作项，并将其添加到队列中：
 
 .. code-block:: c
 
    void my_work_handler(struct work_struct *work);
 
    struct work_struct my_work;
-   struct workqueue_struct * my_workqueue;
+   struct workqueue_struct *my_workqueue;
 
    my_workqueue = create_singlethread_workqueue("my_workqueue");
    INIT_WORK(&my_work, my_work_handler);
 
    queue_work(my_workqueue, &my_work);
 
-And the next code sample shows how to remove the workqueue:
+下面的代码示例显示了如何移除工作队列：
 
 .. code-block:: c
 
    flush_workqueue(my_workqueue);
    destroy_workqueue(my_workqueue);
 
-The work items planned with these functions will run in the context of
-a new kernel thread called *my_workqueue*, the name passed to
-:c:func:`create_singlethread_workqueue`.
+使用这些函数计划的工作项将在一个名为 *my_workqueue* 的新内核线程的上下文中运行，该名称是传递给 :c:func:`create_singlethread_workqueue` 函数的参数。
 
-Kernel threads
+内核线程
 ==============
 
-Kernel threads have emerged from the need to run kernel code in
-process context. Kernel threads are the basis of the workqueue
-mechanism. Essentially, a kernel thread is a thread that only runs in
-kernel mode and has no user address space or other user attributes.
+内核线程之所以出现，是为了在进程上下文中运行内核代码。内核线程是工作队列机制的基础。实质上，内核线程是一种只在内核态下运行，并且没有用户地址空间或其他用户属性的线程。
 
-To create a kernel thread, use :c:func:`kthread_create`:
+要创建内核线程，请使用函数 :c:func:`kthread_create`：
 
 .. code-block:: c
 
    #include <linux/kthread.h>
 
    struct task_struct *kthread_create(int (*threadfn)(void *data),
-					 void *data, const char namefmt[], ...);
+                void *data, const char namefmt[], ...);
 
-* *threadfn* is a function that will be run by the kernel thread
-* *data* is a parameter to be sent to the function
-* *namefmt* represents the kernel thread name, as it is displayed in
-  ps/top ; Can contain sequences %d , %s etc. Which will be replaced
-  according to the standard printf syntax.
+* *threadfn* 是将由内核线程运行的函数
+* *data* 是要传递给函数的参数
+* *namefmt* 表示内核线程的名称，如在 ps/top 中显示的那样；可以包含 %d、%s 等序列，它们将根据标准 printf 语法进行替换。
 
-For example, the following call:
+例如，以下调用：
 
 .. code-block:: c
 
-   kthread_create (f, NULL, "%skthread%d", "my", 0);
+   kthread_create(f, NULL, "%skthread%d", "my", 0);
 
-Will create a kernel thread with the name mykthread0.
+将创建一个名为 mykthread0 的内核线程。
 
-The kernel thread created with this function will be stopped (in the
-*TASK_INTERRUPTIBLE* state). To start the kernel thread, call the
-:c:func:`wake_up_process`:
+使用此函数创建的内核线程将被停止（处于 *TASK_INTERRUPTIBLE* 状态）。要启动内核线程，请调用 :c:func:`wake_up_process`：
 
 .. code-block:: c
 
@@ -603,41 +450,27 @@ The kernel thread created with this function will be stopped (in the
 
    int wake_up_process(struct task_struct *p);
 
-Alternatively, you can use :c:func:`kthread_run` to create and run a
-kernel thread:
+或者，你可以使用 :c:func:`kthread_run` 来创建并运行内核线程：
 
 .. code-block:: c
 
-   struct task_struct * kthread_run(int (*threadfn)(void *data)
-				    void *data, const char namefmt[], ...);
+   struct task_struct *kthread_run(int (*threadfn)(void *data),
+                void *data, const char namefmt[], ...);
 
-Even if the programming restrictions for the function running within
-the kernel thread are more relaxed and scheduling is closer to
-scheduling in userspace, there are, however, some limitations to be
-taken into account. We will list below the actions that can or can not
-be made from a kernel thread:
+尽管在内核线程中运行的函数的编程限制更宽松，并且调度更接近用户空间的调度，但仍然有一些限制需要考虑。下面列出可以或不能从内核线程中执行的操作：
 
-* can't access the user address space (even with copy_from_user,
-  copy_to_user) because a kernel thread does not have a user address
-  space
-* can't implement busy wait code that runs for a long time; if the
-  kernel is compiled without the preemptive option, that code will run
-  without being preempted by other kernel threads or user processes
-  thus hogging the system
-* can call blocking operations
-* can use spinlocks, but if the hold time of the lock is significant,
-  it is recommended to use mutexes
+* 不能访问用户地址空间（即使使用 copy_from_user、copy_to_user），因为内核线程没有用户地址空间
+* 不能实现长时间运行的忙等待代码；如果内核没有启用抢占选项，那么该代码将在不会被其他内核线程或用户进程抢占的情况下运行，从而占用系统资源
+* 可以调用阻塞操作
+* 可以使用自旋锁，但如果锁的保持时间很长，建议使用互斥锁（mutex）
 
-The termination of a kernel thread is done voluntarily, within the
-function running in the kernel thread, by calling :c:func:`do_exit`:
+内核线程的终止是在内核线程中运行的函数自愿进行的，通过调用 :c:func:`do_exit`：
 
 .. code-block:: c
 
    fastcall NORET_TYPE void do_exit(long code);
 
-Most of the implementations of kernel threads handlers use the same
-model and it is recommended to start using the same model to avoid
-common mistakes:
+大多数内核线程处理程序的实现都使用相同的模型，建议开始使用相同的模型以避免常见错误：
 
 .. code-block:: c
 
@@ -645,16 +478,16 @@ common mistakes:
 
    DECLARE_WAIT_QUEUE_HEAD(wq);
 
-   // list events to be processed by kernel thread
+   // 列出内核线程要处理的事件
    struct list_head events_list;
    struct spin_lock events_lock;
 
 
-   // structure describing the event to be processed
+   // 描述要处理的事件的结构体
    struct event {
        struct list_head lh;
        bool stop;
-       //...
+       // ...
    };
 
    struct event* get_next_event(void)
@@ -664,10 +497,10 @@ common mistakes:
        spin_lock(&events_lock);
        e = list_first_entry(&events_list, struct event*, lh);
        if (e)
-	   list_del(&e->lh);
+           list_del(&e->lh);
        spin_unlock(&events_lock);
 
-       return e
+       return e;
    }
 
    int my_thread_f(void *data)
@@ -675,23 +508,22 @@ common mistakes:
        struct event *e;
 
        while (true) {
-	   wait_event(wq, (e = get_next_event));
+           wait_event(wq, (e = get_next_event()));
 
-	   /* Event processing */
+           /* 处理事件 */
 
-	   if (e->stop)
-	       break;
+           if (e->stop)
+               break;
        }
 
        do_exit(0);
    }
 
-   /* start and start kthread */
+   /* 启动并运行内核线程 */
    kthread_run(my_thread_f, NULL, "%skthread%d", "my", 0);
 
 
-With the template above, the kernel thread requests can be issued
-with:
+使用上述模板，可以使用以下代码触发内核线程请求：
 
 .. code-block:: c
 
@@ -703,244 +535,164 @@ with:
        wake_up(&wq);
    }
 
-Further reading
-===============
+进一步阅读
+==============
 
-* `Linux Device Drivers, 3rd ed., Ch. 7: Time, Delays, and Deferred Work <http://lwn.net/images/pdf/LDD3/ch07.pdf>`_
-* `Scheduling Tasks <http://tldp.org/LDP/lkmpg/2.6/html/x1211.html>`_
-* `Driver porting: the workqueue interface <http://lwn.net/Articles/23634/>`_
-* `Workqueues get a rework <http://lwn.net/Articles/211279/>`_
-* `Kernel threads made easy <http://lwn.net/Articles/65178/>`_
-* `Unreliable Guide to Locking <http://www.kernel.org/pub/linux/kernel/people/rusty/kernel-locking/index.html>`_
+* `Linux 设备驱动程序（第 3 版），第 7 章：时间、延迟和延迟工作 <http://lwn.net/images/pdf/LDD3/ch07.pdf>`_
+* `调度任务 <http://tldp.org/LDP/lkmpg/2.6/html/x1211.html>`_
+* `驱动程序移植：工作队列接口 <http://lwn.net/Articles/23634/>`_
+* `工作队列重新工作 <http://lwn.net/Articles/211279/>`_
+* `简化内核线程 <http://lwn.net/Articles/65178/>`_
+* `不可靠的锁指南 <http://www.kernel.org/pub/linux/kernel/people/rusty/kernel-locking/index.html>`_
 
-Exercises
-=========
+练习
+========
 
 .. include:: ../labs/exercises-summary.hrst
-.. |LAB_NAME| replace:: deferred_work
+.. |LAB_NAME| replace:: 延迟工作
 
-0. Intro
+0. 简介
 --------
 
-Using |LXR|_, find the definitions of the following symbols:
+使用 |LXR|_，找到以下符号的定义：
 
 * :c:macro:`jiffies`
 * :c:type:`struct timer_list`
 * :c:func:`spin_lock_bh function`
 
 
-1.Timer
--------
+1. 定时器
+----------
 
-We're looking at creating a simple kernel module that displays a
-message at *TIMER_TIMEOUT* seconds after the module's kernel load.
+我们将创建一个简单的内核模块，在模块的内核加载后的第 *TIMER_TIMEOUT* 秒显示一条消息。
 
-Generate the skeleton for the task named **1-2-timer** and follow the
-sections marked with **TODO 1** to complete the task.
+生成名为 **1-2-timer** 的任务骨架，并按照标有 **TODO 1** 的部分来完成任务。
 
-.. hint:: Use `pr_info(...)`. Messages will be displayed on the
-	  console and can also be viewed using dmesg. When scheduling
-	  the timer we need to use the absolute time of the system (in
-	  the future) in number of ticks. The current time of the
-	  system in the number of ticks is given by :c:type:`jiffies`.
-	  Thus, the absolute time we need to pass to the timer is
-	  ``jiffies + TIMER_TIMEOUT * HZ``.
+.. hint:: 使用 `pr_info(...)`。消息将显示在控制台上，并且还可以使用 dmesg 查看。在调度定时器时，我们需要使用系统的（未来）绝对时间并且以滴答数表示。系统的当前时间（以滴答数表示）由 :c:type:`jiffies` 给出。因此，我们需要将 ``jiffies + TIMER_TIMEOUT * HZ`` 作为绝对时间传递给定时器。
 
-	  For more information review the `Timers`_ section.
+有关更多信息，请查阅 `定时器（Timer）`_ 部分。
 
 
-2. Periodic timer
+2. 周期性定时器
 -----------------
 
-Modify the previous module to display the message in once every
-TIMER_TIMEOUT seconds. Follow the section marked with **TODO 2** in the
-skeleton.
+修改前面的模块，使消息每隔 TIMER_TIMEOUT 秒显示一次。按照骨架中标有 **TODO 2** 的部分进行修改。
 
-3. Timer control using ioctl
+3. 使用 ioctl 控制定时器
 ----------------------------
 
-We plan to display information about the current process after N
-seconds of receiving a ioctl call from user space. N is transmitted as
-ioctl parameter.
+我们计划在从用户空间接收到 ioctl 调用后的第 N 秒显示有关当前进程的信息。N 作为 ioctl 参数传递。
 
-Generate the skeleton for the task named **3-4-5-deferred** and
-follow the sections marked with **TODO 1** in the skeleton driver.
+生成名为 **3-4-5-deferred** 的任务骨架，并按照骨架中标有 **TODO 1** 的部分进行修改。
 
-You will need to implement the following ioctl operations.
+你需要实现以下 ioctl 操作。
 
-* MY_IOCTL_TIMER_SET to schedule a timer to run after a number of
-  seconds which is received as an argument to ioctl. The timer does
-  not run periodically.
-  * This command receives directly a value, not a pointer.
+* MY_IOCTL_TIMER_SET：安排定时器在接收到的秒数之后运行，该秒数作为 ioctl 的参数。该定时器并不周期运行。
+  * 此命令直接接收一个值，而不是指针。
 
-* MY_IOCTL_TIMER_CANCEL to deactivate the timer.
+* MY_IOCTL_TIMER_CANCEL：停用定时器。
 
-.. note:: Review :ref:`ioctl` for a way to access the ioctl argument.
+.. note:: 请查阅 :ref:`ioctl` 了解如何访问 ioctl 参数。
 
-.. note:: Review the `Timers`_ section for information on enabling /
-   disabling a timer.  In the timer handler, display the current
-   process identifier (PID) and the process executable image name.
+.. note:: 请查阅 `定时器（Timer）`_ 部分，了解如何启用/禁用定时器。在定时器处理程序中，显示当前进程标识符（PID）和进程执行镜像名称。
 
-.. hint:: You can find the current process identifier using the *pid*
-	  and *comm* fields of the current process. For details,
-	  review :ref:`proc-info`.
+.. hint:: 你可以使用当前进程的 *pid* 和 *comm* 字段来查找当前进程标识符。有关详细信息，请查阅 :ref:`proc-info`。
 
-.. hint:: To use the device driver from userspace you must create the
-	  device character file */dev/deferred* using the mknod
-	  utility. Alternatively, you can run the
-	  *3-4-5-deferred/kernel/makenode* script that performs this
-	  operation.
+.. hint:: 要从用户空间使用设备驱动程序，你必须使用 mknod 程序创建设备字符文件 */dev/deferred*。或者，你可以运行 *3-4-5-deferred/kernel/makenode* 脚本来执行此操作。
 
-Enable and disable the timer by calling user-space ioctl
-operations. Use the *3-4-5-deferred/user/test* program to test
-planning and canceling of the timer. The program receives the ioctl
-type operation and its parameters (if any) on the command line.
+通过调用用户空间的 ioctl 操作来启用和禁用定时器。使用 *3-4-5-deferred/user/test* 程序来测试定时器的计划和取消。该程序在命令行上接收 ioctl 类型操作及其参数（如果有）。
 
-.. hint:: Run the test executable without arguments to observe the
-	  command line options it accepts.
+.. hint:: 运行测试可执行文件时不带参数，以观察它接受的命令行选项。
 
-	  To enable the timer after 3 seconds use:
+	  要在 3 秒后启用定时器，请使用：
 
 	  .. code-block:: c
 
 	     ./test s 3
 
-	  To disable the timer use:
+	  要停用定时器，请使用：
 
 	  .. code-block:: c
 
 	     ./test c
 
 
-Note that every time the current process the timer runs from is
-*swapper/0* with PID 0. This process is the idle process. It is
-running when there is nothing else to run on. Because the virtual
-machine is very light and does not do much it is natural to see this
-process most of the time.
+注意，定时器运行所基于的当前进程每次都是 PID 为 0 的 *swapper/0*。这个进程是空闲进程，当没有其他任务可运行时，它会一直运行。由于虚拟机非常轻量级且没有太多操作，大部分时间都会看到这个进程。
 
-4. Blocking operations
-----------------------
+4. 阻塞操作
+------------------
 
-Next we want to see what happens when we perform blocking operations
-in a timer routine. For this we try to call in the timer-handling
-routines a function called alloc_io() that simulates a blocking
-operation.
+接下来，我们将尝试在定时器例程中执行阻塞操作，以查看会发生什么情况。为此，我们尝试在定时器处理例程中调用一个名为 alloc_io() 的模拟阻塞操作的函数。
 
-Modify the module so that when you receive *MY_IOCTL_TIMER_ALLOC*
-command the timer handler will call :c:func:`alloc_io`. Follow the
-sections marked with **TODO 2** in the skeleton.
+修改模块，使得当接收到 *MY_IOCTL_TIMER_ALLOC* 命令时，定时器处理程序将调用 :c:func:`alloc_io`。按照骨架中标有 **TODO 2** 的部分进行修改。
 
-Use the same timer. To differentiate functionality in the timer
-handler, use a flag in the device structure. Use the
-*TIMER_TYPE_ALLOC* and *TIMER_TYPE_SET* macros defined in the code
-skeleton. For initialization, use TIMER_TYPE_NONE.
+使用相同的定时器。为了区分定时器处理程序中的功能，可以在设备结构中使用一个标志。使用代码骨架中定义的 *TIMER_TYPE_ALLOC* 和 *TIMER_TYPE_SET* 宏。对于初始化，请使用 TIMER_TYPE_NONE。
 
-Run the test program to verify the functionality of task 3. Run the
-test program again to call :c:func:`alloc_io()`.
+运行测试程序以验证任务 3 的功能。再次运行测试程序以调用 :c:func:`alloc_io()`。
 
-.. note:: The driver causes an error because a blocking function is
-	  called in the atomic context (the timer handler runs
-	  interrupt context).
+.. note:: 该驱动程序会导致错误，因为在原子上下文（定时器处理程序运行在中断上下文中）中调用了阻塞函数。
 
-5. Workqueues
+5. 工作队列
 -------------
 
-We will modify the module to prevent the error observed in the
-previous task.
+我们将修改模块，以解决上一个任务中观察到的错误。
 
-To do so, lets call :c:func:`alloc_io` using workqueues. Schedule a
-work item from the timer handler In the work handler (running in
-process context) call the :c:func:`alloc_io`. Follow the sections
-marked with **TODO 3** in the skeleton and review the `Workqueues`_
-section if needed.
+为此，让我们使用工作队列调用 :c:func:`alloc_io`。从定时器处理程序中安排一个工作项。在工作项处理程序中（在进程上下文中运行），调用 :c:func:`alloc_io`。按照骨架中标有 **TODO 3** 的部分进行修改，并在需要时查阅 `工作队列`_ 部分。
 
-.. hint:: Add a new field with the type :c:type:`struct work_struct`
-	  in your device structure. Initialize this field. Schedule
-	  the work from the timer handler using :c:func:`schedule_work`.
-	  Schedule the timer handler aften N seconds from the ioctl.
+.. hint:: 在设备结构中添加一个类型为 :c:type:`struct work_struct` 的新字段。初始化此字段。使用 :c:func:`schedule_work` 从定时器处理程序中调度工作项。从 ioctl 后的 N 秒开始调度定时器处理程序。
 
-6. Kernel thread
+6. 内核线程
 ----------------
 
-Implement a simple module that creates a kernel thread that shows the
-current process identifier.
+实现一个简单的模块，创建一个显示当前进程标识符的内核线程。
 
-Generate the skeleton for the task named **6-kthread** and follow the
-TODOs from the skeleton.
+生成名为 **6-kthread** 的任务骨架，并按照骨架中标有 **TODO** 的部分进行修改。
 
 
-.. note:: There are two options for creating and running a thread:
+.. note:: 创建和运行线程有两种选择：
 
-	  * :c:func:`kthread_run` to create and run the thread
+	  * 使用 :c:func:`kthread_run` 创建并运行线程
 
-	  * :c:func:`kthread_create` to create a suspended thread and
-	    then start it running with :c:func:`wake_up_process`.
+	  * 使用 :c:func:`kthread_create` 创建一个挂起的线程，然后使用 :c:func:`wake_up_process` 启动它。
 
-	  Review the `Kernel Threads`_ section if needed.
+	  如果需要，请查阅 `内核线程`_ 部分。
 
-.. attention:: Synchronize the thread termination with module unloading:
+.. attention:: 将线程终止与模块卸载进行同步：
 
-	       * The thread should finish when the module is unloaded
+	       * 线程应在模块卸载时结束
 
-	       * Wait for the kernel thread to exit before continuing
-		 with unloading
+	       * 在卸载之前，请等待内核线程退出
 
 
-.. hint:: For synchronization use two wait queues and two flags.
+.. hint:: 为了同步，使用两个等待队列和两个标志。
 
-	  Review :ref:`waiting-queues` on how to use waiting queue.
+	  请查阅 :ref:`waiting-queues` 了解如何使用等待队列。
 
-	  Use atomic variables for flags. Review :ref:`atomic-variables`.
+	  使用原子变量作为标志。请查阅 :ref:`atomic-variables`。
 
 
-7. Buffer shared between timer and process
+7. 定时器和进程之间共享的缓冲区
 ------------------------------------------
 
-The purpose of this task is to exercise the synchronization between a
-deferrable action (a timer) and process context. Set up a periodic
-timer that monitors a list of processes. If one of the processes
-terminate a message is printed. Processes can be dynamically added to
-the list. Use the *3-4-5-deferred/kernel/* skeleton as a base and
-follow the **TODO 4** markings to complete the task.
+该任务的目的是在延迟操作（定时器）和进程上下文之间进行同步。设置一个周期性定时器，监视进程列表。如果其中一个进程终止，将打印一条消息。可以动态添加进程到列表中。请使用 *3-4-5-deferred/kernel/* 骨架作为基础，并按照标有 **TODO 4** 的部分完成任务。
 
-When the *MY_IOCTL_TIMER_MON* command is received check that the given
-process exists and if so add to the monitored list of
-processes and then arm the timer after setting its type.
+当接收到 *MY_IOCTL_TIMER_MON* 命令时，检查给定的进程是否存在，如果存在，则将其添加到监视的进程列表中，并在设置了类型后启用定时器。
 
-.. hint:: Use :c:func:`get_proc` which checks the pid, finds the
-	  associated :c:type:`struct task_struct` and allocates a
-	  :c:type:`struct mon_proc` item you can add to your
-	  list. Note that the function also increases the reference
-	  counter of the task, so that its memory won't be free when
-	  the task terminates.
+.. hint:: 使用 :c:func:`get_proc` 检查 pid，找到关联的 :c:type:`struct task_struct`，并分配一个 :c:type:`struct mon_proc` 项目，可以将其添加到列表中。请注意，该函数还会增加任务的引用计数，以便在任务终止时不会释放其内存。
 
-.. attention:: Use a spinlock to protect the access to the list. Note
-	       that since we share data with the timer handler we need
-	       to disable bottom-half handlers in addition to taking
-	       the lock. Review the `Locking`_ section.
+.. attention:: 使用自旋锁保护对列表的访问。请注意，由于我们与定时器处理程序共享数据，因此除了获取锁之外，还需要禁用底半部处理程序。请查阅 `锁定`_ 部分。
 
-.. hint:: Collect the information every second from a timer. Use the
-	  existing timer and add new behaviour for it via the
-	  TIMER_TYPE_ACCT. To set the flag, use the *t* argument of
-	  the test program.
+.. hint:: 每秒钟从定时器中收集信息。使用现有的定时器，并通过 TIMER_TYPE_ACCT 添加新的行为。要设置标志，请使用测试程序的 *t* 参数。
 
 
-In the timer handler iterate over the list of monitored processes and
-check if they have terminated. If so, print the process name and pid
-then remove the process from the list, decrement the task usage
-counter so that it's memory can be free and finally free the
-:c:type:`struct mon_proc` structure.
+在定时器处理程序中，遍历监视的进程列表，并检查它们是否已终止。如果是，则打印进程名称和 PID，然后从列表中删除该进程，递减任务使用计数器，以便可以释放其内存，最后释放 :c:type:`struct mon_proc` 结构。
 
-.. hint:: Use the *state* field of :c:func:`struct task_struct`. A
-	  task has terminated if its state is *TASK_DEAD*.
+.. hint:: 使用 :c:func:`struct task_struct` 的 *state* 字段。如果任务的状态为 *TASK_DEAD*，则表示任务已终止。
 
-.. hint:: Use :c:func:`put_task_struct` to decrement the task usage
-	  counter.
+.. hint:: 使用 :c:func:`put_task_struct` 递减任务使用计数器。
 
-.. attention:: Make sure you protect the list access with a
-	       spinlock. The simple variant will suffice.
+.. attention:: 确保使用自旋锁保护列表访问。简单的变体就足够了。
 
-.. attention:: Make sure to use the safe iteration over the list since
-	       we may need to remove an item from the list.
+.. attention:: 确保使用安全迭代器遍历列表，因为我们可能需要从列表中删除项目。
 
-Rearm the timer after checking the list.
+在检查完列表后，重新启用定时器。
