@@ -1,129 +1,73 @@
 ============================
-Networking
+网络
 ============================
 
-Lab objectives
+实验目标
 ==============
 
-  * Understanding the Linux kernel networking architecture
-  * Acquiring practical IP packet management skills using a packet filter or
-    firewall
-  * Familiarize yourself with how to use sockets at the Linux kernel level
+  * 理解 Linux 内核网络架构
+  * 掌握使用数据包（packet）过滤器或防火墙进行 IP 数据包管理
+  * 熟悉在 Linux 内核级别使用套接字的方法
 
-Overview
+概述
 ========
 
-The development of the Internet has led to an exponential increase in network
-applications and, as a consequence, to increasing the speed and productivity
-requirements of an operating system's networking subsystem. The networking
-subsystem is not an essential component of an operating system kernel (the Linux
-kernel can be compiled without networking support). It is, however, quite
-unlikely for a computing system (or even an embedded device) to have a
-non-networked operating system due to the need for connectivity. Modern operating
-systems use the `TCP/IP stack
-<https://en.wikipedia.org/wiki/Internet_protocol_suite>`_. Their kernel
-implements protocols up to the transport layer, while application layer protocols
-are typically implemented in user space (HTTP, FTP, SSH, etc.).
+互联网的发展导致网络应用程序呈指数增长，因此操作系统的网络子系统对速度和生产力的要求也在不断增加。网络子系统并非操作系统内核的必需组件（Linux 内核可以选择在编译时不包含网络支持）。然而，由于对连接的需要，计算机系统（甚至嵌入式设备）很少会使用不支持网络的操作系统。现代操作系统使用 `TCP/IP 协议栈 <https://zh.wikipedia.org/zh-cn/TCP/IP协议族>`_。它们的内核实现了传输层以下的协议，而应用层协议通常在用户空间实现（如 HTTP、FTP 以及 SSH 等）。
 
-Networking in user space
-------------------------
+用户空间中的网络编程
+------------------
 
-In user space the abstraction of network communication is the socket. The
-socket abstracts a communication channel and is the kernel-based TCP/IP stack
-interaction interface. An IP socket is associated with an IP address, the
-transport layer protocol used (TCP, UDP etc) and a port. Common function calls
-that use sockets are: creation (``socket``), initialization
-(``bind``), connecting (``connect``), waiting for a connection
-(``listen``, ``accept``), closing a socket (``close``).
+套接字（socket）是在用户空间中，对于网络通信的抽象。套接字抽象了通信通道，也是基于内核的 TCP/IP 栈交互接口。IP 套接字与 IP 地址、所使用的传输层协议（如 TCP、UDP 等）和端口相关联。常用的使用套接字的函数调用有：创建 (``socket``)、初始化 (``bind``)、连接 (``connect``)、等待连接 (``listen``, ``accept``) 以及关闭套接字 (``close``)。
 
-Network communication is accomplished via ``read``/``write`` or ``recv``/``send`` calls
-for TCP sockets and ``recvfrom``/``sendto`` for UDP sockets. Transmission and
-reception operations are transparent to the application, leaving encapsulation
-and transmission over network at the kernel's discretion. However, it is
-possible to implement the TCP/IP stack in user space using raw sockets (the
-``PF_PACKET`` option when creating a socket), or implementing an application
-layer protocol in kernel (`TUX web server
-<http://en.wikipedia.org/wiki/TUX_web_server>`_).
+我们通过 ``read``/``write`` 或 ``recv``/``send`` 调用实现 TCP 套接字的网络通信，通过 ``recvfrom``/``sendto`` 调用实现 UDP 套接字的网络通信。传输和接收操作对应用程序来说是透明的，封装和网络传输由内核自行决定。然而，也可以使用原始套接字（创建套接字时使用 ``PF_PACKET`` 选项）在用户空间中实现 TCP/IP 栈，或者在内核中实现应用层协议（例如 `TUX web 服务器 <https://zh.wikipedia.org/zh-cn/TUX_Web服务器>`_）。
 
-For more details about user space programming using sockets, see `Beej's Guide to
-Network Programming Using Internet
-Sockets <https://www.beej.us/guide/bgnet/>`_.
+有关使用套接字进行用户空间编程的更多详细信息，请参阅 `Beej 的网络套接字编程指南 <https://www.beej.us/guide/bgnet/>`_。
 
-Linux networking
+Linux 网络编程
 ================
 
-The Linux kernel provides three basic structures for working with network
-packets: :c:type:`struct socket`, :c:type:`struct sock` and :c:type:`struct
-sk_buff`.
+Linux 内核提供了三种基本的用于处理网络数据包的结构：:c:type:`struct socket`、:c:type:`struct sock` 和 :c:type:`struct sk_buff`。
 
-The first two are abstractions of a socket:
+前两者是对套接字的抽象：
 
-  * :c:type:`struct socket` is an abstraction very close to user space, ie `BSD
-    sockets <http://en.wikipedia.org/wiki/Berkeley_sockets>`_ used to program
-    network applications;
-  * :c:type:`struct sock` or *INET socket* in Linux terminology is the network
-    representation of a socket.
+  * :c:type:`struct socket` 是非常接近用户空间的抽象，即用于编写网络应用程序的 `BSD 套接字 <http://zh.wikipedia.org/zh-cn/Berkeley套接字>`_；
+  * :c:type:`struct sock` 或 Linux 术语中的 *INET 套接字* 是套接字的网络表示。
 
-The two structures are related: the :c:type:`struct socket` contains an INET
-socket field, and the :c:type:`struct sock` has a BSD socket that holds it.
+这两个结构有关联: :c:type:`struct socket` 包含 INET 套接字字段，而每个 :c:type:`struct sock` 都有一个 BSD 套接字持有它。
 
-The :c:type:`struct sk_buff` structure is the representation of a network packet
-and its status. The structure is created when a kernel packet is received,
-either from the user space or from the network interface.
+:c:type:`struct sk_buff` 结构是网络数据包及其状态的表示。当从用户空间或网络接口接收到内核数据包时，该结构被创建。
 
-The :c:type:`struct socket` structure
+:c:type:`struct socket` 结构
 -------------------------------------
 
-The :c:type:`struct socket` structure is the kernel representation of a BSD
-socket, the operations that can be executed on it are similar to those offered
-by the kernel (through system calls). Common operations with sockets
-(creation, initialization/bind, closing, etc.) result in specific system
-calls; they work with the :c:type:`struct socket` structure.
+:c:type:`struct socket` 结构是 BSD 套接字的内核表示，可以执行在它上面执行的操作类似于内核提供的操作（通过系统调用）。使用套接字的常见操作（创建、初始化/绑定、关闭等）会导致特定的系统调用；它们与 :c:type:`struct socket` 结构一起工作。
 
-The :c:type:`struct socket` operations are described in :file:`net/socket.c` and
-are independent of the protocol type. The :c:type:`struct socket` structure is thus
-a generic interface over particular network operations implementations.
-Typically, the names of these operations begin with the ``sock_`` prefix.
+:c:type:`struct socket` 的操作在 :file:`net/socket.c` 中进行描述，且与协议类型无关。因此, :c:type:`struct socket` 结构是特定网络操作实现的通用接口。通常，这些操作的名称以 ``sock_`` 前缀开头。
 
 .. _SocketStructOps:
 
-Operations on the socket structure
+对 socket 结构的操作
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Socket operations are:
+socket 相关操作包括：
 
-Creation
+创建
 """"""""
 
-Creation is similar to calling the :c:func:`socket` function in user space, but the
-:c:type:`struct socket` created will be stored in the ``res`` parameter:
+创建类似于在用户空间调用 :c:func:`socket` 函数，但创建的 :c:type:`struct socket` 将存储在 ``res`` 参数中：
 
-  * ``int sock_create(int family, int type, int protocol, struct socket **res)``
-    creates a socket after the :c:func:`socket` system call;
-  * ``int sock_create_kern(struct net *net, int family, int type, int protocol,
-    struct socket **res)`` creates a kernel socket;
-  * ``int sock_create_lite(int family, int type, int protocol, struct socket **res)``
-    creates a kernel socket without parameter sanity checks.
+  * ``int sock_create(int family, int type, int protocol, struct socket **res)``：在 :c:func:`socket` 系统调用之后创建 socket；
+  * ``int sock_create_kern(struct net *net, int family, int type, int protocol, struct socket **res)``：创建内核 socket；
+  * ``int sock_create_lite(int family, int type, int protocol, struct socket **res)``：创建内核 socket, 不经过参数完整性检查。
 
-The parameters of these calls are as follows:
+这些调用的参数如下：
 
-  * ``net``, where it is present, used as reference to the network namespace used;
-    we will usually initialize it with ``init_net``;
-  * ``family`` represents the family of protocols used in the transfer of
-    information; they usually begin with the ``PF_`` (Protocol Family) string;
-    the constants representing the family of protocols used are found in
-    :file:`linux/socket.h`, of which the most commonly used is ``PF_INET``, for
-    TCP/IP protocols;
-  * ``type`` is the type of socket; the constants used for this parameter are
-    found in :file:`linux/net.h`, of which the most used are ``SOCK_STREAM`` for
-    a connection based source-to-destination communication and ``SOCK_DGRAM``
-    for connectionless communication;
-  * ``protocol`` represents the protocol used and is closely related to the
-    ``type`` parameter; the constants used for this parameter are found in
-    :file:`linux/in.h`, of which the most used are ``IPPROTO_TCP`` for TCP and
-    ``IPPROTO_UDP`` for UDP.
+  * ``net`` (如果存在)用作对所使用的网络命名空间的引用；通常我们会使用 ``init_net`` 进行初始化；
+  * ``family`` 表示在信息传输中使用的协议族；它们通常以 ``PF_``(协议族)字符串开头；表示所使用的协议族的常量可以在 :file:`linux/socket.h` 中找到，其中最常用的是 ``PF_INET``，用于 TCP/IP 协议；
+  * ``type`` 是 socket 的类型；用于此参数的常量可以在 :file:`linux/net.h` 中找到，其中最常用的是 ``SOCK_STREAM`` (用于基于连接的源到目的地通信)以及 ``SOCK_DGRAM`` (用于无连接通信)；
+  * ``protocol`` 表示使用的协议，与 ``type`` 参数密切相关；用于此参数的常量可以在 :file:`linux/in.h` 中找到，其中最常用的是 ``IPPROTO_TCP`` (用于 TCP)， ``IPPROTO_UDP`` (用于 UDP)。
 
-To create a TCP socket in kernel space, you must call:
+要在内核空间中创建 TCP socket，你需要调用：
 
 .. code-block:: c
 
@@ -132,10 +76,10 @@ To create a TCP socket in kernel space, you must call:
 
   	err = sock_create_kern(&init_net, PF_INET, SOCK_STREAM, IPPROTO_TCP, &sock);
   	if (err < 0) {
-  		/* handle error */
+  		/* 处理错误 */
   	}
 
-and for creating UDP sockets:
+要在内核空间中创建 UDP socket，你需要调用：
 
 .. code-block:: c
 
@@ -144,10 +88,10 @@ and for creating UDP sockets:
 
   	err = sock_create_kern(&init_net, PF_INET, SOCK_DGRAM, IPPROTO_UDP, &sock);
   	if (err < 0) {
-  		/* handle error */
+  		/* 处理错误 */
   	}
 
-A usage sample is part of the :c:func:`sys_socket` system call handler:
+一个使用示例是 :c:func:`sys_socket` 系统调用处理程序的一部分：
 
 .. code-block:: c
 
@@ -157,7 +101,7 @@ A usage sample is part of the :c:func:`sys_socket` system call handler:
   	struct socket *sock;
   	int flags;
 
-  	/* Check the SOCK_* constants for consistency.  */
+  	/* 检查 SOCK_* 常量是否一致。 */
   	BUILD_BUG_ON(SOCK_CLOEXEC != O_CLOEXEC);
   	BUILD_BUG_ON((SOCK_MAX | SOCK_TYPE_MASK) != SOCK_TYPE_MASK);
   	BUILD_BUG_ON(SOCK_CLOEXEC & SOCK_TYPE_MASK);
@@ -178,14 +122,12 @@ A usage sample is part of the :c:func:`sys_socket` system call handler:
   	return sock_map_fd(sock, flags & (O_CLOEXEC | O_NONBLOCK));
   }
 
-Closing
+关闭连接
 """""""
 
-Close connection (for sockets using connection) and release associated
-resources:
+关闭连接（对于使用连接的 socket）并释放相关资源：
 
-  * ``void sock_release(struct socket *sock)`` calls the ``release`` function in
-    the ``ops`` field of the socket structure:
+  * ``void sock_release(struct socket *sock)`` 调用 socket 结构 ``ops`` 字段中的 ``release`` 函数：
 
 .. code-block:: c
 
@@ -201,34 +143,24 @@ resources:
   	//...
   }
 
-Sending/receiving messages
+发送/接收消息
 """"""""""""""""""""""""""
 
-The messages are sent/received using the following functions:
+使用以下函数来发送/接收消息：
 
   * ``int sock_recvmsg(struct socket *sock, struct msghdr *msg, int flags);``
   * ``int kernel_recvmsg(struct socket *sock, struct msghdr *msg, struct kvec *vec, size_t num, size_t size, int flags);``
   * ``int sock_sendmsg(struct socket *sock, struct msghdr *msg);``
   * ``int kernel_sendmsg(struct socket *sock, struct msghdr *msg, struct kvec *vec, size_t num, size_t size);``
 
-The message sending/receiving functions will then call the ``sendmsg``/
-``recvmsg`` function in the ``ops`` field of the socket. Functions
-containing ``kernel_`` as a prefix are used when the socket is used in the
-kernel.
+消息的发送/接收函数将调用 socket ``ops`` 字段中的 ``sendmsg``/``recvmsg`` 函数。当 socket 在内核中使用时，应使用以 ``kernel_`` 为前缀的函数。
 
-The parameters are:
+参数包括：
 
-  * ``msg``, a :c:type:`struct msghdr` structure, containing the message to be
-    sent/received. Among the important components of this structure are ``msg_name``
-    and ``msg_namelen``, which, for UDP sockets, must be filled in with the address
-    to which the message is sent (:c:type:`struct sockaddr_in`);
-  * ``vec``, a :c:type:`struct kvec` structure, containing a pointer to the buffer
-    containing its data and size; as can be seen, it has a similar structure to the
-    :c:type:`struct iovec` structure (the :c:type:`struct iovec` structure
-    corresponds to the user space data, and the :c:type:`struct kvec` structure
-    corresponds to kernel space data).
+  * ``msg``, :c:type:`struct msghdr` 结构，包含要发送/接收的消息。该结构的重要组成部分包括 ``msg_name`` 和 ``msg_namelen``，对于 UDP 套接字，必须使用目标地址填充 (:c:type:`struct sockaddr_in`)；
+  * ``vec``, :c:type:`struct kvec` 结构，其中有一个指针指向缓冲区，缓冲区内包含该 :c:type:`struct kvec` 结构的数据和大小；正如所见，它的结构类似于 :c:type:`struct iovec` 结构 (:c:type:`struct iovec` 结构对应用户空间数据，而 :c:type:`struct kvec` 结构对应内核空间数据)。
 
-A usage example can be seen in the :c:func:`sys_sendto` system call handler:
+可以在 :c:func:`sys_sendto` 系统调用处理程序中看到用法示例：
 
 .. code-block:: c
 
@@ -272,20 +204,20 @@ A usage example can be seen in the :c:func:`sys_sendto` system call handler:
   	return err;
   }
 
-The :c:type:`struct socket` fields
+:c:type:`struct socket` 字段
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: c
 
   /**
-   *  struct socket - general BSD socket
-   *  @state: socket state (%SS_CONNECTED, etc)
-   *  @type: socket type (%SOCK_STREAM, etc)
-   *  @flags: socket flags (%SOCK_NOSPACE, etc)
-   *  @ops: protocol specific socket operations
-   *  @file: File back pointer for gc
-   *  @sk: internal networking protocol agnostic socket representation
-   *  @wq: wait queue for several uses
+   *  struct socket——通用的 BSD socket 
+   *  @state: socket 状态（%SS_CONNECTED 等）
+   *  @type: socket 类型（%SOCK_STREAM 等）
+   *  @flags: socket 标志（%SOCK_NOSPACE 等）
+   *  @ops: 协议特定的 socket 操作
+   *  @file: 反向指向 file 的指针，用于垃圾回收
+   *  @sk: 内部的网络协议无关 socket 表示
+   *  @wq: 有多种用途的等待队列
    */
   struct socket {
   	socket_state		state;
@@ -301,21 +233,17 @@ The :c:type:`struct socket` fields
   	const struct proto_ops	*ops;
   };
 
-The noteworthy fields are:
+值得注意的字段包括：
 
-  * ``ops`` - the structure that stores pointers to protocol-specific functions;
-  * ``sk`` - The ``INET socket`` associated with it.
+  * ``ops``——该结构内部有指针，指针指向协议特定函数；
+  * ``sk``——与之关联的 ``INET socket``。
 
-The :c:type:`struct proto_ops` structure
+:c:type:`struct proto_ops` 结构
 """"""""""""""""""""""""""""""""""""""""
 
-The :c:type:`struct proto_ops` structure contains the implementations of the specific
-operations implemented (TCP, UDP, etc.); these functions will be called from
-generic functions through :c:type:`struct socket` (:c:func:`sock_release`,
-:c:func:`sock_sendmsg`, etc.)
+:c:type:`struct proto_ops` 结构体包含了特定操作（TCP、UDP 等）的实现；这些函数将通过通用函数(如 :c:func:`sock_release`, :c:func:`sock_sendmsg` 等)使用 :c:type:`struct socket` 为参数来调用。
 
-The :c:type:`struct proto_ops` structure therefore contains a number of function
-pointers for specific protocol implementations:
+因此, :c:type:`struct proto_ops` 结构体包含了一些特定协议实现的函数指针：
 
 .. code-block:: c
 
@@ -339,10 +267,7 @@ pointers for specific protocol implementations:
   	//...
   }
 
-The initialization of the ``ops`` field from :c:type:`struct socket` is done in
-the :c:func:`__sock_create` function, by calling the :c:func:`create` function,
-specific to each protocol; an equivalent call is the implementation of the
-:c:func:`__sock_create` function:
+:c:type:`struct socket` 结构体的 ``ops`` 字段的初始化是在 :c:func:`__sock_create` 函数中完成的，该函数通过调用针对每个协议的 :c:func:`create` 函数来实现；等效调用是 :c:func:`__sock_create` 函数的实现：
 
 .. code-block:: c
 
@@ -352,15 +277,9 @@ specific to each protocol; an equivalent call is the implementation of the
   		goto out_module_put;
   //...
 
-This will instantiate the function pointers with calls specific to the protocol
-type associated with the socket. The :c:func:`sock_register` and
-:c:func:`sock_unregister` calls are used to fill the ``net_families`` vector.
+这将使用与 socket 关联的协议类型特定的调用来实例化函数指针。 :c:func:`sock_register` 和 :c:func:`sock_unregister` 调用用于填充 ``net_families`` 向量。
 
-For the rest of the socket operations (other than creating, closing, and
-sending/receiving a message as described above in the `Operations on the socket
-structure`_ section), the functions sent via pointers in this structure will be
-called. For example, for ``bind``, which associates a socket with a socket on
-the local machine, we will have the following code sequence:
+对于 socket 结构的其余操作（除了在 `对 socket 结构的操作`_ 部分中描述的创建、关闭和发送/接收消息之外），将调用通过这个结构中的指针传递的函数。例如，对于 ``bind`` 操作（它将一个 socket 与一个本地机器上的 socket 关联）有以下代码：
 
 .. code-block:: c
 
@@ -375,21 +294,16 @@ the local machine, we will have the following code sequence:
   //...
   	err = sock->ops->bind (sock, (struct sockaddr *) &addr, sizeof(addr));
   	if (err < 0) {
-  		/* handle error */
+  		  /* 处理错误 */
   	}
   //...
 
-As you can see, for transmitting the address and port information that
-will be associated with the socket, a :c:type:`struct sockaddr_in` is filled.
+在以上代码中，用于传输与 socket 关联的地址和端口信息的是 :c:type:`struct sockaddr_in` 结构体。
 
-The :c:type:`struct sock` structure
------------------------------------
+:c:type:`struct sock` 结构
+-----------------------------
 
-The :c:type:`struct sock` describes an ``INET`` socket. Such a structure is
-associated with a user space socket and implicitly with a :c:type:`struct
-socket` structure. The structure is used to store information about the status
-of a connection. The structure's fields and associated operations usually begin
-with the ``sk_`` string. Some fields are listed below:
+:c:type:`struct sock` 结构描述了 ``INET`` 套接字。这样的结构与用户空间的 socket 相关联，并且与 :c:type:`struct socket` 结构相关联，其中与 :c:type:`struct socket` 结构的关联是隐式的。该结构用于存储关于连接状态的信息。结构体的字段和相关操作通常以 ``sk_`` 字符串开头。以下列出了一些字段：
 
 .. code-block:: c
 
@@ -417,22 +331,18 @@ with the ``sk_`` string. Some fields are listed below:
 
 \
 
-  * ``sk_protocol`` is the type of protocol used by the socket;
-  * ``sk_type`` is the socket type (``SOCK_STREAM``, ``SOCK_DGRAM``, etc.);
-  * ``sk_socket`` is the BSD socket that holds it;
-  * ``sk_send_head`` is the list of :c:type:`struct sk_buff` structures for
-    transmission;
-  * the function pointers at the end are callbacks for different situations.
+  * ``sk_protocol`` 是套接字使用的协议类型；
+  * ``sk_type`` 是套接字类型 (``SOCK_STREAM``, ``SOCK_DGRAM`` 等)；
+  * ``sk_socket`` 是持有该套接字的 BSD 套接字；
+  * ``sk_send_head`` 是用于传输的 :c:type:`struct sk_buff` 结构列表；
+  * 最后的函数指针是用于不同情况的回调函数。
 
-Initializing the :c:type:`struct sock` and attaching it to a BSD socket is done
-using the callback created from ``net_families`` (called
-:c:func:`__sock_create`). Here's how to initialize the :c:type:`struct sock`
-structure for the IP protocol, in the :c:func:`inet_create` function:
+使用从 ``net_families`` 创建的回调函数(称为 :c:func:`__sock_create`) 来初始化 :c:type:`struct sock` 并将其附加到 BSD 套接字。以下是在 :c:func:`inet_create` 函数中初始化 IP 协议的 :c:type:`struct sock` 结构体的方法：
 
 .. code-block:: c
 
   /*
-   *	Create an inet socket.
+   *   创建 inet 套接字。
    */
 
   static int inet_create(struct net *net, struct socket *sock, int protocol,
@@ -463,107 +373,90 @@ structure for the IP protocol, in the :c:func:`inet_create` function:
 
 .. _StructSKBuff:
 
-The :c:type:`struct sk_buff` structure
---------------------------------------
+:c:type:`struct sk_buff` 结构体
+--------------------------------
 
-The :c:type:`struct sk_buff` (socket buffer) describes a network packet. The
-structure fields contain information about both the header and packet contents,
-the protocols used, the network device used, and pointers to the other
-:c:type:`struct sk_buff`. A summary description of the content of the structure
-is presented below:
+:c:type:`struct sk_buff` (套接字缓冲区)描述了一个网络数据包。该结构的字段包含有关报头和数据包内容、使用的协议、使用的网络设备以及指向其他 :c:type:`struct sk_buff` 的指针的信息。下面是该结构体的内容的概要描述：
 
 .. code-block:: c
 
   struct sk_buff {
-  	union {
-  		struct {
-  			/* These two members must be first. */
-  			struct sk_buff		*next;
-  			struct sk_buff		*prev;
+    union {
+      struct {
+        /* 这两个成员必须放在最前面。 */
+        struct sk_buff *next;
+        struct sk_buff *prev;
 
-  			union {
-  				struct net_device	*dev;
-  				/* Some protocols might use this space to store information,
-  				 * while device pointer would be NULL.
-  				 * UDP receive path is one user.
-  				 */
-  				unsigned long		dev_scratch;
-  			};
-  		};
+        union {
+          struct net_device *dev;
+          /* 一些协议可能会使用此空间来存储信息，此种情形下设备指针为 NULL。
+           * UDP 接收路径就是其中之一。
+           */
+          unsigned long dev_scratch;
+        };
+      };
 
-  		struct rb_node	rbnode; /* used in netem & tcp stack */
-  	};
-  	struct sock		*sk;
+      struct rb_node rbnode; /* 在 netem 和 tcp 栈中使用 */
+    };
+    struct sock *sk;
 
-          union {
-    		ktime_t		tstamp;
-  		u64		skb_mstamp;
-  	};
+    union {
+      ktime_t tstamp;
+      u64 skb_mstamp;
+    };
 
-  	/*
-  	 * This is the control buffer. It is free to use for every
-  	 * layer. Please put your private variables there. If you
-  	 * want to keep them across layers you have to do a skb_clone()
-  	 * first. This is owned by whoever has the skb queued ATM.
-  	 */
-  	char			cb[48] __aligned(8);
+    /*
+     * 这是控制缓冲区。每一层都可以自由使用它。
+     * 请将你的私有变量放在这里。如果要在多个层之间保留这些变量，首先必须进行 skb_clone()。
+     * 此缓冲区由当前此 skb 的队列的所有者拥有。
+     */
+    char cb[48] __aligned(8);
 
-  	unsigned long		_skb_refdst;
-  	void			(*destructor)(struct sk_buff *skb);
-          union {
-           	struct {
-    			unsigned long	_skb_refdst;
-  			void		(*destructor)(struct sk_buff *skb);
-  		};
-  		struct list_head	tcp_tsorted_anchor;
-  	};
-  	/* ... */
+    unsigned long _skb_refdst;
+    void (*destructor)(struct sk_buff *skb);
+    union {
+      struct {
+        unsigned long _skb_refdst;
+        void (*destructor)(struct sk_buff *skb);
+      };
+      struct list_head tcp_tsorted_anchor;
+    };
+    /* ... */
 
-  	unsigned int		len,
-  				data_len;
-  	__u16			mac_len,
-  				hdr_len;
+    unsigned int len,
+                 data_len;
+    __u16 mac_len,
+          hdr_len;
 
-           /* ... */
+    /* ... */
 
-  	__be16			protocol;
-  	__u16			transport_header;
-  	__u16			network_header;
-  	__u16			mac_header;
+    __be16 protocol;
+    __u16 transport_header;
+    __u16 network_header;
+    __u16 mac_header;
 
-  	/* private: */
-  	__u32			headers_end[0];
-  	/* public: */
+    /* 私有：*/
+    __u32 headers_end[0];
+    /* 公有：*/
 
-  	/* These elements must be at the end, see alloc_skb() for details.  */
-  	sk_buff_data_t		tail;
-  	sk_buff_data_t		end;
-  	unsigned char		*head,
-  				*data;
-  	unsigned int		truesize;
-  	refcount_t		users;
+    /* 这些元素必须放在最后。有关详细信息，请参阅 alloc_skb()。*/
+    sk_buff_data_t tail;
+    sk_buff_data_t end;
+    unsigned char *head,
+                  *data;
+    unsigned int truesize;
+    refcount_t users;
   };
 
-where:
+其中：
 
-  * ``next`` and ``prev`` are pointers to the next, and previous element in the
-    buffer list;
-  * ``dev`` is the device which sends or receives the buffer;
-  * ``sk`` is the socket associated with the buffer;
-  * ``destructor`` is the callback that deallocates the buffer;
-  * ``transport_header``, ``network_header``, and ``mac_header`` are offsets
-    between the beginning of the packet and the beginning of the various headers
-    in the packets. They are internally maintained by the various processing
-    layers through which the packet passes. To get pointers to the headers, use
-    one of the following functions: :c:func:`tcp_hdr`, :c:func:`udp_hdr`,
-    :c:func:`ip_hdr`, etc. In principle, each protocol provides a function to
-    get a reference to the header of that protocol within a received packet.
-    Keep in mind that the ``network_header`` field is not set until the packet
-    reaches the network layer and the ``transport_header`` field is not set
-    until the packet reaches the transport layer.
+  * ``next`` 和 ``prev`` 是指向缓冲区列表中下一个和前一个元素的指针；
+  * ``dev`` 是发送或接收缓冲区内容的设备；
+  * ``sk`` 是与缓冲区相关联的套接字；
+  * ``destructor`` 是负责释放缓冲区的回调函数；
+  * ``transport_header``, ``network_header`` 和 ``mac_header`` 是数据包起始位置和各个头部起始位置之间的偏移量。它们由数据包经过的各个处理层内部维护。要获取指向头部的指针，请使用以下函数之一: :c:func:`tcp_hdr`, :c:func:`udp_hdr` 以及 :c:func:`ip_hdr` 等。原则上，每个协议都对应一个函数。这些函数用于在接收到的数据包中，获取对该协议的头部的引用。请注意，当数据包到达网络层时, ``network_header`` 字段才被设置；而当数据包到达传输层时, ``transport_header`` 字段才被设置。
 
-The structure of an `IP header <https://en.wikipedia.org/wiki/IPv4#Header>`_
-(:c:type:`struct iphdr`) has the following fields:
+`IP 头部 <https://zh.wikipedia.org/zh-cn/IPv4#首部>`_ 的结构 (:c:type:`struct iphdr`) 包含以下字段：
 
 .. code-block:: c
 
@@ -586,18 +479,16 @@ The structure of an `IP header <https://en.wikipedia.org/wiki/IPv4#Header>`_
   	__sum16	check;
   	__be32	saddr;
   	__be32	daddr;
-  	/*The options start here. */
+  	/* 可选项由此开始 */
   };
 
-where:
+其中：
 
-  * ``protocol`` is the transport layer protocol used;
-  * ``saddr`` is the source IP address;
-  * ``daddr`` is the destination IP address.
+  * ``protocol`` 是使用的传输层协议；
+  * ``saddr`` 是源 IP 地址；
+  * ``daddr`` 是目标 IP 地址。
 
-The structure of a `TCP header
-<https://en.wikipedia.org/wiki/Transmission_Control_Protocol#TCP_segment_structure>`_
-(:c:type:`struct tcphdr`) has the following fields:
+`TCP 头部 <https://zh.wikipedia.org/zh-cn/传输控制协议#封包結構>`_ 的结构 (:c:type:`struct tcphdr`) 具有以下字段：
 
 .. code-block:: c
 
@@ -636,17 +527,13 @@ The structure of a `TCP header
   	__be16	urg_ptr;
   };
 
-where:
+其中：
 
-  * ``source`` is the source port;
-  * ``dest`` is the destination port;
-  * ``syn``, ``ack``, ``fin`` are the TCP flags used; for a more detailed view,
-    see this `diagram
-    <http://www.eventhelix.com/Realtimemantra/Networking/Tcp.pdf>`_.
+  * ``source`` 是源端口；
+  * ``dest`` 是目标端口；
+  * 常使用的 TCP 标志包括 ``syn``, ``ack`` 以及 ``fin``；要想对其有更详细地了解，请参见此 `图表 <http://www.eventhelix.com/Realtimemantra/Networking/Tcp.pdf>`_。
 
-The structure of a `UDP header
-<https://en.wikipedia.org/wiki/User_Datagram_Protocol#Packet_structure>`_
-(:c:type:`struct udphdr`) has the following fields:
+`UDP 头部 <https://zh.wikipedia.org/zh-cn/用户数据报协议#UDP的分组结构>`_ 的结构（:c:type:`struct udphdr`）具有以下字段：
 
 .. code-block:: c
 
@@ -657,99 +544,74 @@ The structure of a `UDP header
   	__sum16	check;
   };
 
-where:
+其中：
 
-  * ``source`` is the source port;
-  * ``dest`` is the destination port.
+  * ``source`` 是源端口；
+  * ``dest`` 是目标端口。
 
-An example of accessing the information present in the headers of a network
-packet is as follows:
+访问网络数据包头部中的信息的示例如下：
 
 .. code-block:: c
 
   	struct sk_buff *skb;
 
-  	struct iphdr *iph = ip_hdr(skb);                 /* IP header */
-  	/* iph->saddr  - source IP address */
-  	/* iph->daddr  - destination IP address */
-  	if (iph->protocol == IPPROTO_TCP) {              /* TCP protocol */
-  		struct tcphdr *tcph = tcp_hdr(skb);      /* TCP header */
-  		/* tcph->source  - source TCP port */
-  		/* tcph->dest    - destination TCP port */
-  	} else if (iph->protocol == IPPROTO_UDP) {       /* UDP protocol */
-  		struct udphdr *udph = udp_hdr(skb);      /* UDP header */
-  		/* udph->source  - source UDP port */
-  		/* udph->dest    - destination UDP port */
+  	struct iphdr *iph = ip_hdr(skb);                 /* IP 头部 */
+  	/* iph->saddr  - 源 IP 地址 */
+  	/* iph->daddr  - 目标 IP 地址 */
+  	if (iph->protocol == IPPROTO_TCP) {              /* TCP 协议 */
+  		struct tcphdr *tcph = tcp_hdr(skb);      /* TCP 头部 */
+  		/* tcph->source —— 源 TCP 端口 */
+  		/* tcph->dest   —— 目标 TCP 端口 */
+  	} else if (iph->protocol == IPPROTO_UDP) {       /* UDP 协议 */
+  		struct udphdr *udph = udp_hdr(skb);      /* UDP 头部 */
+  		/* udph->source —— 源 UDP 端口 */
+  		/* udph->dest   —— 目标 UDP 端口 */
   	}
 
 .. _Conversions:
 
-Conversions
+转换
 ===========
 
-In different systems, there are several ways of ordering bytes in a word
-(`Endianness <http://en.wikipedia.org/wiki/Endianness>`_), including: `Big
-Endian <http://en.wikipedia.org/wiki/Endianness#Big-endian>`_ (the most
-significant byte first) and `Little
-Endian <http://en.wikipedia.org/wiki/Endianness#Little-endian>`_ (the least
-significant byte first). Since a network interconnects systems with different
-platforms, the Internet has imposed a standard sequence for the storage of
-numerical data, called `network byte-order
-<http://en.wikipedia.org/wiki/Endianness#Endianness_in_networking>`_. In
-contrast, the byte sequence for the representation of numerical data on the host
-computer is called host byte-order. Data received/sent from/to the network is in
-the network byte-order format and should be converted between this format and
-the host byte-order.
+不同系统的字，有多种字节的顺序方式 (`字节序 <http://zh.wikipedia.org/zh-cn/字节序>`_)，包括: `大端序 <http://zh.wikipedia.org/zh-cn/字节序#大端序>`_ (最高位字节在前) 和 `小端序 <http://zh.wikipedia.org/zh-cn/字节序#小端序>`_ (最低位字节在前)。由于网络连接了具有不同平台的系统，因此互联网对于数值数据的存储已经强加了一种标准序列，称为 `网络字节序 <http://zh.wikipedia.org/zh-cn/字节序#网络序>`_。相反，主机计算机上，表示数值数据的字节序列称为主机字节序。从网络接收/发送的数据采用网络字节序格式，并且应该在该格式和主机字节序之间进行转换。
 
-For converting we use the following macros:
+为了进行转换，我们使用以下宏：
 
-  * ``u16 htons(u16 x)`` converts a 16 bit integer from host byte-order to
-    network byte-order (host to network short);
-  * ``u32 htonl(u32 x)`` converts a 32 bit integer from host byte-order to
-    network byte-order (host to network long);
-  * ``u16 ntohs(u16 x)`` converts a 16 bit integer from network byte-order to
-    host byte-order (network to host short);
-  * ``u32 ntohl(u32 x)`` converts a 32 bit integer from network byte-order to
-    host byte-order (network to host long).
+  * ``u16 htons(u16 x)`` 将 16 位整数从主机字节序转换为网络字节序（主机到网络短整数）；
+  * ``u32 htonl(u32 x)`` 将 32 位整数从主机字节序转换为网络字节序（主机到网络长整数）；
+  * ``u16 ntohs(u16 x)`` 将 16 位整数从网络字节序转换为主机字节序（网络到主机短整数）；
+  * ``u32 ntohl(u32 x)`` 将 32 位整数从网络字节序转换为主机字节序（网络到主机长整数）。
 
 .. _netfilter:
 
 netfilter
 =========
 
-Netfilter is the name of the kernel interface for capturing network packets for
-modifying/analyzing them (for filtering, NAT, etc.). `The netfilter
-<http://www.netfilter.org/>`_ interface is used in user space by `iptables
-<http://www.frozentux.net/documents/iptables-tutorial/>`_.
+Netfilter 是一个内核接口，用于捕获网络数据包以对其进行修改/分析（用于过滤、NAT 等）。在用户空间中，由 `iptables <http://www.frozentux.net/documents/iptables-tutorial/>`_ 使用 `netfilter <http://www.netfilter.org/>`_ 接口。
 
-In the Linux kernel, packet capture using netfilter is done by attaching hooks.
-Hooks can be specified in different locations in the path followed by a kernel
-network packet, as needed. An organization chart with the route followed by a
-package and the possible areas for a hook can be found `here
-<http://linux-ip.net/nf/nfk-traversal.png>`_.
+在 Linux 内核中，使用 netfilter 进行数据包捕获是通过附加钩子（hook）来实现的。钩子可以在内核网络数据包所经过的路径的不同位置指定，你可以根据需要进行配置。你可以在 `这里 <http://linux-ip.net/nf/nfk-traversal.png>`_ 找到一张组织图，组织图上显示数据包所经过的路径以及钩子可能出现的区域。
 
-The header included when using netfilter is :file:`linux/netfilter.h`.
+使用 netfilter 时包含的头文件是 :file:`linux/netfilter.h`。
 
-A hook is defined through the :c:type:`struct nf_hook_ops` structure:
+钩子通过 :c:type:`struct nf_hook_ops` 结构体进行定义：
 
 .. code-block:: c
 
   struct nf_hook_ops {
-  	/* User fills in from here down. */
+  	/* 用户从这里开始填写。*/
   	nf_hookfn               *hook;
   	struct net_device       *dev;
   	void                    *priv;
   	u_int8_t                pf;
   	unsigned int            hooknum;
-  	/* Hooks are ordered in ascending priority. */
+  	/* 钩子按优先级升序排列。*/
   	int                     priority;
   };
 
-where:
+其中：
 
-  * ``pf`` is the package type (``PF_INET``, etc.);
-  * ``priority`` is the priority; priorities are defined in
-     :file:`uapi/linux/netfilter_ipv4.h` as follows:
+  * ``pf`` 是数据包类型 (``PF_INET`` 等)；
+  * ``priority`` 是优先级；优先级在 :file:`uapi/linux/netfilter_ipv4.h` 中定义如下：
 
 .. code-block:: c
 
@@ -773,13 +635,9 @@ where:
 \
 
 
-  * ``dev`` is the device (network interface) on which the capture is
-    intended;
+  * ``dev`` 是捕获操作针对的设备（网络接口）；
 
-
-  * ``hooknum`` is the type of hook used. When a packet is captured, the
-    processing mode is defined by the ``hooknum`` and ``hook`` fields. For IP,
-    hook types are defined in :file:`linux/netfilter.h`:
+  * ``hooknum`` 是我们使用的钩子类型。当捕获到数据包时，处理模式由 ``hooknum`` 和 ``hook`` 字段定义。对于 IP，钩子类型在 :file:`linux/netfilter.h` 中定义：
 
 .. code-block:: c
 
@@ -794,10 +652,7 @@ where:
 
 \
 
-  * ``hook`` is the handler called when capturing a network packet (packet sent
-    as a :c:type:`struct sk_buff` structure). The ``private`` field is private information
-    handed to the handler. The capture handler prototype is defined by the
-    :c:type:`nf_hookfn` type:
+  * ``hook`` 是在捕获网络数据包时调用的处理程序（数据包以 :c:type:`struct sk_buff` 结构体形式发送）。 ``private`` 字段是传递给处理程序的私有信息。捕获处理程序的原型由 :c:type:`nf_hookfn` 类型定义：
 
 .. code-block:: c
 
@@ -815,20 +670,13 @@ where:
   			       struct sk_buff *skb,
   			       const struct nf_hook_state *state);
 
-For the :c:func:`nf_hookfn` capture function, the ``priv`` parameter is the
-private information with which the :c:type:`struct nf_hook_ops` was
-initialized. ``skb`` is the pointer to the captured network packet. Based on
-``skb`` information, packet filtering decisions are made. The function's
-``state`` parameter is the status information related to the packet capture,
-including the input interface, the output interface, the priority, the hook
-number. Priority and hook number are useful for allowing the same function to
-be called by several hooks.
+捕获函数 :c:func:`nf_hookfn` 中, ``priv`` 参数是 :c:type:`struct nf_hook_ops` 初始化时传递的私有信息。 ``skb`` 是指向捕获的网络数据包的指针。根据 ``skb`` 的信息，可以进行数据包过滤决策。函数的 ``state`` 参数是与数据包捕获相关的状态信息，包括输入接口、输出接口、优先级和钩子号。优先级和钩子号可使同一个函数被多个钩子调用。
 
-A capture handler can return one of the constants ``NF_*``:
+捕获处理程序可以返回以下常量之一 (``NF_*``)：
 
 .. code-block:: c
 
-  /* Responses from hook functions. */
+  /* hook 函数的响应结果 */
   #define NF_DROP 0
   #define NF_ACCEPT 1
   #define NF_STOLEN 2
@@ -837,15 +685,13 @@ A capture handler can return one of the constants ``NF_*``:
   #define NF_STOP 5
   #define NF_MAX_VERDICT NF_STOP
 
-``NF_DROP`` is used to filter (ignore) a packet, and ``NF_ACCEPT`` is used to
-accept a packet and forward it.
+``NF_DROP`` 用于过滤（忽略）数据包, ``NF_ACCEPT`` 用于接受数据包并将其转发。
 
-Registering/unregistering a hook is done using the functions defined in
-:file:`linux/netfilter.h`:
+通过使用在 :file:`linux/netfilter.h` 中定义的函数来注册/注销一个 hook：
 
 .. code-block:: c
 
-  /* Function to register/unregister hook points. */
+  /* 注册/注销 hook 点的函数 */
   int nf_register_net_hook(struct net *net, const struct nf_hook_ops *ops);
   void nf_unregister_net_hook(struct net *net, const struct nf_hook_ops *ops);
   int nf_register_net_hooks(struct net *net, const struct nf_hook_ops *reg,
@@ -856,26 +702,18 @@ Registering/unregistering a hook is done using the functions defined in
 
 .. attention::
 
-  Prior to version 3.11-rc2 of the Linux kernel,
-  there are some restrictions related to the use of header extraction functions
-  from a :c:type:`struct sk_buff` structure set as a parameter in a netfilter
-  hook. While the IP header can be obtained each time using :c:func:`ip_hdr`,
-  the TCP and UDP headers can be obtained with :c:func:`tcp_hdr` and
-  :c:func:`udp_hdr` only for packages that come from inside the system rather
-  than the ones that are received from outside the system. In the latter case,
-  you must manually calculate the header offset in the package:
+  在 Linux 内核 3.11-rc2 版本之前，作为 netfilter 钩子参数的 :c:type:`struct sk_buff` 结构，内部的头部提取函数有一些限制。虽然每次都可以使用 :c:func:`ip_hdr` 获取 IP 头部，但是用于获取 TCP 和 UDP 头部的 :c:func:`tcp_hdr` 和 :c:func:`udp_hdr` 函数，却只能对从系统内部，而非外部接收的数据包使用。对于后者的情况，需要手动计算数据包中的头部偏移量：
 
   .. code-block:: c
 
-    // For TCP packets (iph->protocol == IPPROTO_TCP)
+    // TCP 数据包 (iph->protocol == IPPROTO_TCP)
     tcph = (struct tcphdr*)((__u32*)iph + iph->ihl);
-    // For UDP packets (iph->protocol == IPPROTO_UDP)
+    // UDP 数据包 (iph->protocol == IPPROTO_UDP)
     udph = (struct udphdr*)((__u32*)iph + iph->ihl);
 
-  This code works in all filtering situations, so it's recommended to use it
-  instead of header access functions.
+  这段代码适用于所有过滤场景，因此建议使用它来替代头部访问函数。
 
-A usage example for a netfilter hook is shown below:
+下面是一个 netfilter hook 的使用示例：
 
 .. code-block:: c
 
@@ -891,7 +729,7 @@ A usage example for a netfilter hook is shown below:
   		struct sk_buff *skb,
   		const struct nf_hook_state *state)
   {
-  	/* process packet */
+  	/* 处理数据包 */
   	//...
 
   	return NF_ACCEPT;
@@ -920,125 +758,94 @@ A usage example for a netfilter hook is shown below:
 netcat
 ======
 
-When developing applications that include networking code, one of the most
-used tools is netcat. Also nicknamed "Swiss-army knife for TCP / IP". It allows:
+在开发包含网络编程的应用程序时，常用的工具包括 netcat。它也被昵称为“TCP/IP 的瑞士军刀”。它可以用于以下功能：
 
-  * Initiating TCP connections;
-  * Waiting for a TCP connection;
-  * Sending and receiving UDP packets;
-  * Displaying traffic in hexdump format;
-  * Run a program after establishing a connection (eg, a shell);
-  * Set special options in sent packages.
+  * 发起 TCP 连接；
+  * 等待 TCP 连接；
+  * 发送和接收 UDP 数据包；
+  * 以十六进制转储（hexdump）格式显示流量；
+  * 在建立连接后运行程序（例如，一个 shell）；
+  * 在发送的数据包中设置特殊选项。
 
-Initiating TCP connections:
-
-.. code-block:: console
-
-  nc hostname port
-
-Listening to a TCP port:
+发起 TCP 连接：
 
 .. code-block:: console
 
-  nc -l -p port
+  nc 主机名 端口号
 
-Sending and receiving UDP packets is done adding the ``-u`` command line option.
+监听 TCP 端口：
+
+.. code-block:: console
+
+  nc -l -p 端口号
+
+发送和接收 UDP 数据包，需要添加 ``-u`` 命令行选项。
 
 .. note::
 
-  The command is :command:`nc`; often :command:`netcat` is an alias for this
-  command. There are other implementations of the netcat command, some of which
-  have slightly different parameters than the classic implementation. Run
-  :command:`man nc` or :command:`nc -h` to check how to use it.
+  命令是 :command:`nc`；通常 :command:`netcat` 是此命令的别名。还有其他实现 netcat 命令的版本，其中一些与经典实现参数略有不同。运行 :command:`man nc` 或 :command:`nc -h` 以查看如何使用它。
 
-For more information on netcat, check the following `tutorial
-<https://www.win.tue.nl/~aeb/linux/hh/netcat_tutorial.pdf>`_.
+有关 netcat 的更多信息，请参阅以下 `教程 <https://www.win.tue.nl/~aeb/linux/hh/netcat_tutorial.pdf>`_。
 
-Further reading
-===============
+进一步阅读
+===========
 
-#. Understanding Linux Network Internals
-#. `Linux IP networking`_
-#. `The TUX Web Server`_
-#. `Beej's Guide to Network Programming Using Internet Sockets`_
-#. `Kernel Korner - Network Programming in the Kernel`_
-#. `Hacking the Linux Kernel Network Stack`_
-#. `The netfilter.org project`_
-#. `A Deep Dive Into Iptables and Netfilter Architecture`_
-#. `Linux Foundation Networking Page`_
+#. 了解 Linux 网络内部
+#. `Linux IP 网络`_
+#. `TUX Web 服务器`_
+#. `Beej 的互联网套接字网络编程指南`_
+#. `内核中的网络编程——Kernel Korner`_
+#. `深入 Linux 内核网络堆栈`_
+#. `netfilter.org 项目`_
+#. `深入了解 Iptables 和 Netfilter 架构`_
+#. `Linux 基金会网络页面`_
 
-.. _Linux IP networking: http://www.cs.unh.edu/cnrg/gherrin/
-.. _The TUX Web Server: http://www.stllinux.org/meeting_notes/2001/0719/myTUX/
-.. _Beej's Guide to Network Programming Using Internet Sockets: https://www.beej.us/guide/bgnet/
-.. _Kernel Korner - Network Programming in the Kernel: http://www.linuxjournal.com/article/7660
-.. _Hacking the Linux Kernel Network Stack: http://phrack.org/issues/61/13.html
-.. _The netfilter.org project: http://www.netfilter.org/
-.. _A Deep Dive Into Iptables and Netfilter Architecture: https://www.digitalocean.com/community/tutorials/a-deep-dive-into-iptables-and-netfilter-architecture
-.. _Linux Foundation Networking Page: http://www.linuxfoundation.org/en/Net:Main_Page
+.. _Linux IP 网络: http://www.cs.unh.edu/cnrg/gherrin/
+.. _TUX Web 服务器: http://www.stllinux.org/meeting_notes/2001/0719/myTUX/
+.. _Beej 的互联网套接字网络编程指南: https://www.beej.us/guide/bgnet/
+.. _内核中的网络编程——Kernel Korner: http://www.linuxjournal.com/article/7660
+.. _深入 Linux 内核网络堆栈: http://phrack.org/issues/61/13.html
+.. _netfilter.org 项目: http://www.netfilter.org/
+.. _深入了解 Iptables 和 Netfilter 架构: https://www.digitalocean.com/community/tutorials/a-deep-dive-into-iptables-and-netfilter-architecture
+.. _Linux 基金会网络页面: http://www.linuxfoundation.org/en/Net:Main_Page
 
-Exercises
-=========
+练习
+====
 
 .. include:: ../labs/exercises-summary.hrst
-.. |LAB_NAME| replace:: networking
+.. |LAB_NAME| replace:: 网络
 
 .. important::
 
-  You need to make sure that the ``netfilter`` support is active in kernel. It
-  is enabled via ``CONFIG_NETFILTER``. To activate it, run :command:`make menuconfig` in
-  the :file:`linux` directory and check the ``Network packet filtering framework
-  (Netfilter)`` option in ``Networking support -> Networking options``. If it
-  was not enabled, enable it (as builtin, not external module - it must be
-  marked with ``*``).
+  你需要确保内核支持 ``netfilter``。可以通过 ``CONFIG_NETFILTER`` 来启用它。要激活它，请在 :file:`linux` 目录中运行 :command:`make menuconfig`，并在 ``Networking support -> Networking options`` 中勾选 ``Network packet filtering framework (Netfilter)`` 选项。如果它未启用，请启用它（作为内置功能，而不是外部模块——必须带有 ``*`` 标记）。
 
 
-1. Displaying packets in kernel space
--------------------------------------
+1. 在内核空间中显示数据包
+------------------------
 
-Write a kernel module that displays the source address and port for TCP packets
-that initiate an outbound connection. Start from the code in
-:file:`1-2-netfilter` and fill in the areas marked with ``TODO 1``, taking into
-account the comments below.
+编写一个内核模块，显示发起出站连接的 TCP 数据包的源地址和端口。从 :file:`1-2-netfilter` 中的代码开始，并填写标有 ``TODO 1`` 的区域，同时考虑下面的注释。
 
-You will need to register a netfilter hook of type ``NF_INET_LOCAL_OUT`` as explained
-in the `netfilter`_ section.
+你需要注册一个类型为 ``NF_INET_LOCAL_OUT`` 的 netfilter 钩子，如 `netfilter`_ 部分所述。
 
-`The struct sk_buff structure`_ lets you access the packet headers using
-specific functions. The :c:func:`ip_hdr` function returns the IP header as a
-pointer to a :c:type:`struct iphdr` structure. The :c:func:`tcp_hdr` function
-returns the TCP header as a pointer to a :c:type:`struct tcphdr` structure.
+借助 `struct sk_buff 结构`_, 你可以使用特定的函数访问数据包头部。:c:func:`ip_hdr` 函数以返回指向 :c:type:`struct iphdr` 结构的指针的形式，返回 IP 头部。:c:func:`tcp_hdr` 函数以返回指向 :c:type:`struct tcphdr` 结构的指针的形式，返回 TCP 头部。
 
-The `diagram`_ explains how to make a TCP connection. The connection initiation
-packet has the ``SYN`` flag set in the TCP header and the ``ACK`` flag cleared.
+`图表`_ 解释了如何建立 TCP 连接。连接初始化数据包在 TCP 头部中设置了 ``SYN`` 标志，并清除了 ``ACK`` 标志。
 
 .. note::
 
-  To display the source IP address, use the ``%pI4`` format of the printk
-  function. Details can be found in the `kernel documentation
-  <https://www.kernel.org/doc/Documentation/printk-formats.txt>`_ (``IPv4
-  addresses`` section). The following is an example code snippet that uses
-  ``%pI4``:
+  要显示源 IP 地址，请使用 printk 函数的 ``%pI4`` 格式。详细信息可以在 `内核文档 <https://www.kernel.org/doc/Documentation/printk-formats.txt>`_ (``IPv4 addresses`` 部分)中找到。以下是使用 ``%pI4`` 的示例代码片段：
 
   .. code-block:: c
 
     printk("IP address is %pI4\n", &iph->saddr);
 
-  When using the ``%pI4`` format, the argument to printk is a pointer. Hence the
-  construction ``&iph->saddr`` (with operator & - ampersand) instead of
-  ``iph->saddr``.
+  在使用 ``%pI4`` 格式时，printk 的实参是指针。因此，构造应为 ``&iph->saddr`` （带有 & 运算符）而不是 ``iph->saddr``。
 
-The source TCP port is, in the TCP header, in the `network byte-order`_ format.
-Read through the :ref:`Conversions` section. Use :c:func:`ntohs` to convert.
+在 TCP 头部中，源 TCP 端口以 `网络字节序`_ 格式表示。请阅读 :ref:`转换` 部分。使用 :c:func:`ntohs` 进行转换。
 
-For testing, use the :file:`1-2-netfilter/user/test-1.sh` file. The test creates
-a connection to the localhost, a connection that will be intercepted and
-displayed by the kernel module. The script is copied on the virtual machine by
-the :command:`make copy` command only if it is marked as executable. The script
-uses the statically compiled :command:`netcat` tool stored in
-:file:`skels/networking/netcat`; this program must have execution
-permissions.
+为了进行测试，请使用 :file:`1-2-netfilter/user/test-1.sh` 文件。该测试创建一个到本地主机的连接，然后由内核模块拦截和显示该连接。 :command:`make copy` 命令仅会在该脚本标记为可执行的情况下，才会将该脚本复制到虚拟机上。该脚本使用静态编译得到的 :command:`netcat` 工具，该工具的路径是 :file:`skels/networking/netcat`；此程序必须具有执行权限。
 
-After running the checker the output should be similar to the one bellow:
+运行检查器后，输出应类似于下面的示例：
 
 .. code-block:: c
 
@@ -1047,46 +854,27 @@ After running the checker the output should be similar to the one bellow:
   Should show up in filter.
   Check dmesg output.
 
-2. Filtering by destination address
------------------------------------
+2. 按目标地址进行过滤
+---------------------
 
-Extend the module from exercise 1 so that you can specify a destination address
-by means of a ``MY_IOCTL_FILTER_ADDRESS`` ioctl call. You'll only show packages
-containing the specified destination address. To solve this task, fill in the
-areas marked with ``TODO 2`` and follow the specifications below.
+扩展练习 1 中的模块，以便你可以通过 ``MY_IOCTL_FILTER_ADDRESS`` ioctl 调用指定目标地址。注意只显示包含指定目标地址的数据包。为了解决这个任务，填写标有 ``TODO 2`` 的区域，并按照以下规范进行操作。
 
-To implement the ioctl routine, you must fill out the ``my_ioctl`` function.
-Review the section in :ref:`ioctl`. The address sent from user space is in
-`network byte-order`_, so there will be **NO need** for conversion.
+要实现 ioctl 例程，你必须填写 ``my_ioctl`` 函数。请查看 :ref:`ioctl` 部分的内容。从用户空间发送的地址使用 `网络字节序`_, 因此 **无需** 进行转换。
 
 .. note::
 
-  The IP address sent via ``ioctl`` is sent by address, not by value. The
-  address must be stored in the ``ioctl_set_addr`` variable. For copying use
-  :c:func:`copy_from_user`.
+  通过 ``ioctl`` 发送的 IP 地址是通过地址发送的，而不是通过值发送的。地址必须存储在 ``ioctl_set_addr`` 变量中。可以使用 :c:func:`copy_from_user` 进行复制。
 
-To compare the addresses, fill out the ``test_daddr`` function. Addresses in
-network byte-order will be used without having to convert addresses (if they
-are equal from left to right they will be equal if reversed too).
+要比较地址，请填写 ``test_daddr`` 函数。这里我们无需转换地址，即可将（使用网络字节序的）地址进行比较（如果从左到右相等，则反转后也相等）。
 
-The ``test_daddr`` function must be called from the netfilter hook to display
-the connection initialization packets for which the destination address is the
-one sent through the ioctl routine. The connection initiation packet has the
-``SYN`` flag set in the TCP header and the ``ACK`` flag cleared.  You have to
-check two things:
+如果要显示按目标地址过滤出的连接初始化数据包（这些过滤出的数据包，其目标地址与我们通过 ioctl 例程发送的地址相符），那么 ``test_daddr`` 函数必须在 netfilter 钩子中调用。连接初始化数据包在 TCP 头部中设置了 ``SYN`` 标志，并清除了 ``ACK`` 标志。你需要检查两件事情：
 
-  * the TCP flags;
-  * the destination address of the packet (using ``test_addr``).
+  * TCP 标志；
+  * 数据包的目标地址（使用 ``test_addr``）。
 
-For testing, use the :file:`1-2-netfilter/user/test-2.sh` script. This script
-needs to compile the :file:`1-2-netfilter/user/test.c` file in the test
-executable. Compilation is done automatically on the physical system when
-running the :command:`make build` command. The test script is copied to the
-virtual machine only if it is marked as executable. The script uses the
-statically compiled :command:`netcat` tool in :file:`skels/networking/netcat`;
-this executable must have execution permissions.
+为了进行测试，请使用 :file:`1-2-netfilter/user/test-2.sh` 脚本。此脚本需要编译 :file:`1-2-netfilter/user/test.c` 文件以生成测试可执行文件。在物理系统上运行 :command:`make build` 命令时，会自动进行编译。只有标记为可执行，该测试脚本才会复制到虚拟机上。该脚本使用静态编译的 :command:`netcat` 工具（在 :file:`skels/networking/netcat` 中）；该可执行文件必须具有执行权限。
 
-After running the checker the output should be similar to the one bellow:
+运行检查器后，输出应类似于下面的示例：
 
 .. code-block:: console
 
@@ -1096,159 +884,100 @@ After running the checker the output should be similar to the one bellow:
   Should NOT show up in filter.
   Check dmesg output.
 
-The test ask for packet filtering first for the ``127.0.0.1`` IP address and
-then for the ``127.0.0.2`` IP address. The first connection initiation packet
-(to ``127.0.0.1``) is intercepted and displayed by the filter, while the second
-(to ``127.0.0.2``) is not intercepted.
+测试首先要求对 ``127.0.0.1`` IP 地址进行数据包过滤，然后对 ``127.0.0.2`` IP 地址进行过滤。第一个连接初始化数据包（到 ``127.0.0.1``）被过滤器拦截并显示，而第二个数据包（到 ``127.0.0.2``）则未被拦截。
 
-3. Listening on a TCP socket
-----------------------------
+3. 监听 TCP socket
+-------------------
 
-Write a kernel module that creates a TCP socket that listens to connections on
-port ``60000`` on the loopback interface (in ``init_module``). Start from the
-code in :file:`3-4-tcp-sock` fill in the areas marked with ``TODO 1`` taking
-into account the observations below.
+编写一个内核模块，在回环接口（loopback interface）（在 ``init_module`` 中）上创建监听连接的 TCP 套接字，监听端口为 ``60000``。从 :file:`3-4-tcp-sock` 中的代码开始，填写标有 ``TODO 1`` 的区域，同时考虑以下观察结果。
 
-Read the `Operations on the socket structure`_ and `The struct proto_ops
-structure`_ sections.
+请阅读 `对 socket 结构的操作`_ 和 `struct proto_ops 结构`_ 部分。
 
-The ``sock`` socket is a ``server socket`` and must be put in the listening
-state. That is, the ``bind`` and ``listen`` operations must be applied to the
-socket. For the ``bind`` and ``listen`` equivalent, in kernel space you will
-need to call ``sock->ops->...;`` examples of such functions you can call are
-``sock->ops->bind``, ``sock->ops->listen`` etc.
+``sock`` socket 是 ``服务器套接字``，因此必须处于监听状态。也就是说，必须对该 socket 执行 ``bind`` 和 ``listen`` 操作。在内核空间中，要执行类似于 ``bind`` 和 ``listen`` 的操作，你需要调用类似 ``sock->ops->...;`` 的函数。你可以调用的示例函数包括 ``sock->ops->bind``, ``sock->ops->listen`` 等。
 
 .. note::
 
-  For example, call ``sock->ops->bind``, or ``sock->ops->listen`` functions, see
-  how they are called in the :c:func:`sys_bind` and :c:func:`sys_listen` system
-  call handlers.
+  例如，调用 ``sock->ops->bind`` 或 ``sock->ops->listen`` 函数，查看在 :c:func:`sys_bind` 和 :c:func:`sys_listen` 系统调用处理程序中调用它们的方式。
 
-  Look for the system call handlers in the ``net/socket.c`` file in the Linux
-  kernel source code tree.
+  在 Linux 内核源代码树的 ``net/socket.c`` 文件中，查找系统调用处理程序。
 
 .. note::
 
-  For the second argument of the ``listen`` (backlog) call, use the
-  ``LISTEN_BACKLOG``.
+  对于 ``listen`` 的第二个参数（backlog），请使用 ``LISTEN_BACKLOG``。
 
-Remember to release the socket in the module's exit function and in the area
-marked with error labels; use :c:func:`sock_release`.
+在模块的退出函数和标有错误标签的区域中记得释放 socket；可以使用 :c:func:`sock_release` 来释放。
 
-For testing, run the :command:`3-4-tcp_sock/test-3.sh` script. The script is
-copied on the virtual machine by :command:`make copy` only if it is marked as
-executable.
+要进行测试，请运行 :command:`3-4-tcp_sock/test-3.sh` 脚本。只有在标记为可执行时，该脚本才会通过 :command:`make copy` 复制到虚拟机上。
 
-After running the test, a TCP socket will be displayed by listening to
-connections on port ``60000``.
+运行测试后，将显示一个 TCP 套接字，通过监听端口 ``60000`` 进行连接。
 
-4. Accepting connections in kernel space
-----------------------------------------
+4. 在内核空间接受连接
+--------------------
 
-Expand the module from the previous exercise to allow an external connection (no
-need to send any message, only accept new connections). Fill in the areas marked
-with ``TODO 2``.
+扩展上一个练习中的模块，以允许外部连接（无需发送任何消息，只需接受新连接）。填写标有 ``TODO 2`` 的区域。
 
-Read the `Operations on the socket structure`_ and `The struct proto_ops
-structure`_ sections.
+请阅读 `对 socket 结构的操作`_ 和 `struct proto_ops 结构`_ 部分。
 
-For the kernel space ``accept`` equivalent, see the system call handler for
-:c:func:`sys_accept4`. Follow the `lnet_sock_accept
-<https://elixir.bootlin.com/linux/v4.17/source/drivers/staging/lustre/lnet/lnet/lib-socket.c#L511>`_
-implementation, and how the ``sock->ops->accept`` call is used. Use ``0`` as
-the value for the second to last argument (``flags``), and ``true`` for the
-last argument (``kern``).
+对于内核空间的 ``accept`` 等效操作，请参阅 :c:func:`sys_accept4` 系统调用处理程序。请查看 `lnet_sock_accept <https://elixir.bootlin.com/linux/v4.17/source/drivers/staging/lustre/lnet/lnet/lib-socket.c#L511>`_ 实现，以及如何使用 ``sock->ops->accept`` 调用。将倒数第二个参数 (``flags``) 的值设为 ``0``，将最后一个参数 (``kern``) 的值设为 ``true``。
 
 .. note::
 
-  Look for the system call handlers in the ``net/socket.c`` file in the Linux
-  kernel source code tree.
+  在 Linux 内核源代码树的 ``net/socket.c`` 文件中查找系统调用处理程序。
 
 .. note::
 
-  The new socket (``new_sock``) must be created with the
-  :c:func:`sock_create_lite` function and then its operations must be configured
-  using
+  必须使用 :c:func:`sock_create_lite` 函数创建新套接字 (``new_sock``)，然后使用以下方式配置其操作：
 
   .. code-block:: console
 
     newsock->ops = sock->ops;
 
-Print the address and port of the destination socket. To find the peer name of a
-socket (its address), refer to the :c:func:`sys_getpeername` system call handler.
+打印目标 socket 的地址和端口。要查找 socket 的对等名称（即地址），请参考 :c:func:`sys_getpeername` 系统调用处理程序。
 
 .. note::
 
-  The first argument for the ``sock->ops->getname`` function will be the
-  connection socket, ie ``new_sock``, the one initialized with by the ``accept``
-  call.
+  ``sock->ops->getname`` 函数的第一个参数是连接套接字，即通过 ``accept`` 调用初始化的 ``new_sock``。
 
-  The last argument of the ``sock->ops->getname`` function will be ``1``,
-  meaning that we want to know about the endpoint or the peer (*remote end* or
-  *peer*).
+  ``sock->ops->getname`` 函数的最后一个参数是 ``1``，表示我们想要了解有关端点或对等点 (*远程端* 或 *对等点*) 的信息。
 
-  Display the peer address (indicated by the ``raddr`` variable) using the
-  ``print_sock_address`` macro defined in the file.
+  使用文件中定义的 ``print_sock_address`` 宏显示对等地址（由 ``raddr`` 变量指示）。
 
-Release the newly created socket (after accepting the connection) in the module
-exit function and after the error label. After adding the ``accept`` code to the
-module initialization function, the :command:`insmod` operation will lock until
-a connection is established. You can unlock using :command:`netcat` on that
-port. Consequently, the test script from the previous exercise will not work.
+在模块的退出函数中，以及在错误标签之后，释放新创建的套接字（接受连接后）。在将 ``accept`` 代码添加到模块初始化函数之后，:command:`insmod` 操作将会阻塞，直到建立连接。你可以使用 :command:`netcat` 在该端口上解锁。因此，上一个练习中的测试脚本将无法工作。
 
-For testing, run the :file:`3-4-tcp_sock/test-4.sh` script. The script is copied on
-the virtual machine by :command:`make copy` only if it is marked as executable.
+要进行测试，请运行 :file:`3-4-tcp_sock/test-4.sh` 脚本。只有在标记为可执行时，该脚本才会通过 :command:`make copy` 复制到虚拟机上。
 
-Nothing special will be displayed (in the kernel buffer). The success of the
-test will be defined by the connection establishment. Then use ``Ctrl+c`` to
-stop the test script, and then you can remove the kernel module.
+不会显示任何特殊内容（在内核缓冲区中）。测试的成功将由连接的建立来确定。然后使用 ``Ctrl+c`` 停止测试脚本，然后可以移除内核模块。
 
-5. UDP socket sender
---------------------
+5. UDP 套接字发送方
+-------------------
 
-Write a kernel module that creates a UDP socket and sends the message from the
-``MY_TEST_MESSAGE`` macro on the socket to the loopback address on port
-``60001``.
+编写一个内核模块，其创建一个 UDP socket，并将来自 socket 的 ``MY_TEST_MESSAGE`` 宏的消息发送到回环地址的端口 ``60001``。
 
-Start from the code in :file:`5-udp-sock`.
+从 :file:`5-udp-sock` 中的代码开始。
 
-Read the `Operations on the socket structure`_ and `The struct proto_ops
-structure`_ sections.
+请阅读 `对 socket 结构的操作`_ 和 `struct proto_ops 结构`_ 部分。
 
-To see how to send messages in the kernel space, see the :c:func:`sys_send`
-system call handler or `Sending/receiving messages`_.
+要了解如何在内核空间中发送消息，请参阅 :c:func:`sys_send` 系统调用处理程序或 `发送/接收消息`_。
 
 .. hint::
 
-  The ``msg_name`` field of the :c:type:`struct msghdr` structure must be
-  initialized to the destination address (pointer to :c:type:`struct sockaddr`)
-  and the ``msg_namelen`` field to the address size.
+  :c:type:`struct msghdr` 结构的 ``msg_name`` 字段必须初始化为目标地址（指向 :c:type:`struct sockaddr` 的指针）, ``msg_namelen`` 字段必须初始化为地址大小。
 
-  Initialize the ``msg_flags`` field of the :c:type:`struct msghdr` structure
-  to ``0``.
+  将 :c:type:`struct msghdr` 结构的 ``msg_flags`` 字段初始化为 ``0``。
 
-  Initialize the ``msg_control`` and ``msg_controllen`` fields of the
-  :c:type:`struct msghdr` structure to ``NULL`` and ``0`` respectively.
+  将 :c:type:`struct msghdr` 结构的 ``msg_control`` 和 ``msg_controllen`` 字段分别初始化为 ``NULL`` 和 ``0``。
 
-For sending the message use :c:func:`kernel_sendmsg`.
+要发送消息，请使用 :c:func:`kernel_sendmsg`。
 
-The message transmission parameters are retrieved from the kernel space. Cast
-the :c:type:`struct iovec` structure pointer to a :c:type:`struct kvec` pointer
-in the :c:func:`kernel_sendmsg` call.
+消息传输参数从内核空间中检索。在 :c:func:`kernel_sendmsg` 调用中，将 :c:type:`struct iovec` 结构指针转换为 :c:type:`struct kvec` 指针。
 
 .. hint::
 
-  The last two parameters of :c:func:`kernel_sendmsg` are ``1`` (number of I/O
-  vectors) and ``len`` (message size).
+  :c:func:`kernel_sendmsg` 的最后两个参数分别为 ``1`` (I/O 向量的数量) 和 ``len`` (消息大小)。
 
-For testing, use the :file:`test-5.sh` file. The script is copied on the virtual
-machine by the :command:`make copy` command only if it is marked as executable.
-The script uses the statically compiled ``netcat`` tool stored in
-:file:`skels/networking/netcat`; this executable must have execution
-permissions.
+要进行测试，请使用 :file:`test-5.sh` 脚本。只有在标记为可执行时，该脚本才会通过 :command:`make copy` 复制到虚拟机上。该脚本使用存储在 :file:`skels/networking/netcat` 中的静态编译的 ``netcat`` 工具；该可执行文件必须具有执行权限。
 
-For a correct implementation, running the :file:`test-5.sh` script will cause
-the ``kernelsocket`` message to be displayed like in the output below:
+如果正确实现，运行 :file:`test-5.sh` 脚本后，将显示类似下面的输出中的 ``kernelsocket`` 消息：
 
 .. code-block:: console
 
