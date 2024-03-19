@@ -1,16 +1,16 @@
 ==============
-Memory mapping
+内存映射
 ==============
 
-Lab objectives
+实验目标
 ==============
 
-* Understand address space mapping mechanisms
-* Learn about the most important structures related to memory management
+* 理解地址空间映射机制
+* 了解与内存管理相关的重要结构
 
-Keywords:
+关键词：
 
-* address space
+* 地址空间
 * :c:func:`mmap`
 * :c:type:`struct page`
 * :c:type:`struct vm_area_struct`
@@ -20,95 +20,56 @@ Keywords:
 * :c:func:`ClearPageReserved`
 
 
-Overview
+概述
 ========
 
-In the Linux kernel it is possible to map a kernel address space to a
-user address space. This eliminates the overhead of copying user space
-information into the kernel space and vice versa. This can be done
-through a device driver and the user space device interface
-(:file:`/dev`).
+在 Linux 内核中，我们可以将内核地址空间映射到用户地址空间。这样可以消除将用户空间信息复制到内核空间或相反操作的开销。这可以通过设备驱动程序和用户空间设备接口 (:file:`/dev`) 来实现。
 
-This feature can be used by implementing the :c:func:`mmap` operation
-in the device driver's :c:type:`struct file_operations` and using the
-:c:func:`mmap` system call in user space.
+我们可以通过在设备驱动程序的 :c:type:`struct file_operations` 中实现 :c:func:`mmap` 操作，并在用户空间中通过 :c:func:`mmap` 系统调用来使用此功能。
 
-The basic unit for virtual memory management is a page, which size is
-usually 4K, but it can be up to 64K on some platforms. Whenever we
-work with virtual memory we work with two types of addresses: virtual
-address and physical address. All CPU access (including from kernel
-space) uses virtual addresses that are translated by the MMU into
-physical addresses with the help of page tables.
+虚拟内存管理的基本单位是页面。页面的大小通常为 4K，但在某些平台上可以达到 64K。虚拟内存技术会使用两种类型的地址：虚拟地址和物理地址。所有 CPU 访问（包括来自内核空间的访问）访问的都是虚拟地址，然后由 MMU 将虚拟地址转换为物理地址，转换过程依靠页表来完成。
 
-A physical page of memory is identified by the Page Frame Number
-(PFN). The PFN can be easily computed from the physical address by
-dividing it with the size of the page (or by shifting the physical
-address with PAGE_SHIFT bits to the right).
+物理内存页面由页面帧号（PFN）标识。PFN 可以通过将物理地址除以页面的大小（或通过将物理地址向右移动 PAGE_SHIFT 位）来轻松计算得到。
 
 .. image:: ../res/paging.png
    :width: 49 %
 
-For efficiency reasons, the virtual address space is divided into
-user space and kernel space. For the same reason, the kernel space
-contains a memory mapped zone, called **lowmem**, which is contiguously
-mapped in physical memory, starting from the lowest possible physical
-address (usually 0). The virtual address where lowmem is mapped is
-defined by :c:macro:`PAGE_OFFSET`.
+出于效率考量，虚拟地址空间被划分为用户空间和内核空间。出于同样的考量，内核空间包含一个内存映射区域，称为 **lowmem（低内存）**。lowmem 从最低物理地址（通常为 0）开始，以连续方式映射到物理内存。lowmem 映射的虚拟地址由 :c:macro:`PAGE_OFFSET` 定义。
 
-On a 32bit system, not all available memory can be mapped in lowmem and
-because of that there is a separate zone in kernel space called
-**highmem** which can be used to arbitrarily map physical memory.
+在 32 位系统上，不是所有可用内存都可以映射到 lowmem 中，因此内核空间中有一个单独的区域称为 **highmem（高内存）**，可用于映射任意物理内存。
 
-Memory allocated by :c:func:`kmalloc` resides in lowmem and it is
-physically contiguous. Memory allocated by :c:func:`vmalloc` is not
-contiguous and does not reside in lowmem (it has a dedicated zone in
-highmem).
+由 :c:func:`kmalloc` 分配的内存位于 lowmem 中，是物理连续的。由 :c:func:`vmalloc` 分配的内存不是连续的，也不位于 lowmem 中（它在 highmem 中有一个专用区域）。
 
 .. image:: ../res/kernel-virtmem-map.png
    :width: 49 %
 
-Structures used for memory mapping
+用于内存映射的结构
 ==================================
 
-Before discussing about the memory mapping mechanism over a device,
-we will present some of the basic structures used by the Linux memory
-management subsystem.
-Some of the basic structures are: :c:type:`struct page`,
-:c:type:`struct vm_area_struct`, :c:type:`struct mm_struct`.
+在讨论设备上的内存映射机制之前，我们将介绍 Linux 内存管理子系统使用的一些基本结构。其中一些基本结构包括：:c:type:`struct page`, :c:type:`struct vm_area_struct` 以及 :c:type:`struct mm_struct`。
 
 :c:type:`struct page`
 ---------------------
 
-:c:type:`struct page` is used to embed information about all physical
-pages in the system. The kernel has a :c:type:`struct page` structure
-for all pages in the system.
+:c:type:`struct page` 用于嵌入系统中所有物理页面的信息。内核为系统中的每个页面，都配有一个 :c:type:`struct page` 结构。
 
-There are many functions that interact with this structure:
+有许多函数与此结构交互：
 
-* :c:func:`virt_to_page` returns the page associated with a virtual
-  address
-* :c:func:`pfn_to_page` returns the page associated with a page frame
-  number
-* :c:func:`page_to_pfn` return the page frame number associated with a
-  :c:type:`struct page`
-* :c:func:`page_address` returns the virtual address of a
-  :c:type:`struct page`; this functions can be called only for pages from
-  lowmem
-* :c:func:`kmap` creates a mapping in kernel for an arbitrary physical
-  page (can be from highmem) and returns a virtual address that can be
-  used to directly reference the page
+* :c:func:`virt_to_page` 返回与虚拟地址关联的页面
+* :c:func:`pfn_to_page` 返回与页面帧号关联的页面
+* :c:func:`page_to_pfn` 返回与 :c:type:`struct page` 关联的页面帧号
+* :c:func:`page_address` 返回 :c:type:`struct page` 的虚拟地址；此函数只能用于 lowmem 中的页面
+* :c:func:`kmap` 为任意物理页面（可以来自 highmem）在内核中创建映射，并返回虚拟地址，该虚拟地址可用于直接引用该页面
 
 :c:type:`struct vm_area_struct`
 -------------------------------
 
-:c:type:`struct vm_area_struct` holds information about a contiguous
-virtual memory area. The memory areas of a process can be viewed by
-inspecting the *maps* attribute of the process via procfs:
+:c:type:`struct vm_area_struct` 保存连续虚拟内存区域的信息。可以通过检查进程的 *maps* 属性（通过 procfs）来查看进程的内存区域：
 
 .. code-block:: shell
 
    root@qemux86:~# cat /proc/1/maps
-   #address          perms offset  device inode     pathname
+   #地址             权限  偏移     设备  inode      路径
    08048000-08050000 r-xp 00000000 fe:00 761        /sbin/init.sysvinit
    08050000-08051000 r--p 00007000 fe:00 761        /sbin/init.sysvinit
    08051000-08052000 rw-p 00008000 fe:00 761        /sbin/init.sysvinit
@@ -125,93 +86,63 @@ inspecting the *maps* attribute of the process via procfs:
    b7766000-b7767000 r-xp 00000000 00:00 0          [vdso]
    bfa15000-bfa36000 rw-p 00000000 00:00 0          [stack]
 
-A memory area is characterized by a start address, a stop address,
-length, permissions.
+内存区域由起始地址、结束地址、长度和权限来描述。
 
-A :c:type:`struct vm_area_struct` is created at each :c:func:`mmap`
-call issued from user space. A driver that supports the :c:func:`mmap`
-operation must complete and initialize the associated
-:c:type:`struct vm_area_struct`. The most important fields of this
-structure are:
+每次从用户空间发出 :c:func:`mmap` 调用时，系统都会创建一个 :c:type:`struct vm_area_struct`。一个驱动程序要想支持 :c:func:`map` 操作，必须完成并初始化与之关联的 :c:type:`struct vm_area_struct`。该结构的重要字段包括：
 
-* :c:member:`vm_start`, :c:member:`vm_end` - the beginning and the end of
-  the memory area, respectively (these fields also appear in
-  :file:`/proc/<pid>/maps`);
-* :c:member:`vm_file` - the pointer to the associated file structure (if any);
-* :c:member:`vm_pgoff` - the offset of the area within the file;
-* :c:member:`vm_flags` - a set of flags;
-* :c:member:`vm_ops` - a set of working functions for this area
-* :c:member:`vm_next`, :c:member:`vm_prev` - the areas of the same process
-  are chained by a list structure
+* :c:member:`vm_start` 以及 :c:member:`vm_end` ——内存区域的起始和结束地址（这些字段也出现在 :file:`/proc/<pid>/maps` 中）；
+* :c:member:`vm_file` ——关联 file 结构的指针（如果有的话）；
+* :c:member:`vm_pgoff` ——区域在文件中的偏移量；
+* :c:member:`vm_flags` ——一组标志；
+* :c:member:`vm_ops` ——该区域的工作函数集合；
+* :c:member:`vm_next` 以及 :c:member:`vm_prev` ——同一进程的区域通过链表结构连接起来。
 
 :c:type:`struct mm_struct`
 --------------------------
 
-:c:type:`struct mm_struct` encompasses all memory areas associated
-with a process. The :c:member:`mm` field of :c:type:`struct task_struct`
-is a pointer to the :c:type:`struct mm_struct` of the current process.
+:c:type:`struct mm_struct` 包含与进程关联的所有内存区域。:c:type:`struct task_struct` 的 :c:member:`mm` 字段是一个指针，指向当前进程的 :c:type:`struct mm_struct`。
 
 
-Device driver memory mapping
+设备驱动程序的内存映射
 ============================
 
-Memory mapping is one of the most interesting features of a Unix
-system. From a driver's point of view, the memory-mapping facility
-allows direct memory access to a user space device.
+内存映射是 Unix 系统中最有趣的功能之一。从驱动程序的角度来看，内存映射机制允许直接访问用户空间设备的内存。
 
-To assign a :c:func:`mmap` operation to a driver, the :c:member:`mmap`
-field of the device driver's :c:type:`struct file_operations` must be
-implemented. If that is the case, the user space process can then use
-the :c:func:`mmap` system call on a file descriptor associated with
-the device.
+要将 :c:func:`mmap` 操作分配给驱动程序，必须实现设备驱动程序的 :c:type:`struct file_operations` 的 :c:member:`mmap` 字段。如果这样做了，用户空间进程可以对与设备关联的文件描述符使用 :c:func:`mmap` 系统调用。
 
-The mmap system call takes the following parameters:
+mmap 系统调用有以下参数：
 
 .. code-block:: c
 
    void *mmap(caddr_t addr, size_t len, int prot,
               int flags, int fd, off_t offset);
 
-To map memory between a device and user space, the user process must
-open the device and issue the :c:func:`mmap` system call with the resulting
-file descriptor.
+要在设备和用户空间之间映射内存，用户进程必须对设备执行 open 操作，并使用得到的文件描述符发出 :c:func:`mmap` 系统调用。
 
-The device driver :c:func:`mmap` operation has the following signature:
+设备驱动程序的 :c:func:`mmap` 操作具有以下签名：
 
 .. code-block:: c
 
    int (*mmap)(struct file *filp, struct vm_area_struct *vma);
 
-The *filp* field is a pointer to a :c:type:`struct file` created when
-the device is opened from user space. The *vma* field is used to
-indicate the virtual address space where the memory should be mapped
-by the device. A driver should allocate memory (using
-:c:func:`kmalloc`, :c:func:`vmalloc`, :c:func:`alloc_pages`) and then
-map it to the user address space as indicated by the *vma* parameter
-using helper functions such as :c:func:`remap_pfn_range`.
+*filp* 字段是一个指针，指向在用户空间打开设备时创建的 :c:type:`struct file`。 *vma* 字段用于指示设备应该将内存映射到哪一个虚拟地址空间。驱动程序应该分配内存 (使用 :c:func:`kmalloc`, :c:func:`vmalloc` 或者 :c:func:`alloc_pages`), 然后使用辅助函数（如:c:func:`remap_pfn_range`）根据 *vma* 参数将其映射到用户地址空间。
 
-:c:func:`remap_pfn_range` will map a contiguous physical address space
-into the virtual space represented by :c:type:`vm_area_struct`:
+:c:func:`remap_pfn_range` 将连续的物理地址空间映射到由 :c:type:`vm_area_struct` 表示的虚拟空间：
 
 .. code-block:: c
 
-   int remap_pfn_range (structure vm_area_struct *vma, unsigned long addr,
-                        unsigned long pfn, unsigned long size, pgprot_t prot);
+   int remap_pfn_range(struct vm_area_struct *vma, unsigned long addr,
+                       unsigned long pfn, unsigned long size, pgprot_t prot);
 
-:c:func:`remap_pfn_range` expects the following parameters:
+:c:func:`remap_pfn_range` 需要以下参数：
 
-* *vma*  - the virtual memory space in which mapping is made;
-* *addr* - the virtual address space from where remapping begins; page
-  tables for the virtual address space between addr and addr + size
-  will be formed as needed
-* *pfn* - the page frame number to which the virtual address should be
-  mapped
-* *size* - the size (in bytes) of the memory to be mapped
-* *prot* - protection flags for this mapping
+* *vma* ——进行映射的虚拟内存空间；
+* *addr* ——重新映射开始的虚拟地址空间；将根据需要形成 addr 和 addr + size 之间的虚拟地址空间的页表
+* *pfn* ——虚拟地址应映射到的页帧号
+* *size* ——要映射的内存的大小（以字节为单位）
+* *prot* ——此映射的保护标志
 
-Here is an example of using this function that contiguously maps the
-physical memory starting at page frame number *pfn* (memory that was
-previously allocated) to the *vma->vm_start* virtual address:
+以下是使用该函数的示例，该示例将从页帧号 *pfn*（先前分配的内存）开始的物理内存连续映射到 *vma->vm_start* 虚拟地址：
 
 .. code-block:: c
 
@@ -225,11 +156,7 @@ previously allocated) to the *vma->vm_start* virtual address:
        return -EIO;
    }
 
-To obtain the page frame number of the physical memory we must
-consider how the memory allocation was performed. For each
-:c:func:`kmalloc`, :c:func:`vmalloc`, :c:func:`alloc_pages`, we must
-used a different approach. For :c:func:`kmalloc` we can use something
-like:
+要获得物理内存的页帧号，我们必须考虑内存分配是如何进行的。对于 :c:func:`kmalloc`, :c:func:`vmalloc` 或者 :c:func:`alloc_pages`, 我们必须使用不同的方法。对于 :c:func:`kmalloc`，我们可以使用类似以下的方法：
 
 .. code-block:: c
 
@@ -237,7 +164,7 @@ like:
 
    unsigned long pfn = virt_to_phys((void *)kmalloc_area)>>PAGE_SHIFT;
 
-while for :c:func:`vmalloc`:
+而对于 :c:func:`vmalloc`：
 
 .. code-block:: c
 
@@ -245,7 +172,7 @@ while for :c:func:`vmalloc`:
 
    unsigned long pfn = vmalloc_to_pfn(vmalloc_area);
 
-and finally for :c:func:`alloc_pages`:
+最后对于 :c:func:`alloc_pages`：
 
 .. code-block:: c
 
@@ -253,16 +180,9 @@ and finally for :c:func:`alloc_pages`:
 
    unsigned long pfn = page_to_pfn(page);
 
-.. attention:: Note that memory allocated with :c:func:`vmalloc` is not
-               physically contiguous so if we want to map a range allocated
-               with :c:func:`vmalloc`, we have to map each page individually
-               and compute the physical address for each page.
+.. attention:: 请注意，使用 :c:func:`vmalloc` 分配的内存在物理上不连续，因此如果我们想要映射使用 :c:func:`vmalloc` 分配的范围，我们必须逐个映射每个页面，并计算每个页面的物理地址。
 
-Since the pages are mapped to user space, they might be swapped
-out. To avoid this we must set the PG_reserved bit on the page.
-Enabling is done using :c:func:`SetPageReserved` while reseting it
-(which must be done before freeing the memory) is done with
-:c:func:`ClearPageReserved`:
+由于这些页面被映射到的是用户空间，它们可能会被交换出去。为了避免这种情况，我们必须在页面上设置 PG_reserved 位。我们可以使用 :c:func:`SetPageReserved` 来启用它，也可以使用 :c:func:`ClearPageReserved` 来重置它（在释放内存之前必须执行此操作）：
 
 .. code-block:: c
 
@@ -290,210 +210,156 @@ Enabling is done using :c:func:`SetPageReserved` while reseting it
        kfree(mem);
    }
 
-
-Further reading
+进一步阅读
 ===============
 
-* `Linux Device Drivers 3rd Edition - Chapter 15. Memory Mapping and DMA <http://lwn.net/images/pdf/LDD3/ch15.pdf>`_
-* `Linux Device Driver mmap Skeleton <http://www.xml.com/ldd/chapter/book/ch13.html>`_
-* `Driver porting: supporting mmap () <http://lwn.net/Articles/28746/>`_
-* `Device Drivers Concluded <http://www.linuxjournal.com/article/1287>`_
+* `Linux 设备驱动程序第 3 版——第 15 章 内存映射和 DMA <http://lwn.net/images/pdf/LDD3/ch15.pdf>`_
+* `Linux 设备驱动程序 mmap 骨架 <http://www.xml.com/ldd/chapter/book/ch13.html>`_
+* `驱动程序移植：支持 mmap () <http://lwn.net/Articles/28746/>`_
+* `设备驱动程序结束 <http://www.linuxjournal.com/article/1287>`_
 * `mmap <http://en.wikipedia.org/wiki/Mmap>`_
 
-Exercises
+练习
 =========
 
 .. include:: ../labs/exercises-summary.hrst
-.. |LAB_NAME| replace:: memory_mapping
+.. |LAB_NAME| replace:: 内存映射
 
-1. Mapping contiguous physical memory to userspace
+1. 将连续的物理内存映射到用户空间
 --------------------------------------------------
 
-Implement a device driver that maps contiguous physical memory
-(e.g. obtained via :c:func:`kmalloc`) to userspace.
+实现一个设备驱动程序，将连续的物理内存（例如通过 :c:func:`kmalloc` 获得的内存）映射到用户空间。
 
-Review the `Device driver memory mapping`_ section, generate the
-skeleton for the task named **kmmap** and fill in the areas marked
-with **TODO 1**.
+查看 `设备驱动程序的内存映射`_ 部分，生成名为 **kmmap** 的任务的框架，并填写标有 **TODO 1** 的区域。
 
-Start with allocating a NPAGES+2 memory area page using :c:func:`kmalloc`
-in the module init function and find the first address in the area that is
-aligned to a page boundary.
+在模块初始化函数中，首先使用 :c:func:`kmalloc` 分配一个 NPAGES+2 个页面的内存区域，并找到该区域中对齐到页边界的第一个地址。
 
-.. hint:: The size of a page is *PAGE_SIZE*.
+.. hint:: 一个页面的大小为 *PAGE_SIZE*。
 
-	  Store the allocated area in *kmalloc_ptr* and the page
-	  aligned address in *kmalloc_area*:
+          将分配的区域存储在 *kmalloc_ptr* 中，将对齐的地址存储在 *kmalloc_area* 中：
 
-	  Use :c:func:`PAGE_ALIGN` to determine *kmalloc_area*.
+          使用 :c:func:`PAGE_ALIGN` 函数来确定 *kmalloc_area*。
 
-Enable the PG_reserved bit of each page with
-:c:func:`SetPageReserved`. Clear the bit with
-:c:func:`ClearPageReserved` before freeing the memory.
+使用 :c:func:`SetPageReserved` 将每个页面的 PG_reserved 位设置为启用状态。在释放内存之前，使用 :c:func:`ClearPageReserved` 清除该位。
 
-.. hint:: Use :c:func:`virt_to_page` to translate virtual pages into
-	  physical pages, as required by :c:func:`SetPageReserved`
-	  and :c:func:`ClearPageReserved`.
+.. hint:: 使用 :c:func:`virt_to_page` 将虚拟页转换为物理页, :c:func:`SetPageReserved` 和 :c:func:`ClearPageReserved` 所需的是物理页面。
 
-For verification purpose (using the test below), fill in the first 4
-bytes of each page with the following values: 0xaa, 0xbb, 0xcc, 0xdd.
+为了验证目的（使用下面的测试），在每个页面的前 4 个字节中填入以下值：0xaa、0xbb、0xcc 以及 0xdd。
 
-Implement the :c:func:`mmap` driver function.
+实现 :c:func:`mmap` 驱动程序函数。
 
-.. hint:: For mapping, use :c:func:`remap_pfn_range`. The third
-	  argument for :c:func:`remap_pfn_range` is a page frame number (PFN).
+.. hint:: 要想映射，使用 :c:func:`remap_pfn_range`。:c:func:`remap_pfn_range` 的第三个参数是页帧号（PFN）。
 
-	  To convert from virtual kernel address to physical address,
-	  use :c:func:`virt_to_phys`.
+          要从虚拟内核地址转换为物理地址，请使用 :c:func:`virt_to_phys`。
 
-	  To convert a physical address to its PFN, shift the address
-	  with PAGE_SHIFT bits to the right.
+          要将物理地址转换为其 PFN，请将地址右移 PAGE_SHIFT 位。
 
-For testing, load the kernel module and run:
+用于测试的方法是，加载内核模块并运行：
 
 .. code-block:: shell
 
   root@qemux86:~# skels/memory_mapping/test/mmap-test 1
 
-If everything goes well, the test will show "matched" messages.
+如果一切顺利，测试将显示“matched”消息。
 
-2. Mapping non-contiguous physical memory to userspace
+2. 将非连续的物理内存映射到用户空间
 ------------------------------------------------------
 
-Implement a device driver that maps non-contiguous physical memory
-(e.g. obtained via :c:func:`vmalloc`) to userspace.
+实现一个设备驱动程序，将非连续的物理内存（例如通过:c:func:`vmalloc`获得的内存）映射到用户空间。
 
-Review the `Device driver memory mapping`_ section, generate the
-skeleton for the task named **vmmap** and fill in the areas marked
-with **TODO 1**.
+查看`设备驱动程序内存映射`_部分，生成名为**vmmap**的任务的框架，并填写标有**TODO 1**的区域。
 
-Allocate a memory area of NPAGES with :c:func:`vmalloc`.
+使用:c:func:`vmalloc`分配一个NPAGES大小的内存区域。
 
-.. hint:: The size of a page is *PAGE_SIZE*.
-          Store the allocated area in *vmalloc_area*.
-          Memory allocated by :c:func:`vmalloc` is paged aligned.
+.. hint:: 一个页面的大小为*PAGE_SIZE*。
+          将分配的区域存储在*vmalloc_area*中。
+          由:c:func:`vmalloc`分配的内存是按页对齐的。
 
-Enable the PG_reserved bit of each page with
-:c:func:`SetPageReserved`. Clear the bit with
-:c:func:`ClearPageReserved` before freeing the memory.
+使用:c:func:`SetPageReserved`将每个页面的PG_reserved位设置为启用状态。在释放内存之前，使用:c:func:`ClearPageReserved`清除该位。
 
-.. hint:: Use :c:func:`vmalloc_to_page` to translate virtual pages
-          into physical pages used by the functions
-          :c:func:`SetPageReserved` and :c:func:`ClearPageReserved`.
+.. hint:: 使用:c:func:`vmalloc_to_page`将虚拟页转换为物理页，用于:c:func:`SetPageReserved`和:c:func:`ClearPageReserved`函数。
 
-For verification purpose (using the test below), fill in the first 4
-bytes of each page with the following values: 0xaa, 0xbb, 0xcc, 0xdd.
+为了验证目的（使用下面的测试），在每个页面的前4个字节中填入以下值：0xaa、0xbb、0xcc、0xdd。
 
-Implement the mmap driver function.
+实现:mmap驱动程序函数。
 
-.. hint:: To convert from virtual vmalloc address to physical address,
-          use :c:func:`vmalloc_to_pfn` which returns a PFN directly.
+.. hint:: 要将虚拟vmalloc地址转换为物理地址，使用:c:func:`vmalloc_to_pfn`直接返回PFN。
 
-.. attention:: vmalloc pages are not physically contiguous so it is
-               needed to use :c:func:`remap_pfn_range` for each page.
+.. attention:: vmalloc页面不是物理连续的，因此需要为每个页面使用:c:func:`remap_pfn_range`。
 
-               Loop through all virtual pages and for each:
-               * determine the physical address
-               * map it with :c:func:`remap_pfn_range`
+               遍历所有虚拟页面，并对于每个页面：
+               * 确定物理地址
+               * 使用:c:func:`remap_pfn_range`进行映射
 
-               Make sure that you determine the physical address
-               each time and that you use a range of one page for mapping.
+               确保每次都确定物理地址，并且使用一个页面范围进行映射。
 
-For testing, load the kernel module and run:
+用于测试的方法是，加载内核模块并运行：
 
 .. code-block:: shell
 
   root@qemux86:~# skels/memory_mapping/test/mmap-test 1
 
-If everything goes well, the test will show "matched" messages.
+如果一切顺利，测试将显示“matched”消息。
 
-3. Read / write operations in mapped memory
+3. 在映射内存中进行读写操作
 -------------------------------------------
 
-Modify one of the previous modules to allow read / write operations on
-your device. This is a didactic exercise to see that the same space
-can also be used with the :c:func:`mmap` call and with :c:func:`read`
-and :c:func:`write` calls.
+修改之前的模块之一，以允许在设备上进行读写操作。这是一个教学练习，可以看到相同的空间既可以使用 :c:func:`mmap` 调用，也可以使用 :c:func:`read` 和 :c:func:`write` 调用。
 
-Fill in areas marked with **TODO 2**.
+填写标有 **TODO 2** 的区域。
 
-.. note:: The offset parameter sent to the read / write operation can
-          be ignored as all reads / writes from the test program will
-          be done with 0 offsets.
+.. note:: 读/写操作的偏移参数可以忽略，因为测试程序中的所有读/写操作偏移都是 0。
 
-For testing, load the kernel module and run:
+用于测试的方法是，加载内核模块并运行：
 
 .. code-block:: shell
 
   root@qemux86:~# skels/memory_mapping/test/mmap-test 2
 
 
-4. Display memory mapped in procfs
+4. 在 procfs 中显示内存映射
 ----------------------------------
 
-Using one of the previous modules, create a procfs file in which you
-display the total memory mapped by the calling process.
+使用之前的模块之一，在其中创建一个 procfs 文件，显示调用进程映射的总内存。
 
-Fill in the areas marked with **TODO 3**.
+填写标有 **TODO 3** 的区域。
 
-Create a new entry in procfs (:c:macro:`PROC_ENTRY_NAME`, defined in
-:file:`mmap-test.h`) that will show the total memory mapped by the process
-that called the :c:func:`read` on that file.
+在 procfs 中创建一个新条目 (:c:macro:`PROC_ENTRY_NAME`, 在 :file:`mmap-test.h` 中定义)，该条目将显示调用 :c:func:`read` 的进程映射的总内存。
 
-.. hint:: Use :c:func:`proc_create`. For the mode parameter, use 0,
-          and for the parent parameter use NULL. Use
-          :c:func:`my_proc_file_ops` for operations.
+.. hint:: 使用 :c:func:`proc_create`。mode 参数使用 0，parent 参数使用 NULL。使用 :c:func:`my_proc_file_ops` 进行操作。
 
-In the module exit function, delete the :c:macro:`PROC_ENTRY_NAME` entry
-using :c:func:`remove_proc_entry`.
+在模块退出函数中，使用 :c:func:`remove_proc_entry` 删除 :c:macro:`PROC_ENTRY_NAME` 条目。
 
-.. note:: A (complex) use and description of the :c:type:`struct
-          seq_file` interface can be found here in this `example
-          <http://tldp.org/LDP/lkmpg/2.6/html/x861.html>`_ .
+.. note:: 可以在此 `示例 <http://tldp.org/LDP/lkmpg/2.6/html/x861.html>`_ 中找到 (复杂的) :c:type:`struct seq_file` 接口的使用和说明。
 
-          For this exercise, just a simple use of the interface
-          described `here <http://lwn.net/Articles/22355/>`_ is
-          sufficient. Check the "extra-simple" API described there.
+          对于这个练习，只需使用 `这里 <http://lwn.net/Articles/22355/>`_ 描述的接口的简单用法即可。请查看那里描述的“extra-simple” API。
 
-In the :c:func:`my_seq_show` function you will need to:
+在 :c:func:`my_seq_show` 函数中，你需要：
 
-* Obtain the :c:type:`struct mm_struct` structure of the current process
-  using the :c:func:`get_task_mm` function.
+* 使用 :c:func:`get_task_mm` 函数获取当前进程的 :c:type:`struct mm_struct` 结构。
 
-  .. hint:: The current process is available via the *current* variable
-            of type :c:type:`struct task_struct*`.
+  .. hint:: 当前进程可以通过类型为 :c:type:`struct task_struct*` 的 *current* 变量获得。
 
-* Iterate through the entire :c:type:`struct vm_area_struct` list
-  associated with the process.
+* 遍历与进程关联的整个 :c:type:`struct vm_area_struct` 列表。
 
-  .. hint:: Use the variable :c:data:`vma_iterator` and start from
-            :c:data:`mm->mmap`. Use the :c:member:`vm_next` field of
-            the :c:type:`struct vm_area_struct` to navigate through
-            the list of memory areas. Stop when you reach :c:macro:`NULL`.
+  .. hint:: 使用变量 :c:data:`vma_iterator`，从 :c:data:`mm->mmap` 开始。使用 :c:type:`struct vm_area_struct` 的 :c:member:`vm_next` 字段在内存区域列表中导航。直到达到 :c:macro:`NULL` 时停止。
 
-* Use *vm_start* and *vm_end* for each area to compute the total size.
+* 对于每个区域，使用 *vm_start* 和 *vm_end* 计算总大小。
 
-* Use :c:func:`pr_info("%lx %lx\n, ...)` to print *vm_start* and *vm_end* for
-  each area.
+* 使用 :c:func:`pr_info("%lx %lx\n, ...)` 为每个区域打印 *vm_start* 和 *vm_end*。
 
-* To release :c:type:`struct mm_struct`, decrement the reference
-  counter of the structure using :c:func:`mmput`.
+* 要释放 :c:type:`struct mm_struct`，请使用 :c:func:`mmput` 递减结构的引用计数器。
 
-* Use :c:func:`seq_printf` to write to the file. Show only the total count,
-  no other messages. Do not even show newline (\n).
+* 使用 :c:func:`seq_printf` 写入文件。仅显示总计数，不显示其他消息。甚至不要显示换行符（\n）。
 
-In :c:func:`my_seq_open` register the display function
-(:c:func:`my_seq_show`) using :c:func:`single_open`.
+在 :c:func:`my_seq_open` 中，使用 :c:func:`single_open` 注册显示函数 (:c:func:`my_seq_show`)。
 
-.. note:: :c:func:`single_open` can use :c:macro:`NULL` as its third argument.
+.. note:: :c:func:`single_open` 可以使用 NULL 作为其第三个参数。
 
-For testing, load the kernel module and run:
+测试的方法是，加载内核模块并运行：
 
 .. code-block:: shell
 
   root@qemux86:~# skels/memory_mapping/test/mmap-test 3
 
-.. note:: The test waits for a while (it has an internal sleep
-          instruction). As long as the test waits, use the
-          :command:`pmap` command in another console to see the
-          mappings of the test and compare those to the test results.
+.. note:: 测试会等待一段时间（其中包含一个 sleep 指令）。只要测试在等待，就可以在另一个控制台中使用 :pmap 命令查看测试的映射，并将其与测试结果进行比较。
