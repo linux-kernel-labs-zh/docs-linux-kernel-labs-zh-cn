@@ -285,7 +285,7 @@ mmap 系统调用有以下参数：
 
 .. attention:: vmalloc 页面不是物理连续的，因此需要为每个页面单独使用 :c:func:`remap_pfn_range`。
 
-               遍历所有虚拟页面，并对于每个页面：
+               遍历所有虚拟页面，并对于每个页面:
                * 确定物理地址
                * 使用 :c:func:`remap_pfn_range` 进行映射
 
