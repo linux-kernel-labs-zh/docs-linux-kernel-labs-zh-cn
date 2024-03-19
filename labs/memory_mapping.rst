@@ -265,35 +265,33 @@ mmap 系统调用有以下参数：
 2. 将非连续的物理内存映射到用户空间
 ------------------------------------------------------
 
-实现一个设备驱动程序，将非连续的物理内存（例如通过:c:func:`vmalloc`获得的内存）映射到用户空间。
+实现一个设备驱动程序，将非连续的物理内存（例如通过 :c:func:`vmalloc` 获得的内存）映射到用户空间。
 
-查看`设备驱动程序内存映射`_部分，生成名为**vmmap**的任务的框架，并填写标有**TODO 1**的区域。
+查看 `设备驱动程序的内存映射`_ 部分，生成名为 **vmmap** 的任务的框架，并填写标有 **TODO 1** 的区域。
 
-使用:c:func:`vmalloc`分配一个NPAGES大小的内存区域。
+使用 :c:func:`vmalloc` 分配一个 NPAGES 大小的内存区域。
 
-.. hint:: 一个页面的大小为*PAGE_SIZE*。
-          将分配的区域存储在*vmalloc_area*中。
-          由:c:func:`vmalloc`分配的内存是按页对齐的。
+.. hint:: 一个页面的大小为 *PAGE_SIZE*。将分配的区域存储在 *vmalloc_area* 中。由 :c:func:`vmalloc` 分配的内存是按页对齐的。
 
-使用:c:func:`SetPageReserved`将每个页面的PG_reserved位设置为启用状态。在释放内存之前，使用:c:func:`ClearPageReserved`清除该位。
+使用 :c:func:`SetPageReserved` 将每个页面的 PG_reserved 位设置为启用状态。在释放内存之前，使用 :c:func:`ClearPageReserved` 清除该位。
 
-.. hint:: 使用:c:func:`vmalloc_to_page`将虚拟页转换为物理页，用于:c:func:`SetPageReserved`和:c:func:`ClearPageReserved`函数。
+.. hint:: 使用 :c:func:`vmalloc_to_page` 将虚拟页转换为物理页，以供 :c:func:`SetPageReserved` 和 :c:func:`ClearPageReserved` 函数使用。
 
-为了验证目的（使用下面的测试），在每个页面的前4个字节中填入以下值：0xaa、0xbb、0xcc、0xdd。
+为了验证目的（使用下面的测试），在每个页面的前 4 个字节中填入以下值：0xaa、0xbb、0xcc 以及 0xdd。
 
-实现:mmap驱动程序函数。
+实现 mmap 驱动程序函数。
 
-.. hint:: 要将虚拟vmalloc地址转换为物理地址，使用:c:func:`vmalloc_to_pfn`直接返回PFN。
+.. hint:: 要将虚拟 vmalloc 地址转换为物理地址，使用 :c:func:`vmalloc_to_pfn` 直接返回 PFN。
 
-.. attention:: vmalloc页面不是物理连续的，因此需要为每个页面使用:c:func:`remap_pfn_range`。
+.. attention:: vmalloc 页面不是物理连续的，因此需要为每个页面单独使用 :c:func:`remap_pfn_range`。
 
                遍历所有虚拟页面，并对于每个页面：
                * 确定物理地址
-               * 使用:c:func:`remap_pfn_range`进行映射
+               * 使用 :c:func:`remap_pfn_range` 进行映射
 
-               确保每次都确定物理地址，并且使用一个页面范围进行映射。
+               确保每次都确定物理地址，并且使用同一个页面范围进行映射。
 
-用于测试的方法是，加载内核模块并运行：
+测试的方法是，加载内核模块并运行：
 
 .. code-block:: shell
 
