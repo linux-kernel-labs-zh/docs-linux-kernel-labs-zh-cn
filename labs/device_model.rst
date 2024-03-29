@@ -1,94 +1,58 @@
 ==================
-Linux Device Model
+Linux 设备模型
 ==================
 
-Overview
+概述
 ========
 
-Plug and Play is a technology that offers support for automatically adding and
-removing devices to the system. This reduces conflicts with the resources they
-use by automatically configuring them at system startup. In order to achieve
-these goals, the following features are required:
+即插即用（Plug and Play）是一种技术，它支持自动添加和移除设备到系统中。它通过在系统启动时自动配置设备，来减少与这些设备使用的资源相关的冲突。为了实现这些目标，需要具备以下特性：
 
-  * Automatic detection of adding and removing devices in the system (the device
-    and its bus must notify the appropriate driver that a configuration change
-    occurred).
-  * Resource management (addresses, irq lines, DMA channels, memory areas),
-    including resource allocation to devices and solving conflicts that may arise.
-  * Devices must allow for software configuration (device resources - ports,
-    interrupts, DMA resources - must allow for driver assignment).
-  * The drivers required for new devices must be loaded automatically by the
-    operating system when needed.
-  * When the device and its bus allow, the system should be able to add or
-    remove the device from the system while it is running, without having to reboot
-    the system (hotplug).
+  * 自动检测系统中添加和移除的设备（设备及其总线必须通知相应的驱动程序发生了配置更改）。
+  * 资源管理（地址、中断线、DMA 通道、内存区域），包括为设备分配资源并解决可能出现的冲突。
+  * 设备必须允许进行软件配置（设备资源（端口、中断以及 DMA 资源）必须允许驱动程序进行分配）。
+  * 操作系统在需要时必须自动加载新设备所需的驱动程序。
+  * 如果设备及其总线允许的话，系统应能够在运行时添加或移除设备，而无需重新启动系统（热插拔）。
 
-For a system to support plug and play, the BIOS, operating system and the device
-must support this technology. The device must have an ID that will provide to the
-driver for identification, and the operating system must be able to identify
-these configuration changes as they appear.
+要支持即插即用，BIOS、操作系统和设备都必须支持这项技术。设备必须具有提供给驱动程序进行识别的 ID，并且操作系统必须能够在配置更改出现时进行识别。
 
-Plug and play devices are: PCI devices (network cards), USB (keyboard, mouse,
-printer), etc.
+即插即用设备包括：PCI 设备（网卡）、USB（键盘、鼠标、打印机）等。
 
-Prior to version 2.6, the kernel did not have a unified model to get
-information about devices.
-For this reason, a model for Linux devices, Linux Device Model, was developed.
+在 2.6 版本之前，内核没有统一的模型用来获取有关设备的信息。因此，Linux 开发团队开发了 Linux 设备模型，用于 Linux 设备。
 
-The primary purpose of this model is to maintain internal data structures that
-reflect the state and structure of the system. Such information includes what
-devices are in the system, how they are in terms of power management, what bus
-they are attached to, what drivers they have, along with the structure of the
-buses, devices, drivers in the system.
+该模型的主要目的是维护反映系统状态和结构的内部数据结构。这些信息包括系统中有哪些设备、它们在电源管理方面的状态如何，连接到哪个总线，有哪些驱动程序，以及系统中总线、设备、驱动程序的结构。
 
-To maintain this information, the kernel uses the following entities:
+为了维护这些信息，内核使用以下对象：
 
-  * device - a physical device that is attached to a bus
-  * driver - a software entity that can be associated with a device and performs
-    operations with it
-  * bus - a device to which other devices can be attached
-  * class - a type of device that has a similar behavior; There is a class for
-    disks, partitions, serial ports, etc.
-  * subsystem - a view on the structure of the system; Kernel subsystems
-    include devices (hierarchical view of all devices in the system), buses (bus
-    view of devices according to how they are attached to buses), classes, etc.
+  * 设备（device）——连接到总线的物理设备
+  * 驱动程序（driver）——可与设备关联并对其执行操作的软件对象
+  * 总线（bus）——可连接其他设备的设备
+  * 类别（class）——具有类似行为的设备类型；存在用于磁盘、分区、串口等的类别。
+  * 子系统（subsystem）——对系统结构的视图；内核子系统包括设备（对系统中所有设备的分层视图）、总线（根据设备连接到总线的方式的总线视图）、类别等。
 
 sysfs
 =====
 
-The kernel provides a representation of its model in userspace through the
-sysfs virtual file system. It is usually mounted in the /sys directory and
-contains the following subdirectories:
+内核通过 sysfs 虚拟文件系统在用户空间提供其模型的表示。它通常挂载在 /sys 目录下，包含以下子目录：
 
-  * block - all block devices available in the system (disks, partitions)
-  * bus - types of bus to which physical devices are connected (pci, ide, usb)
-  * class - drivers classes that are available in the system (net, sound, usb)
-  * devices - the hierarchical structure of devices connected to the system
-  * firmware - information from system firmware (ACPI)
-  * fs - information about mounted file systems
-  * kernel - kernel status information (logged-in users, hotplug)
-  * module - the list of modules currently loaded
-  * power - information related to the power management subsystem
+  * block——系统中所有可用的块设备（磁盘、分区）
+  * bus——物理设备连接的总线类型（pci、ide、usb）
+  * class——系统中可用的驱动程序类别（网络、声音、usb）
+  * devices——连接到系统的设备的层次结构
+  * firmware——来自系统固件（ACPI）的信息
+  * fs——挂载的文件系统的信息
+  * kernel——内核状态信息（已登录用户、热插拔）
+  * module——当前加载的模块列表
+  * power——与电源管理子系统相关的信息
 
-As you can see, there is a correlation between the kernel data structures
-within the described model and the subdirectories in the sysfs virtual file
-system. Although this likeness may lead to confusion between the two concepts,
-they are different. The kernel device model can work without the sysfs file
-system, but the reciprocal is not true.
+可以看出，在 sysfs 虚拟文件系统中的子目录与之前所描述的模型中的内核数据结构之间存在关联。尽管这种相似性可能导致你对两个概念产生混淆，但它们是不同的。内核设备模型可以在没有 sysfs 文件系统的情况下工作，但反之则不成立。
 
-The sysfs information is found in files that contain an attribute. Some
-standard attributes (represented by files or directories with the same name)
-are as follows:
+sysfs 信息存储在包含属性的文件中。一些标准属性（由具有相同名称的文件或目录表示）如下：
 
-   * dev - Major and minor device identifier. It can be used to automatically
-     create entries in the /dev directory
-   * device - a symbolic link to the directory containing devices; It can be
-     used to discover the hardware devices that provide a particular service (for
-     example, the ethi PCI card)
-   * driver - a symbolic link to the driver directory (located in
-     /sys/bus/\*/drivers )
+   * dev——主设备号和次设备号。可用于自动创建 /dev 目录中的条目。
+   * device——指向包含设备的目录的符号链接；可用于发现提供特定服务的硬件设备（例如 ethi PCI 卡）。
+   * driver——指向驱动程序目录的符号链接（位于 /sys/bus/\*/drivers 中）。
 
-Other attributes are available, depending on the bus and driver used.
+根据使用的总线和驱动程序，还有其他可用的属性。
 
 .. ditaa::
                                                                    +------+
@@ -122,13 +86,10 @@ Other attributes are available, depending on the bus and driver used.
                   +--------------------------------+
 
 
-Basic Structures in Linux Devices
-=================================
+Linux 设备中的基本结构
+=======================
 
-Linux Device Model provides a number of structures to ensure the interaction
-between a hardware device and a device driver. The whole model is based on
-kobject structure. Hierarchies are built using this structure and the following
-structures are implemented:
+Linux 设备模型提供了一些结构，以确保硬件设备和设备驱动程序之间的交互。整个模型基于 kobject 结构构建层级，实现了以下结构：
 
   * struct bus_type
   * struct device
@@ -175,15 +136,12 @@ structures are implemented:
                        +--+                                   +--+                                   +--+
 
 
-The kobject structure
----------------------
+kobject 结构
+------------------
 
-A kobject structure does not perform a single function. This structure is
-usually integrated into a larger one. A kobject structure actually
-incorporates a set of features that will be offered to a higher abstraction
-object in the Linux Device Model hierarchy.
+kobject 结构本身并不执行单一功能。通常，这个结构被整合到更大的结构中。kobject 结构实际上包含了一组功能，将提供给 Linux 设备模型层次结构中更高级别的抽象对象。
 
-For example, the cdev structure has the following definition:
+例如，cdev 结构具有以下定义：
 
 .. code-block:: c
 
@@ -197,9 +155,9 @@ For example, the cdev structure has the following definition:
     };
 
 
-Note that this structure includes a ``kobject`` structure field.
+请注意，这个结构包含了一个 ``kobject`` 结构字段。
 
-A kobject structure is defined as follows:
+kobject 结构定义如下：
 
 .. code-block:: c
 
@@ -218,44 +176,22 @@ A kobject structure is defined as follows:
             unsigned int uevent_suppress:1;
     };
 
-As we can see, the kobject structures are in a hierarchy: an object has a
-parent and holds a kset member, which contains objects on the same level.
+可以看出，kobject 结构是有层次的：每一个对象都有一个父对象，并持有一个 kset 成员，其中包含相同级别的对象。
 
-Working with the structure involves initializing it with the
-:c:func:`kobject_init` function.
-Also in the initialization process it is necessary to set the name of the
-``kobject`` structure, which will appear in sysfs, using the
-:c:func:`kobject_set_name` function.
+要想使用这个结构，你需要使用 :c:func:`kobject_init` 函数对其进行初始化。在初始化过程中，你需要使用 kobject_set_name 函数设置 ``kobject`` 结构的名称，该名称将显示在 sysfs 中。
 
-Any operation on a kobject is done by incrementing its internal counter using
-:c:func:`kobject_get`, or decrementing if it is no longer used using
-:c:func:`kobject_put`.
-Thus, a kobject object will only be released when its internal counter reaches 0.
-A method of notifying this is needed so that the resources associated with the
-device structure which included the kobject structure are released
-(for example, cdev).
-The method is called ``release`` and is associated with the object via the ktype
-field (:c:type:`struct kobj_type`).
+对 kobject 的任何操作都是通过增加其内部计数器来完成的，这些操作使用 :c:func:`kobject_get` 函数来增加内部计数器，如果不再使用，则应使用 :c:func:`kobject_put` 函数进行减少。因此，只有当 kobject 对象的内部计数器达到 0 时，它才会被释放。我们需要一种用于通知的方法，以释放与包含 kobject 结构的设备结构（例如 cdev）相关联的资源。该方法是 ``release``，其通过 ktype 字段 (:c:type:`struct kobj_type` 类型) 与该对象关联。
 
-The kobject structure is the basic structure of the Linux Device Model.
-The structures in the higher levels of the model are :c:type:`struct bus_type`,
-:c:type:`struct device` and :c:type:`struct device_driver`.
+kobject 结构是 Linux 设备模型的基本结构。模型中较高级别的结构包括 :c:type:`struct bus_type`, :c:type:`struct device` 和 :c:type:`struct device_driver`。
 
-Buses
------
+总线
+----
 
-A bus is a communication channel between the processor and an input/output
-device. To ensure that the model is generic, all input/output devices are
-connected to the processor via such a bus (even if it can be a virtual one
-without a physical hardware correspondent).
+总线是处理器与输入/输出设备之间的通信通道。为了确保模型能够通用，所有输入/输出设备都通过这样的总线连接到处理器（即使它可以是没有物理硬件对应的虚拟总线）。
 
-When adding a system bus, it will appear in the sysfs file system in
-``/sys/bus``.
-As with kobjects, buses can be organized into hierarchies and will be represented
-in sysfs.
+在添加系统总线后，它将出现在 sysfs 文件系统的 ``/sys/bus`` 目录中。与 kobjects 一样，总线可以组织成层次结构，并在 sysfs 中表示。
 
-In the Linux Device Model, a bus is represented by the structure
-:c:type:`struct bus_type`:
+在 Linux 设备模型中，总线由结构体 :c:type:`struct bus_type` 表示：
 
 .. code-block:: c
 
@@ -275,25 +211,20 @@ In the Linux Device Model, a bus is represented by the structure
             //...
     };
 
-It can be noticed that a bus has a name, lists of default attributes, a number
-of specific functions, and the driver's private data.
-The ``uevent`` function (formerly ``hotplug``) is used with hotplug devices.
+可以注意到，总线具有名称、默认属性列表、一些特定函数和驱动程序的私有数据。 ``uevent`` 函数（以前称为 ``hotplug``）用于热插拔设备。
 
-Bus operations are the registration, the implementation of the operations
-described in the :c:type:`struct bus_type` structure and the iteration and
-inspection of the devices connected to the bus.
+总线操作包括注册、实现在结构体 :c:type:`struct bus_type` 中描述的操作，以及迭代和检查连接到总线上的设备。
 
-A bus is registered using :c:func:`bus_register`, and unregistered using
-:c:func:`bus_unregister`.
+我们使用 :c:func:`bus_register` 函数进行总线注册，并使用 :c:func:`bus_unregister` 函数取消注册。
 
-Implementation example:
+实现示例：
 
 .. code-block:: c
 
     #include <linux/device.h>
     /* mybus.c */
 
-    //bus type
+    // 总线类型
     struct bus_type my_bus_type = {
       .name   = "mybus",
       .match  = my_match,
@@ -319,8 +250,7 @@ Implementation example:
     }
 
 
-The functions that will normally be initialized within a bus_type structure are
-``match`` and ``uevent``:
+通常在 bus_type 结构中初始化的函数包括 ``match`` 和 ``uevent``：
 
 .. code-block:: c
 
@@ -328,35 +258,24 @@ The functions that will normally be initialized within a bus_type structure are
     #include <linux/string.h>
     /* mybus.c */
 
-    // match devices to drivers; just do a simple name test
+    // 将设备与驱动程序进行匹配；只需进行简单的名称测试
     static int my_match(struct device *dev, struct device_driver *driver)
     {
       return !strncmp(dev_name(dev), driver->name, strlen(driver->name));
     }
 
-    // respond to hotplug user events; add environment variable DEV_NAME
+    // 响应热插拔用户事件；添加环境变量 DEV_NAME
     static int my_uevent(struct device *dev, struct kobj_uevent_env *env)
     {
       add_uevent_var(env, "DEV_NAME=%s", dev_name(dev));
       return 0;
     }
 
-The ``match`` function is used when a new device or a new driver is added to the
-bus. Its role is to make a comparison between the device ID and the driver ID.
-The ``uevent`` function is called before generating a hotplug in user-space and
-has the role of adding environment variables.
+``match`` 函数在向总线添加新设备或新驱动程序时使用。其作用是比较设备 ID 和驱动程序 ID。 ``uevent`` 函数在生成用户空间的热插拔事件之前调用，其作用是添加环境变量。
 
-Other possible operations on a bus are iterating over the drivers or devices
-attached to it.
-Although we can not directly access them (lists of drivers and devices
-being stored in the private data of the driver, the ``subsys_private *p`` field),
-these can be iterated using the :c:macro:`bus_for_each_dev` and
-:c:macro:`bus_for_each_drv` macros.
+总线上的其他操作可能包括遍历附加的驱动程序或设备。虽然我们无法直接访问它们（驱动程序和设备的列表存储在驱动程序的私有数据中，即 ``subsys_private *p`` 字段），但我们可以使用 :c:macro:`bus_for_each_dev` 和 :c:macro:`bus_for_each_drv` 宏来对其进行遍历。
 
-The Linux Device Model interface allows you to create attributes for the
-associated objects. These attributes will have a corresponding file in the
-bus subdirectory in sysfs. The attributes associated with a bus are
-described by the bus_attribute structure :
+你可以通过 Linux 设备模型接口为关联的对象创建属性。这些属性在 sysfs 中的 bus 子目录中具有相应的文件。与总线相关联的属性由 bus_attribute 结构描述。
 
 .. code-block:: c
 
@@ -366,39 +285,37 @@ described by the bus_attribute structure :
            ssize_t (*store)(struct bus_type *, const char *buf, size_t count);
   };
 
-Typically, an attribute is defined by the :c:macro:`BUS_ATTR` macro.
-The :c:func:`bus_create_file` and :c:func:`bus_remove_file` functions can be
-used to add/delete an attribute within the bus structure.
+通常，属性由宏 :c:macro:`BUS_ATTR` 定义。我们可以使用函数 :c:func:`bus_create_file` 和 :c:func:`bus_remove_file` 在总线结构中添加/删除属性。
 
-An example of defining an attribute for ``my_bus`` is shown below:
+下面是定义 ``my_bus`` 属性的示例：
 
 .. code-block:: c
 
     /* mybus.c */
 
-    #define MY_BUS_DESCR     "SO2 rules forever"
+    #define MY_BUS_DESCR     "SO2 永远统治"
 
-    // export a simple bus attribute
+    // 导出某个简单的总线属性
     static ssize_t my_show_bus_descr(struct bus_type *bus, char *buf)
     {
             return snprintf(buf, PAGE_SIZE, "%s\n", MY_BUS_DESCR);
     }
 
     /*
-     * define attribute - attribute name is descr;
-     * full name is bus_attr_descr;
-     * sysfs entry should be /sys/bus/mybus/descr
+     * 定义属性——属性名为 descr；
+     * 全名为 bus_attr_descr；
+     * sysfs 条目应为 /sys/bus/mybus/descr
      */
     BUS_ATTR(descr, 0444, my_show_bus_descr, NULL);
 
-    // specify attribute - in module init function
+    // 在模块初始化函数中指定属性
     static int __init my_bus_init(void)
     {
             int err;
             //...
             err = bus_create_file(&my_bus_type, &bus_attr_descr);
             if (err) {
-                    /* handle error */
+                    /* 处理错误 */
             }
             //...
     }
@@ -410,21 +327,14 @@ An example of defining an attribute for ``my_bus`` is shown below:
             //...
     }
 
-The bus is represented by both a ``bus_type`` object and a ``device`` object,
-as we will see later (the bus is also a device).
+总线由 ``bus_type`` 对象和 ``device`` 对象表示，我们稍后将进一步了解（总线也是一种设备）。
 
-
-Devices
+设备
 -------
 
-Any device in the system has a :c:type:`struct device` structure associated
-with it.
-Devices are discovered by different kernel methods (hotplug, device drivers,
-system initialization) and are registered in the system. Each device present in
-the kernel has an entry in ``/sys/devices``.
+系统中的任何设备都与 :c:type:`struct device` 结构相关联。设备可以通过多种不同的内核方法（热插拔、设备驱动程序、系统初始化）被发现并注册到系统中。内核中的每个设备在 ``/sys/devices`` 目录下都有一个条目。
 
-At the lowest level, a device in Linux Device Model is represented by a
-:c:type:`struct device` structure:
+在 Linux 设备模型中，设备在最低级别上由 :c:type:`struct device` 结构表示：
 
 .. code-block:: c
 
@@ -434,64 +344,55 @@ At the lowest level, a device in Linux Device Model is represented by a
             struct device_private   *p;
             struct kobject          kobj;
 
-            const char              *init_name; /* initial name of the device */
+            const char              *init_name; /* 设备的初始名称 */
             //...
-            struct bus_type         *bus;       /* type of bus device is on */
-            struct device_driver    *driver;    /* which driver has allocated this
-                                                 device */
+            struct bus_type         *bus;       /* 设备所在的总线类型 */
+            struct device_driver    *driver;    /* 分配该设备的驱动程序 */
             //...
             void    (*release)(struct device *dev);
     };
 
-Structure fields include the parent device that is usually a controller, the
-associated ``kobject``, the bus it is connected to, the device driver, and a
-function called when the device counter reaches 0 (``release``).
+结构字段包括父设备（通常是控制器），相关的 ``kobject``，设备连接的总线，设备驱动程序以及在设备计数器达到 0 时调用的函数 (``release``)。
 
-As usual, we have the registration/unregistration functions
-:c:func:`device_register` and :c:func:`device_unregister`.
+像往常一样，我们有注册函数 :c:func:`device_register` 和取消注册函数 :c:func:`device_unregister`。
 
-To work with attributes, we have structure :c:type:`struct device_attribute`,
-the macro :c:macro:`DEVICE_ATTR` for definition, and the functions
-:c:func:`device_create_file` and :c:func:`device_remove_file` for adding/removing
-the attribute to/from the device.
+要处理属性，我们有结构体 :c:type:`struct device_attribute` 以及宏 :c:macro:`DEVICE_ATTR` 用于定义属性，还有函数 :c:func:`device_create_file` 以及 :c:func:`device_remove_file` 用于将属性添加到设备或从设备中删除属性。
 
-One important thing to note is that the :c:type:`struct device` structure is
-usually not used directly, but it is added to another structure. For example:
+需要注意的是，我们通常不直接使用结构体 :c:type:`struct device` ，而是将其添加到另一个结构体中。例如：
 
 .. code-block:: c
 
-    // my device type
+    // 我的设备类型
     struct my_device {
         char *name;
         struct my_driver *driver;
         struct device dev;
     };
 
-Typically, a bus driver will export functions to add or remove such a
-device, as shown below:
+通常，总线驱动程序会导出用于添加或移除此类设备的函数，如下所示：
 
 .. code-block:: c
 
     /* mybus.c */
 
-    /* BUS DEVICE (parent) */
+    /* 总线设备（父设备）*/
 
-    // parent device release
+    // 父设备释放函数
     static void my_bus_device_release(struct device *dev)
     {
     }
 
-    // parent device
+    // 父设备
     static struct device my_bus_device = {
       .init_name   = "mybus0",
       .release     = my_bus_device_release
     };
 
-    /* DEVICE */
+    /* 设备 */
 
     /*
-     * as we are not using the reference count, we use a no-op
-     * release function
+     * 由于我们不使用引用计数，我们使用一个无操作的
+     * 释放函数
      */
     static void my_dev_release(struct device *dev)
     {
@@ -512,20 +413,13 @@ device, as shown below:
       device_unregister(&mydev->dev);
     }
 
-    /* export register/unregister device functions */
+    /* 导出注册/注销设备函数 */
     EXPORT_SYMBOL(my_register_device);
     EXPORT_SYMBOL(my_unregister_device);
 
-As seen, the functions ``my_register_device`` and ``my_unregister_device``, used
-to add/remove a device to/from a bus, are defined in the same file where the
-bus is defined. Device structures are not initialized; they will be initialized
-when the devices are discovered by the system (by hotplug or direct registration
-from driver) and the function ``my_register_device`` will be called to add a
-device to the bus.
+如上所示，函数 ``my_register_device`` 和 ``my_unregister_device`` 用于向总线添加/移除设备的操作，这两个函数与总线定义处于同一个文件。这里设备结构体没有被初始化；它们在系统通过热插拔或驱动程序的直接注册发现设备时，将被初始化，之后系统会调用函数 ``my_register_device`` 来将设备添加到总线中。
 
-To use the bus defined above in the driver implementation, we must define a
-structure of type ``my_device``, initialize it and register it using the function
-exported by the bus (``my_register_device``).
+要在驱动程序实现中使用上述定义的总线，我们必须定义一个类型为 ``my_device`` 的结构体，对其进行初始化，并使用总线导出的函数 (``my_register_device``) 进行注册。
 
 .. code-block:: c
 
@@ -535,7 +429,7 @@ exported by the bus (``my_register_device``).
     char devname[NAME_SIZE];
     //...
 
-    //register
+    // 注册设备
     int err;
 
     sprintf(devname, "mydev0");
@@ -544,28 +438,22 @@ exported by the bus (``my_register_device``).
     dev_set_drvdata(&mydev.dev, &mydev);
     err = my_register_device(&mydev);
     if (err < 0) {
-      /*handle error */
+      /* 处理错误 */
     }
 
     //..
 
-    //unregister
-    my_unregister_device(&mydev);
+    // 注销设备
+    my_unregister_device(&mydev)
 
-Drivers
+驱动程序
 -------
 
-Linux Device Model is used to allow simple association between system
-devices and drivers. Drivers can export information independent of the physical
-device.
+借助 Linux 设备模型，我们可以实现系统设备和驱动程序之间的简单关联。驱动程序可以独立于物理设备导出信息。
 
-In sysfs, driver information has no single subdirectory associated; They can be
-found in the directory structure in different places: the loaded module is in
-``/sys/module``, in ``/sys/devices`` you can find the driver associated with
-each device, in ``/sys/class`` the drivers belonging to a class, in
-``/sys/bus`` the drivers associated to each bus.
+在 sysfs 中，驱动程序信息没有单独的子目录与之关联；它们可以在不同位置的目录结构中找到：加载的模块在 ``/sys/module`` 中，在 ``/sys/devices`` 中可以找到与每个设备关联的驱动程序，在 ``/sys/class`` 中是属于某个类的驱动程序，在 ``/sys/bus`` 中是与每个总线关联的驱动程序。
 
-A device driver is identified by the structure :c:type:`struct device_driver`:
+系统通过结构体 :c:type:`struct device_driver` 来区分设备驱动：
 
 .. code-block:: c
 
@@ -576,7 +464,7 @@ A device driver is identified by the structure :c:type:`struct device_driver`:
              struct driver_private   *p;
 
              struct module           *owner;
-             const char              *mod_name;     /* used for built-in modules */
+             const char              *mod_name;     /* 用于内置模块 */
 
              int     (*probe)        (struct device *dev);
              int     (*remove)       (struct device *dev);
@@ -585,26 +473,19 @@ A device driver is identified by the structure :c:type:`struct device_driver`:
              int     (*resume)       (struct device *dev);
     };
 
-Among the structure fields we find the name of the driver (appears in ``sysfs``),
-the bus with which the driver works, and functions called at various times in a
-device's operation.
+在本结构体字段中，我们可以找到驱动程序的名称（出现在 ``sysfs`` 中），与驱动程序一起工作的总线以及在设备操作的各个时刻调用的函数。
 
-As before, we have the functions :c:func:`driver_register` and
-:c:func:`driver_unregister` to register/unregister a driver.
+与之前一样，我们有函数 :c:func:`driver_register` 和 :c:func:`driver_unregister` 来注册/注销驱动程序。
 
-To work with attributes, we have the :c:type:`struct driver_attribute` structure,
-the macro :c:type:`DRIVER_ATTR` for definition, and the functions
-:c:func:`driver_create_file` and :c:func:`driver_remove_file` functions for
-adding the attribute to the device.
+要处理属性，我们有结构体 :c:type:`struct driver_attribute` 与宏 :c:type:`DRIVER_ATTR` 用于定义属性，并且有函数 :c:func:`driver_create_file` 和 :c:func:`driver_remove_file` 用于向设备添加属性。
 
-As with devices, the structure :c:type:`struct device_driver` is usually
-incorporated into another structure specific to a particular bus (PCI, USB, etc.):
+与设备一样，结构体 :c:type:`struct device_driver` 通常被纳入到特定总线 (PCI、USB 等) 对应的另一个结构体中：
 
 .. code-block:: c
 
     /* mybus.c */
 
-    // my driver type
+    // 我的驱动类型
     struct my_driver {
       struct module *module;
       struct device_driver driver;
@@ -628,21 +509,15 @@ incorporated into another structure specific to a particular bus (PCI, USB, etc.
       driver_unregister(&driver->driver);
     }
 
-    /* export register/unregister driver functions */
+    /* 导出注册/取消注册驱动程序函数 */
     EXPORT_SYMBOL(my_register_driver);
     EXPORT_SYMBOL(my_unregister_driver);
 
-Driver registration/unregistration operations are exported for use in
-other modules.
+驱动程序的注册/注销操作被导出以供其他模块使用。
 
-As for devices, the operations for drivers are defined when the bus is
-initialized and they are exported to be used by drivers. When implementing a
-driver that works with devices attached to the bus, we will call the functions
-``my_register_driver`` and ``my_unregister_driver`` to associate with the bus.
+与设备一样，驱动程序的操作在总线初始化时定义，并导出供驱动程序使用。当实现一个与连接到总线上的设备配合工作的驱动程序时，我们将调用函数 ``my_register_driver`` 和 ``my_unregister_driver`` 来与总线关联。
 
-To use the functions (in the driver implementation), we must declare a structure
-of type ``my_driver``, initialize it and register using the function exported
-by the bus.
+要使用这些函数（在驱动程序实现中），我们必须声明一个类型为 ``my_driver`` 的结构体，对其进行初始化，并使用总线导出的函数进行注册。
 
 .. code-block:: c
 
@@ -656,42 +531,30 @@ by the bus.
     };
     //...
 
-    //register
+    // 注册
     int err;
     err = my_register_driver(&mydriver);
     if (err < 0) {
-      /*handle error */
+      /* 处理错误 */
     }
     //..
 
-    //unregister
+    // 取消注册
     my_unregister_driver(&mydriver);
 
 
-Classes
+类
 -------
 
-A class is a high-level view of the Linux Device Model, which abstracts
-implementation details. For example, there are drivers for SCSI and ATA
-drivers, but all belong to the class of disks. Classes provide a grouping of
-devices based on functionality, not how they are connected or how they work.
-Classes have a correspondent in ``/sys/classes``.
+类是 Linux 设备模型的高层次视图，它抽象了实现细节。例如，SCSI 和 ATA 驱动程序虽然有所不同，但都属于磁盘类。类根据功能对设备进行分组，而不考虑它们的连接方式或工作原理。类在 ``/sys/classes`` 中有对应的表示。
 
-There are two main structures that describe the classes: :c:type:`struct class`
-and :c:type:`struct device`.
-The class structure describes a generic class, while the structure
-:c:type:`struct device` describes a class associated with a device.
-There are functions for initializing/deinitiating and adding attributes for each
-of these, described in ``include/linux/device.h``.
+主要有两个结构用来描述类，分别是 :c:type:`struct class` 和 :c:type:`struct device`。:c:type:`struct class` 结构描述了通用类，而结构体 :c:type:`struct device` 则描述了与设备有关联的类。对于每种结构体，都有用于初始化/反初始化和添加属性的函数，这些函数在 ``include/linux/device.h`` 中有描述。
 
-The advantage of using classes is that the ``udev`` program in userspace, which we
-will discuss later, allows the automatic creation of devices in the ``/dev``
-directory based on class information.
+使用类的优势在于，我们可以借助用户空间中的 ``udev`` 程序（我们稍后将讨论），根据类信息自动在 ``/dev`` 目录中创建设备。
 
-For this reason, we will continue to present a small set of functions that work
-with classes to simplify the use of the plug and play mechanism.
+因此，我们将继续介绍一小组函数，这些函数与类一起使用以简化即插即用机制。
 
-A generic class is described by structure class structure:
+通用类由结构体 class 描述：
 
 .. code-block:: c
 
@@ -712,8 +575,7 @@ A generic class is described by structure class structure:
              //...
     };
 
-The :c:func:`class_register` and :c:func:`class_unregister` functions can be
-used for initialization/deinitialization.
+你可以使用 :c:func:`class_register` 和 :c:func:`class_unregister` 函数对类进行初始化/反初始化。
 
 .. code-block:: c
 
@@ -727,7 +589,7 @@ used for initialization/deinitialization.
             //...
             err = class_register(&my_class);
             if (err < 0) {
-                    /* handle error */
+                    /* 处理错误 */
             }
             //...
     }
@@ -739,19 +601,9 @@ used for initialization/deinitialization.
             //...
     }
 
-A class associated with a device is described by the :c:type:`struct device`
-structure.
-The :c:func:`device_create` and :c:func:`device_destroy` functions can be used
-for initialization/deinitialization.
-The :c:func:`device_create` function initializes the ``device`` structure,
-and assigns the generic ``class`` structure and the device received as a
-parameter to it;
-In addition, it will create an attribute of the class, ``dev``, which contains
-the minor and major of the device (``minor:major``).
-Thus, udev utility in usermode can read the necessary data from this attribute
-file to create a node in the ``/dev`` directory by calling ``makenod``.
+与设备关联的类由结构体 :c:type:`struct device` 描述。函数 :c:func:`device_create` 和 :c:func:`device_destroy` 负责初始化/反初始化。函数 :c:func:`device_create` 初始化 ``device`` 结构体，并将通用的 ``class`` 结构体和作为参数接收到的设备分配给它；此外，它还将创建类的属性 ``dev``，其中包含设备的次设备号和主设备号 (``minor:major``)。因此，用户态的 udev 实用程序可以从该属性文件中读取所需的数据，通过调用 ``mknod`` 在 ``/dev`` 目录中创建一个节点。
 
-An example of initialization:
+以下是初始化的示例：
 
 .. code-block:: c
 
@@ -759,129 +611,76 @@ An example of initialization:
     struct cdev cdev;
     struct device dev;
 
-    //init class for device cdev.dev
+    // 为设备 cdev.dev 初始化类
     my_classdev = device_create(&my_class, NULL, cdev.dev, &dev, "myclass0");
 
-    //destroy class for device cdev.dev
+    // 销毁设备 cdev.dev 的类
     device_destroy(&my_class, cdev.dev);
 
-When a new device is discovered, a class and a node will be assigned to it and
-a node will be created in the ``/dev`` directory.
-For the example above, the node ``/dev/myclass0`` will be generated.
+当发现新设备时，将为其分配一个类和节点，并在 ``/dev`` 目录中创建一个节点。对于上面的示例，将生成节点 ``/dev/myclass0``。
 
-Hotplug
+热插拔
 -------
 
-``Hotplug`` describes the mechanism for adding or removing a device from the
-system while it is running without having to reboot the system.
+``热插拔`` 描述了在系统运行时添加或移除设备而无需重新启动系统的机制。
 
-A hotplug event is a notification from the kernel to the user-space when something
-changes in the system configuration. These events are generated when creating
-or removing a kobject from the kernel. Since these objects are the basis of the
-Linux Device Model, being included in all structures (``struct bus_type``,
-``struct device``, ``struct device_driver``, ``struct class``, etc.), a hotplug event
-will be generated when any of these structures is created or removed (``uevent``).
+热插拔事件是内核向用户空间发送的通知，用于指示系统配置发生了变化。这些事件在从内核创建或删除 kobject 时生成。由于这些对象是 Linux 设备模型的基础，包含在所有结构体中 (``struct bus_type``, ``struct device``, ``struct device_driver`` 以及 ``struct class`` 等)，当创建或删除任何这些结构体时，都会生成热插拔事件 (``uevent``)。
 
-When a device is discovered in the system, an event is generated.  Depending on
-the point where it resides in Linux Device Model, the functions corresponding
-to the event will be called (usually, the ``uevent`` function associated to the
-bus or the class). Using these functions, the driver has the ability to set
-system variables for the user-space.
-The generated event then reaches the user-space. Here is the ``udev``
-utility that captures these events. There are configuration files for this
-utility in the ``/etc/udev/`` directory. Different rules can be specified to
-capture only certain events and perform certain actions, depending on the
-system variables set in the kernel or in ``uevent`` functions.
+当在系统中发现设备时，将生成事件。根据设备在 Linux 设备模型中所处的位置，将调用相应的事件函数（通常是与总线或类关联的 ``uevent`` 函数）。借助这些函数，驱动程序可以为用户空间设置系统变量。生成的事件然后到达用户空间。在这里 ``udev`` 程序会捕获这些事件。在 ``/etc/udev/`` 目录中有针对该程序的配置文件。可以指定不同的规则来捕获特定事件并执行特定操作，这取决于内核或 ``uevent`` 函数中设置的系统变量。
 
-An important consequence is that in this way the plug and play mechanism can be
-achieved; with the help of ``udev`` and the classes (described above), entries
-in the ``/dev/`` directories can be automatically created for devices, and using
-``udev`` drivers can be automatically loaded for a device.
+通过这种方式，我们可以实现即插即用的机制。借助于 ``udev`` 和上述的类，可以自动为设备在 ``/dev/`` 目录中创建条目，并且使用 ``udev`` 可以自动为设备加载驱动程序。
 
-Rules for ``udev`` are located ``/etc/udev/rules.d``.
-Any file that ends with ``.rules`` in this directory will be parsed when an
-event occurs. For more details on how to write rules in these files see
-`Writing udev rules <http://www.reactivated.net/writing_udev_rules.html>`_.
-For testing, there are utilities such as ``udevmonitor``, ``udevinfo`` and
-``udevtest``.
+关于 ``udev`` 的规则位于 ``/etc/udev/rules.d`` 目录下。当事件发生时，该目录中以 ``.rules`` 结尾的任何文件都将被解析。有关如何在这些文件中编写规则的详细信息，请参阅 `编写 udev 规则 <http://www.reactivated.net/writing_udev_rules.html>`_。用于测试的程序包括 ``udevmonitor``, ``udevinfo`` 和 ``udevtest``。
 
-For a quick example, consider the situation where we want to automatically load
-a driver for a device when an event occurs. We can create a new file
-/etc/udev/rules.d/myrules.rules, we will have the following line:
+举个简单示例，假设我们希望在事件发生时自动加载设备的驱动程序。我们可以创建名为 ``/etc/udev/rules.d/myrules.rules`` 的新文件，其中包含以下内容：
 
 .. code-block:: bash
 
     SUBSYSTEM=="pnp", ATTRS{id}=="PNP0400", RUN+="/sbin/insmod /root/mydriver.ko"
 
-This will choose from the events generated only those belonging to the ``pnp``
-subsystem (connected to ``PNP`` bus) and having an id attribute with the value
-``PNP0400``.
+这将仅选择属于 ``pnp`` 子系统（连接到 ``PNP`` 总线）且具有值为 ``PNP0400`` 的 id 属性的生成事件。
 
-When this rule will be found, the command specified under ``RUN`` will be
-executed to insert the appropriate driver in the kernel.
+当找到这个规则时，将执行在 ``RUN`` 下指定的命令，将适当的驱动程序插入内核中。
 
 
-Plug and Play
+即插即用
 =============
 
-As noted above, in Linux Device Model all devices are connected by a bus, even if
-it has a corresponding physical hardware or it is virtual.
+如上所述，在 Linux 设备模型中，所有设备都通过总线连接，不管总线具有相应的物理硬件或者仅仅是虚拟设备。
 
-The kernel already has implemented most buses using a ``bus_type`` structure
-and functions to register/unregister drivers and devices.
-To implement a driver, we must first determine the bus to which the supported
-devices are connected and use the structures and functions exported by this bus.
-The main buses are ``PCI``, ``USB``, ``PNP``, ``IDE``, ``SCSI``, ``platform``,
-``ACPI``, etc.
+内核已经使用 ``bus_type`` 结构和用于注册/取消注册驱动程序与设备的函数实现了大多数总线。要实现一个驱动程序，我们必须首先确定其所支持的设备连接的总线，并使用该总线导出的结构和函数。主要的总线包括 ``PCI``, ``USB``, ``PNP``, ``IDE``, ``SCSI``, ``platform`` 以及 ``ACPI`` 等等。
 
-PNP bus
+PNP 总线
 -------
 
-The plug and play mechanism provides a means of detecting and setting the resources
-for legacy driver that may not be configured or otherwise. All plug and play
-drivers, protocols, services are based on Plug and Play level. It is responsible
-for the exchange of information between drivers and protocols. The following
-protocols are available:
+即插即用机制提供了一种检测和设置未配置的传统驱动程序之类的资源的手段。所有的即插即用驱动程序、协议和服务都基于即插即用级别。它负责在驱动程序和协议之间进行信息交换。以下协议可用：
 
-    * ``PNPBIOS`` - used for systems such as serial and parallel ports
-    * ``ISAPNP`` - offers support for the ISA bus
-    * ``ACPI`` - offering, among other things, information about system-level devices
+* ``PNPBIOS`` ——用于串行和并行端口等系统
+* ``ISAPNP`` ——提供对 ISA 总线的支持
+* ``ACPI`` ——提供了关于系统级设备的信息等
 
-The kernel contains a bus, called ``pnp_bus``, that is used for connecting by
-many drivers.
-The implementation and working with the bus follow the Linux Device Model and
-is very similar to what we discussed above.
+内核包含一个名为 ``pnp_bus`` 的总线，用于连接许多驱动程序。该总线的实现和工作遵循 Linux 设备模型，与我们上面讨论的内容非常相似。
 
-The main functions and structures exported by the bus, which can be used by
-drivers, are:
+由该总线导出的可以供驱动程序使用的函数和结构，主要包括：
 
-    * :c:type:`struct pnp_driver` - driver type associated to the bus
-    * :c:func:`pnp_register_driver` - function used to register a PNP driver in the system
-    * :c:func:`pnp_unregister_driver` - function used to unregister a PNP driver from the system
+* :c:type:`struct pnp_driver`——与总线关联的驱动程序类型
+* :c:func:`pnp_register_driver`——用于在系统中注册 PNP 驱动程序的函数
+* :c:func:`pnp_unregister_driver`——用于从系统中取消注册 PNP 驱动程序的函数
 
-As noted in previous sections, the bus has a function called ``match`` used to
-associate the devices with the appropriate drivers.
-For example, when discovering a new device, a driver which meets the condition
-given by the ``match`` function regarding to the new device. Usually, this
-condition is a comparation of IDs (driver id and device id).
-A common approach is using a static table in each driver, which holds information
-about the devices supported by the driver, which will be used by the bus
-when verifying the condition. For example, for a parallel port device we have
-the table ``parport_pc_pnp_tbl``:
+前面的小节中我们提到，总线具有一个名为 ``match`` 的函数，用于将设备与适当的驱动程序关联起来。例如，当发现新设备时，符合 ``match`` 函数所给条件的驱动程序会与新设备相关。通常，这个条件是对 ID（驱动程序 ID 和设备 ID）进行比较。常见的方法是在每个驱动程序中使用一个静态表，该表包含驱动程序支持的设备的信息，总线在验证时将使用该表。例如，对于并行端口设备，我们有表格 ``parport_pc_pnp_tbl``：
 
 .. code-block:: c
 
     static const struct pnp_device_id parport_pc_pnp_tbl[] = {
-             /* Standard LPT Printer Port */
+             /* 标准 LPT 打印机端口 */
              {.id = "PNP0400", .driver_data = 0},
-             /* ECP Printer Port */
+             /* ECP 打印机端口 */
              {.id = "PNP0401", .driver_data = 0},
     };
 
     MODULE_DEVICE_TABLE(pnp, parport_pc_pnp_tbl);
 
-Each driver declares and initializes a structure ``pnp_driver``, such as
-``parport_pc_pnp_driver``:
+每个驱动程序声明并初始化一个 ``pnp_driver`` 结构，例如 ``parport_pc_pnp_driver``：
 
 .. code-block:: c
 
@@ -896,11 +695,7 @@ Each driver declares and initializes a structure ``pnp_driver``, such as
              .remove         = parport_pc_pnp_remove,
     };
 
-We can notice that the structure has as fields a pointer to the table declared
-above and two functions, which are called when a new device is detected and when
-it is removed from the system.
-As all the structures presented above, the driver must be registered to the
-system:
+我们可以注意到，该结构的字段包括对上述表格的指针和两个函数，系统在检测到新设备以及在设备从系统中移除时调用这些函数。与上面介绍的所有结构一样，驱动程序必须向系统注册：
 
 .. code-block:: c
 
@@ -908,7 +703,7 @@ system:
     {
             err = pnp_register_driver(&parport_pc_pnp_driver);
             if (err < 0) {
-                    /* handle error */
+                    /* 处理错误 */
             }
     }
 
@@ -917,17 +712,12 @@ system:
             pnp_unregister_driver(&parport_pc_pnp_driver);
     }
 
-PNP operations
+PNP 操作
 --------------
 
-So far we have discussed the Linux Device Model and its API. To
-implement a plug and play driver, we must respect the Linux Device Model model.
+到目前为止，我们已经讨论了 Linux 设备模型及其 API。要实现即插即用驱动程序，我们必须遵循 Linux 设备模型。
 
-Most often, adding a bus in the kernel is not necessary, as most of the existing
-buses are already implemented (PCI, USB, etc.). Thus, we must first identify the
-bus to which the device is attached.
-In the examples below, we will consider that this bus is bus PNP and we will
-use the structures and functions described above.
+通常情况下，我们不需要在内核中添加新的总线，因为大多数现有的总线已经实现了（如 PCI、USB 等）。因此，我们首先必须确定设备连接的总线。在下面的示例中，我们将假设该总线为 PNP 总线，并使用上述描述的结构和函数。
 
 .. ditaa::
                                                                                    +
@@ -965,18 +755,10 @@ use the structures and functions described above.
          :                           :                            :                |           :
 
 
-Adding a driver
+添加驱动程序
 ---------------
 
-In addition to the usual operations, a driver must follow the Linux Device Model.
-Thus, it will be registered in the system using the functions provided by
-the bus for this purpose.
-Usually, the bus provides a particular driver structure containing a
-:c:type:`struct device_driver` structure, that the driver must initialize and
-register using a function ``*_register_driver``.
-For example, for the ``PNP`` bus, the driver must declare and initialize a
-structure of type :c:type:`struct pnp_driver` and register it using
-``pnp_register_drvier``:
+除了常规操作外，驱动程序必须遵循 Linux 设备模型。因此，它将使用总线提供的函数在系统中注册。通常，总线提供一个特定的驱动程序结构，其中包含 :c:type:`struct device_driver` 结构，驱动程序必须初始化并使用 ``*_register_driver`` 函数进行注册。例如，对于 ``PNP`` 总线，驱动程序必须声明并初始化一个类型为 :c:type:`struct pnp_driver` 的结构，并使用 ``pnp_register_driver`` 进行注册：
 
 .. code-block:: c
 
@@ -992,29 +774,16 @@ structure of type :c:type:`struct pnp_driver` and register it using
             err = pnp_register_driver(&my_pnp_driver);
     }
 
-Unlike legacy drivers, plug and play drivers don't register devices at
-initialization in the init function (``my_init`` in the example above) using
-:c:func:`register_device`.
+与传统驱动程序不同，即插即用驱动程序不会在初始化函数（上面示例中的 ``my_init``）中使用 :c:func:`register_device` 注册设备。
 
-As described above, each bus has a `match` function which is called when a new
-device is detected in the system to determine the associated driver.
-Thus, there must be a way for each driver to export information about the
-devices it supports, to allow this check to pass and have its functions further
-called.
-In the examples presented in this lab, the match function does a simple
-comparison between the device name and the driver name. Most drivers use a table
-containing information devices and store a pointer to this table in the
-driver structure.
-For example, a driver associated to a ``PNP`` bus defines a table of type
-:c:type:`struct pnp_device_id` and initializes the field ``id_table`` from the
-structure ``pnp_driver my_pnp_driver`` with a pointer to it:
+如上所述，每个总线都有一个 `match` 函数，当系统检测到新设备时会调用该函数，以确定关联的驱动程序。因此，每个驱动程序需要能够导出其支持的设备的信息，以允许此检查通过并进一步调用其函数。在本实验中介绍的示例中，匹配函数执行设备名称和驱动程序名称之间的简单比较。大多数驱动程序使用包含设备信息的表，并将指向该表的指针存储在驱动程序结构中。例如，与 ``PNP`` 总线关联的驱动程序定义了类型为 :c:type:`struct pnp_device_id` 的表，并使用指向它的指针初始化结构体 ``pnp_driver my_pnp_driver`` 中的字段 ``id_table``：
 
 .. code-block:: c
 
     static const struct pnp_device_id my_pnp_tbl[] = {
-             /* Standard LPT Printer Port */
+             /* 标准 LPT 打印机端口 */
              {.id = "PNP0400", .driver_data = 0},
-             /* ECP Printer Port */
+             /* ECP 打印机端口 */
              {.id = "PNP0401", .driver_data = 0},
              { }
     };
@@ -1027,21 +796,12 @@ structure ``pnp_driver my_pnp_driver`` with a pointer to it:
              //...
     };
 
-In the example above, the driver supports multiple parallel port devices,
-defined in the table ``my_pnp_tbl``.  This information is used by the bus in
-the ``match_device`` function.
-When adding a driver, the bus driver will be associated to it and new entires
-in ``sysfs`` will be created based on the driver name.
-Then the bus ``match`` function will be called for every supported device,
-to associate the driver with any connected device that it supports.
+在上面的示例中，驱动程序支持多个并行端口设备，这些设备在表格 ``my_pnp_tbl`` 中定义。总线在 ``match_device`` 函数中使用此信息。在添加驱动程序时，总线驱动程序将与其关联，并根据驱动程序名称在 ``sysfs`` 中创建新条目。然后，总线的 ``match`` 函数将针对每个支持的设备调用，以将驱动程序与其支持的任何连接设备关联起来。
 
-Removing a driver
+移除驱动程序
 -----------------
 
-To remove a driver from the kernel, in addition to operations required for a
-legacy driver, we must unregister the ``device_driver`` structure.
-For a driver associated with the ``PNP`` bus, we must unregister the ``pnp_driver``
-structure using the :c:func:`pnp_unregister_driver` function:
+要从内核中移除驱动程序，除了传统驱动程序所需的操作外，我们还必须取消注册 ``device_driver`` 结构。对于与 ``PNP`` 总线关联的驱动程序，我们必须使用 :c:func:`pnp_unregister_driver` 函数取消注册 ``pnp_driver`` 结构：
 
 .. code-block:: c
 
@@ -1052,18 +812,12 @@ structure using the :c:func:`pnp_unregister_driver` function:
             pnp_unregister_driver(&my_pnp_driver);
     }
 
-Unlike legacy drivers, plug and play drivers don't unregister devices in the
-module unload function (``my_exit``). When a driver is removed, all the
-references to it will be removed for all the devices it supports, and entries
-from ``sysfs`` will also be removed.
+与传统驱动程序不同，即插即用驱动程序不会在模块卸载函数 (``my_exit``) 中取消注册设备。当驱动程序被移除时，所有它支持的设备对它的引用将被删除，并且 ``sysfs`` 中的条目也将被删除。
 
-Adding a new device
+添加新设备
 -------------------
 
-As we saw above, plug and play drivers do not register devices at initialization.
-This operation will take place in the ``probe`` function, which is called when
-a new device is detected. A device attached to the ``PNP`` bus will be added to
-the system by the function ``probe`` from the ``pnp_driver`` structure:
+如上所述，即插即用驱动程序在初始化时不会注册设备。这个操作将在检测到新设备时调用的 ``probe`` 函数中进行。连接到 ``PNP`` 总线的设备将通过 ``pnp_driver`` 结构的 ``probe`` 函数添加到系统中：
 
 .. code-block:: c
 
@@ -1071,7 +825,7 @@ the system by the function ``probe`` from the ``pnp_driver`` structure:
                                                  const struct pnp_id *dev_id) {
             int err, iobase, nr_ports, irq;
 
-            //get irq & ports
+            //获取中断和端口
             if (pnp_irq_valid(dev, 0))
                     irq = pnp_irq(dev, 0);
             if (pnp_port_valid(dev, 0)) {
@@ -1080,7 +834,7 @@ the system by the function ``probe`` from the ``pnp_driver`` structure:
                     return -ENODEV;
             nr_ports = pnp_port_len(dev, 0);
 
-            /* register device dev */
+            /* 注册设备 dev */
     }
 
     static struct pnp_driver my_pnp_driver = {
@@ -1089,31 +843,17 @@ the system by the function ``probe`` from the ``pnp_driver`` structure:
              //...
     };
 
-Upon detection of a device in the kernel (at boot or by the insertion of the
-device through ``hotplug``), an interrupt is generated and reaches the bus
-driver.
-The device is registered using the function :c:func:`device_register` and it is
-attached to the bus. A call to the user space will also be generated, and the
-event can be treated by ``udev``. Then, the list of drivers associated with the
-bus is iterated and the ``match`` function is called for each of them.
-The ``match`` function tries to find a driver for the new device. After a
-suitable driver is found for the device, the ``probe`` function of the driver
-is called. If the function ends successfully, the device is added to the driver's
-list of devices and new entries are created in ``sysfs`` based on the device name.
+在内核中检测到设备（在引导时或通过“热插拔”插入设备）时，系统会生成中断并传递给总线驱动程序。使用函数 :c:func:`device_register` 注册设备，并将其连接到总线。然后还会生成对用户空间的调用，事件可以由 ``udev`` 处理。然后, ``udev`` 将迭代与总线关联的驱动程序列表，并对每个驱动程序调用 ``match`` 函数。 ``match`` 函数尝试为新设备找到驱动程序。找到合适的驱动程序后，将调用驱动程序的 ``probe`` 函数。如果函数成功结束，设备将添加到驱动程序的设备列表中，并根据设备名称在 ``sysfs`` 中创建新条目。
 
-Removing a device
+移除设备
 -----------------
 
-As we saw above, the plug and play drivers don't unregister devices when the
-driver is unloaded. This operation is done in the ``remove`` function, which
-is called when a device is removed from the system.
-In case of a device attached to the ``PNP`` bus, the unregister will be done
-in the ``remove`` function specified in the ``pnp_driver`` structure:
+如上所述，即插即用驱动程序在卸载驱动程序时不会取消注册设备。这个操作是在从系统中移除设备时调用的 ``remove`` 函数中完成的。对于连接到 ``PNP`` 总线的设备，取消注册将在 ``pnp_driver`` 结构中指定的 ``remove`` 函数中进行：
 
 .. code-block:: c
 
     static void my_pnp_remove(struct pnp_dev *dev) {
-             /* unregister device dev */
+             /* 取消注册设备 dev */
     }
 
     static struct pnp_driver my_pnp_driver = {
@@ -1121,57 +861,47 @@ in the ``remove`` function specified in the ``pnp_driver`` structure:
              .remove         = my_pnp_remove,
     };
 
-As seen in the example above, when the removal of a device is detected, the
-``my_pnp_remove`` function is called. A user-space call is also generated, which
-can be detected by ``udev``, and entries are removed from ``sysfs``.
+如上例所示，当检测到设备被移除时，将调用 ``my_pnp_remove`` 函数。还会生成对用户空间的调用，可以被 ``udev`` 检测到，并且会从 ``sysfs`` 中删除条目。
 
-Exercises
+练习
 =========
 
 .. include:: ../labs/exercises-summary.hrst
-.. |LAB_NAME| replace:: device_model
+.. |LAB_NAME| replace:: 设备模型
 
-0. Intro
+0. 引言
 ---------
 
-Find the definitions of the following symbols in the Linux kernel:
+在 Linux 内核中找到以下符号的定义：
 
-   * functions ``dev_name``, ``dev_set_name``.
-   * functions ``pnp_device_probe``, ``pnp_bus_match``, ``pnp_register_driver``
-     and the ``pnp_bus_type`` variable.
+   * 函数 ``dev_name``, ``dev_set_name``。
+   * 函数 ``pnp_device_probe``, ``pnp_bus_match``, ``pnp_register_driver`` 以及变量 ``pnp_bus_type``。
 
-1. Bus implementation
+1. 总线实现
 ---------------------
 
-Analyze the contents of the ``bex.c``, a module that implements a bus
-driver. Follow the comments marked with **TODO 1** and implement the missing
-functionality: register the bus driver and add a new device named ``root``
-with type ``none`` and version 1.
+分析 ``bex.c`` 的内容，这是一个实现总线驱动程序的模块。按照标记为 **TODO 1** 的注释，实现缺失的功能：注册总线驱动程序，并添加一个名为 ``root``、类型为 ``none``、版本为 1 的新设备。
 
-.. hint:: See :c:func:`bex_add_dev`.
+.. hint:: 参考 :c:func:`bex_add_dev`。
 
-.. hint:: The register and unregister must be done using :c:func:`bus_register`
-          and :c:func:`bus_unregister`.
+.. hint:: 注册和取消注册必须使用 :c:func:`bus_register` 和 :c:func:`bus_unregister` 完成。
 
-Load the module and verify that the bus is visible in ``/sys/bus``. Verify
-that the device is visible in ``/sys/bus/bex/devices``.
+加载该模块，并验证总线是否在 ``/sys/bus`` 中可见。验证设备是否在 ``/sys/bus/bex/devices`` 中可见。
 
-Remove the module and notice that the ``sysfs`` entries are removed.
+卸载该模块，并注意到 ``sysfs`` 条目已被删除。
 
-2. Add type and version device attributes
+2. 添加类型和版本设备属性
 -----------------------------------------
 
-Add two read-only device attributes, ``type`` and ``version``. Follow the
-**TODO 2** markings.
+添加两个只读设备属性, ``type`` 和 ``version``。按照 **TODO 2** 的标记进行操作。
 
-.. hint:: You will need to add the two attributes in the structure
-          ``bex_dev_attrs``, as follows:
+.. hint:: 你需要在 ``bex_dev_attrs`` 结构中添加这两个属性，如下所示：
 
           ``&dev_attr_<insert-attribute-type-here>.attr,``
 
 .. hint::
 
-  A possible implementation for the show function is the following:
+  展示函数的一个可能实现如下所示：
 
   .. code-block:: c
 
@@ -1184,22 +914,16 @@ Add two read-only device attributes, ``type`` and ``version``. Follow the
       }
       DEVICE_ATTR_RO(type);
 
-Observe that two new attributes are visible in
-/sys/bus/bex/devices/root. Check the contents of these attributes.
+观察在 /sys/bus/bex/devices/root 中出现了两个新属性。检查这些属性的内容。
 
-3. Add del and add bus attributes
+3. 添加 del 和 add 总线属性
 ---------------------------------
 
-Add two write-only bus attributes, ``del`` and ``add``. del expects the name
-of a device to delete, while add expects the name, type and version to
-create a new device. Follow the **TODO 3** markings and review
-`Buses`_.
+添加两个只写总线属性, ``del`` 和 ``add``。 ``del`` 期望删除设备的名称，而 ``add`` 期望提供名称、类型和版本来创建一个新设备。按照 **TODO 3** 的标记进行操作，并查阅 `Buses`_。
 
-.. hint:: Use :c:func:`sscanf` to parse the input from sysfs and
-	  :c:func:`bex_del_dev` and :c:func:`bex_add_dev` to delete
-	  and create a new device.
+.. hint:: 使用 :c:func:`sscanf` 解析来自 sysfs 的输入，并使用 :c:func:`bex_del_dev` 和 :c:func:`bex_add_dev` 删除和创建新设备。
 
-An example for the store function is the following:
+下面是 store 函数的示例：
 
 .. code-block:: c
 
@@ -1216,71 +940,54 @@ An example for the store function is the following:
     }
     BUS_ATTR(add, S_IWUSR, NULL, add_store);
 
-.. hint:: The store functions should return ``0`` if
-          ``bex_add_dev``/``bex_del_dev`` fail and ``count`` otherwise.
+.. hint:: 如果 ``bex_add_dev``/``bex_del_dev`` 失败，store 函数应返回 ``0``，否则返回 ``count``。
 
-Create a new device and observe that is visible in
-``/sys/bus/devices``. Delete it and observe it disapears from ``sysfs``.
+创建一个新设备，并观察它在 ``/sys/bus/devices`` 中可见。然后删除它，并观察它从 ``sysfs`` 中消失。
 
-.. hint:: Use echo to write into the bus attributes:
+.. hint:: 使用 echo 命令将内容写入总线属性：
 
     .. code-block:: shell
 
         $ echo "name type 1" > /sys/bus/bex/add
         $ echo "name" > /sys/bus/bex/del
 
-4. Register the bex misc driver
+4. 注册 bex 杂项驱动程序
 -------------------------------
 
-Modify **bex-misc.c** so that it registers the driver with the bex
-bus. Insert the ``bmx_misc.ko`` module and create a new bex device from
-sysfs with the name "test", type "misc", version 2. Follow the **TODO
-4** markings.
+修改 **bex-misc.c**，使其在 bex 总线上注册驱动程序。插入 ``bmx_misc.ko`` 模块，并从 sysfs 创建一个名为“test”、类型为“misc”、版本为 2 的新 bex 设备。按照 **TODO 4** 的标记进行操作。
 
-Observe that the driver is visible in ``/sys/bus/bex/drivers``.
+观察驱动程序在 ``/sys/bus/bex/drivers`` 中可见。
 
-Why isn't the probe function called?
+为什么没有调用 probe 函数？
 
-.. hint:: Notice that the bus match function in **bex.c** is not
-          implemented.
+.. hint:: 注意到 **bex.c** 中的总线匹配函数未实现。
 
-Implement the bus matching function in **bex.c**. Follow the **TODO 5**
-markings. Try again to create a new bex device and observe that this
-time the ``probe`` function from the ``bex_misc`` driver is called.
+在 **bex.c** 中实现总线匹配函数。按照 **TODO 5** 的标记进行操作。再次尝试创建一个新的 bex 设备，并观察这次 ``bex_misc`` 驱动程序的 ``probe`` 函数被调用。
 
-5. Register misc device in the bex_misc probe function
+5. 在 bex_misc probe 函数中注册杂项设备
 ------------------------------------------------------
 
-Modify **bex_misc.c** to refuse probing if ``version > 1``. Also, register the
-defined misc device in ``bex_misc_probe`` and deregister it in
-``bex_misc_remove``. Follow the **TODO 6** markings.
+修改 **bex_misc.c**，如果 ``version > 1``，则拒绝探测。此外，在 ``bex_misc_probe`` 中注册定义的杂项设备，并在 ``bex_misc_remove`` 中取消注册。按照 **TODO 6** 的标记进行操作。
 
-.. hint:: Use :c:func:`misc_register` and :c:func:`misc_deregister`.
+.. hint:: 使用 :c:func:`misc_register` 和 :c:func:`misc_deregister`。
 
-Create a new device with the name "test", type "misc" and version 2
-and observe that the probe fails. Create a new device with the name
-"test2", type "misc" and version 1 and observe that the probe is
-successful.
+创建一个名称为“test”、类型为“misc”、版本为 2 的新设备，并观察探测失败。创建一个名称为“test2”、类型为“misc”、版本为 1 的新设备，并观察探测成功。
 
-Inspect ``/sys/bus/bex/devices/test2`` and observe that we have a new
-entry. Identify the major and minor for the misc device, create a
-character device file and try to read and write from the misc device
-buffer.
+检查 ``/sys/bus/bex/devices/test2``，观察到我们有了一个新条目。确定杂项设备的主设备号和次设备号，创建一个字符设备文件，并尝试从杂项设备缓冲区中读取和写入数据。
 
-.. hint:: The major and minor should be visible in the dev attribute
-          of the misc device
+.. hint:: 主设备号和次设备号应该在杂项设备的 dev 属性中可见。
 
-6. Monitor uevent notifications
+6. 监视 uevent 通知
 -------------------------------
 
-Use the ``udevadm monitor`` command and observe what happens when:
+使用命令 ``udevadm monitor``，观察以下情况发生时会发生什么：
 
-* the ``bex.ko`` and ``bex_misc.ko`` modules are inserted
+* 插入 ``bex.ko`` 和 ``bex_misc.ko`` 模块
 
-* a new device with the type "type" is created
+* 创建一个类型为“type”的新设备
 
-* a new device with the type "misc" and version 2 is created
+* 创建一个类型为“misc”、版本为 2 的新设备
 
-* a new device with the type "misc" and version 1 is created
+* 创建一个类型为“misc”、版本为 1 的新设备
 
-* all of the above are removed
+* 移除上述所有设备
