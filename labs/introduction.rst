@@ -2,6 +2,10 @@
 介绍
 ====
 
+.. meta::
+   :description: 介绍操作系统 2 实验的规则和目标，介绍实验文档，介绍 Linux 内核及相关资源
+   :keywords: 内核, 内核编程, Linux, cscope, LXR, gdb, addr2line, dump_stack
+
 实验目标
 =======
 
