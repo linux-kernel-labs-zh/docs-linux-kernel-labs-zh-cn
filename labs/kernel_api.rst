@@ -2,6 +2,9 @@
 内核 API
 ========
 
+.. meta::
+   :description: 熟悉基本的 Linux 内核 API，描述内存分配机制，描述锁定（locking）机制
+
 实验目标
 ========
 

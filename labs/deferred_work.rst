@@ -2,6 +2,10 @@
 延迟工作
 =============
 
+.. meta::
+   :description: 理解延迟工作（即在稍后时间执行的代码），实现使用延迟工作的常见任务，理解延迟工作的同步特性
+   :keywords: softirq, tasklet, struct tasklet_struct, 下半部处理程序, jiffies, HZ, timer, struct timer_list, spin_lock_bh, spin_unlock_bh, workqueue, struct work_struct, 内核线程, events/x
+
 实验目标
 ==============
 
