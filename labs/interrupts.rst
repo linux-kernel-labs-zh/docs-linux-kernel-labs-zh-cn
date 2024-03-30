@@ -2,6 +2,10 @@
 I/O 访问和中断
 ==========================
 
+.. meta::
+   :description: 与外围设备进行通信，实现中断处理程序，将中断与进程上下文同步
+   :keywords: IRQ, I/O 端口, I/O 地址, 基地址, UART, request_region, release_region, inb, outb
+
 实验目标
 ==============
 
