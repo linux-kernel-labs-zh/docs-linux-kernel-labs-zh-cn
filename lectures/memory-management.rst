@@ -1,369 +1,341 @@
 =================
-Memory Management
+内存管理
 =================
 
-`View slides <memory-management-slides.html>`_
+`查看幻灯片 <memory-management-slides.html>`_
 
 .. slideconf::
    :autoslides: False
    :theme: single-level
 
-Lecture objectives:
+课程目标：
 ===================
 
-.. slide:: Memory Management
+.. slide:: 内存管理
    :inline-contents: True
    :level: 2
 
-   * Physical Memory Management
+   * 物理内存管理
 
-     * Page allocations
+     * 页面分配
 
-     * Small allocations
+     * 小型分配
 
-   * Virtual Memory Management
+   * 虚拟内存管理
 
-   * Page Fault Handling Overview
+   * 缺页错误处理概述
 
 
-Physical Memory Management
+物理内存管理
 ==========================
 
-.. slide:: Physical Memory Management
+.. slide:: 物理内存管理
    :inline-contents: True
    :level: 2
 
-   * Algorithms and data structure that keep track of physical memory
-     pages
+   * 跟踪物理内存页面的算法和数据结构
 
-   * Independent of virtual memory management
+   * 独立于虚拟内存管理
 
-   * Both virtual and physical memory management is required for complete
-     memory management
+   * 完整的内存管理同时需要虚拟内存管理和物理内存管理
 
-   * Physical pages are being tracked using a special data structure:
-     :c:type:`struct page`
+   * 物理页面使用特殊的数据结构进行跟踪：:c:type:`struct page`
 
-   * All physical pages have an entry reserved in the :c:data:`mem_map`
-     vector
+   * 每个物理页面都在 :c:data:`mem_map` 向量中保留有一个条目
 
-   * The physical page status may include: a counter for how many
-     times is a page used, position in swap or file, buffers for this
-     page, position int the page cache, etc.
+   * 物理页面的状态可能包括：页面使用计数器，位于交换区（swap）或文件中的位置，该页面的缓冲区，页面缓存（page cache）中的位置等。
 
-Memory zones
+内存区域
 ------------
 
-.. slide:: Memory zones
+.. slide:: 内存区域
    :inline-contents: True
    :level: 2
 
-   * DMA zone
+   * DMA 区域
 
-   * DMA32 zone
+   * DMA32 区域
 
-   * Normal zone (LowMem)
+   * 正常区域（LowMem）
 
-   * HighMem Zone
+   * 高内存区域（HighMem）
 
-   * Movable Zone
+   * 可移动区域（Movable Zone）
 
 
-Non-Uniform Memory Access
+非均匀内存访问
 -------------------------
 
-.. slide:: Non-Uniform Memory Access
+.. slide:: 非均匀内存访问
    :inline-contents: True
    :level: 2
 
-   * Physical memory is split in between multiple nodes, one for each CPU
+   * 物理内存被分割成多个节点（node），每个 CPU 对应一个节点
 
-   * There is single physical address space accessible from every node
+   * 每个节点都可以访问单个物理地址空间
 
-   * Access to the local memory is faster
+   * 访问本地内存更快
 
-   * Each node maintains is own memory zones (.e. DMA, NORMAL, HIGHMEM, etc.)
+   * 每个节点维护自己的内存区域（例如 DMA、NORMAL、HIGHMEM 等）
 
 
-Page allocation
+页面分配
 ---------------
 
-.. slide:: Page allocation
+.. slide:: 页面分配
    :inline-contents: True
    :level: 2
 
 
    .. code-block:: c
 
-      /* Allocates 2^order contiguous pages and returns a pointer to the
-       * descriptor for the first page
-       */
+      /* 分配 2^order 个连续页面，并返回指针，指针指向第一个页面的描述符 */
       struct page *alloc_pages(gfp_mask, order);
 
-      /* allocates a single page */
+      /* 分配单个页面 */
       struct page *alloc_page(gfp_mask);
 
 
-      /* helper functions that return the kernel virtual address */
+      /* 返回内核虚拟地址的辅助函数 */
       void *__get_free_pages(gfp_mask, order);
       void *__get_free_page(gfp_mask);
       void *__get_zero_page(gfp_mask);
       void *__get_dma_pages(gfp_mask, order);
 
 
-.. slide:: Why only allocate pages in chunks of power of 2?
+.. slide:: 为什么只以 2 的幂次分配页面？
    :inline-contents: True
    :level: 2
 
-   * Typical memory allocation algorithms have linear complexity
+   * 典型的内存分配算法具有线性复杂度
 
-   * Why not use paging?
+   * 为什么不使用分页？
 
-     * Sometime we do need contiguous memory allocations (for DMA)
+     * 有时我们确实需要连续的内存分配（用于 DMA）
 
-     * Allocation would require page table changes and TLB flushes
+     * 分配将需要页表更改和 TLB 刷新
 
-     * Not able to use extended pages
+     * 无法使用扩展页面
 
-     * Some architecture directly (in hardware) linearly maps a part
-       of the address space (e.g. MIPS)
+     * 一些体系结构直接（在硬件中）线性映射地址空间的一部分（例如 MIPS）
 
 
-.. slide:: The buddy algorithm
+.. slide:: 伙伴算法
    :inline-contents: True
    :level: 2
 
-   * Free blocks are distributed in multiple lists
+   * 空闲块被分布在多个列表中
 
-   * Each list contains blocks of the same size
+   * 每个列表包含相同大小的块
 
-   * The block size is a power of two
+   * 块的大小是 2 的幂次
 
 
-.. slide:: Allocating a block of size N
+.. slide:: 分配大小为 N 的块
    :inline-contents: True
    :level: 2
 
-   * If there is a free block in the N-size list, pick the first
+   * 如果 N 大小的列表中存在空闲块，选择第一个
 
-   * If not, look for a free block in the 2N-size list
+   * 如果没有，在 2N 大小的列表中查找空闲块
 
-   * Split the 2N-size block in two N-size blocks and add them to the
-     N-size block
+   * 将 2N 大小的块分割为两个 N 大小的块，并将它们添加到 N 大小的列表中
 
-   * Now that we have the N-size list populated, pick the first free
-     block from that list
+   * 现在我们 N 大小的列表里有内容了，从该列表中选择第一个空闲块
 
 
-.. slide:: Freeing a block of size N
+.. slide:: 释放大小为 N 的块
    :inline-contents: True
    :level: 2
 
-   * If the "buddy" is free coalesce into a 2N-size block
+   * 如果“伙伴”是空闲的，则合并为一个 2N 大小的块
 
-   * Try until no more free buddy block is found and place the
-     resulting block in the respective list
+   * 循环往复直到无法找到空闲的伙伴块，并将结果块放置在相应的列表中
 
+Linux 的实现
+------------------
 
-.. slide:: The Linux implementation
+.. slide:: Linux 的实现
    :inline-contents: True
    :level: 2
 
-   * 11 lists for blocks of 1, 2, 4, 8, 16, 32, 64, 128, 256, 512,
-     1024 pages
+   * 为 1、2、4、8、16、32、64、128、256、512 以及 1024 页面大小的块总共设置 11 个列表，每个列表对应某个大小的块。
 
-   * Each memory zone has its own buddy allocator
+   * 每个内存区域都有自己的伙伴分配器
 
-   * Each zone has a vector of descriptors for free blocks, one entry
-     for each size
+   * 每个区域都有一个用于空闲块的描述符向量，每个大小对应一个条目
 
-   * The descriptor contains the number of free blocks and the head of
-     the list
+   * 描述符包含空闲块的数量和列表的头部
 
-   * Blocks are linked in the list using the `lru` field of
-     :c:type:`struct page`
+   * 块通过 :c:type:`struct page` 的 `lru` 字段链接在列表中
 
-   * Free pages have the PG_buddy flag set
+   * 空闲页面设置了 PG_buddy 标志
 
-   * The page descriptor keeps a copy of the block size in the private
-     field to easily check if the "buddy" is free
+   * 页面描述符在私有字段中保留了块大小的副本，以便轻松检查“伙伴”是否空闲
 
 
-Small allocations
+小型分配
 -----------------
 
-.. slide:: Small allocations
+.. slide:: 小型分配
    :inline-contents: True
    :level: 2
 
-   * Buddy is used to allocate pages
+   * 伙伴系统被用于分配页面
 
-   * Many of the kernel subsystems need to allocate buffers smaller
-     than a page
+   * 许多内核子系统需要分配小于一页的缓冲区
 
-   * Typical solution: variable size buffer allocation
+   * 典型解决方案：可变大小的缓冲区分配
 
-     * Leads to external fragmentation
+     * 导致外部碎片
 
-   * Alternative solution: fixed size buffer allocation
+   * 另一种解决方案：固定大小的缓冲区分配
 
-     * Leads to internal fragmentation
+     * 导致内部碎片
 
-   * Compromise: fixed size block allocation with multiple sizes, geometrically distributed
+   * 折中方案：使用多种固定大小的块分配，几何分布
 
-     * e.g.: 32, 64, ..., 131056
+     * 例如：32、64、...、131056
 
 
-.. slide:: The SLAB allocator
+.. slide:: SLAB 分配器
    :inline-contents: True
    :level: 2
 
-   * Buffers = objects
+   * 缓冲区=对象
 
-   * Uses buddy to allocate a pool of pages for object allocations
+   * 使用伙伴系统分配一组页面以进行对象分配
 
-   * Each object (optionally) has a constructor and destructor
+   * 每个对象（可选地）具有构造函数和析构函数
 
-   * Deallocated objects are cached - avoids subsequent calls for
-     constructors and buddy allocation / deallocation
+   * 已释放的对象被缓存——避免了后续对构造函数和伙伴分配/释放的调用
 
-.. slide:: Why SLAB?
+
+.. slide:: 为什么使用 SLAB？
    :inline-contents: True
    :level: 2
 
-   * The kernel will typically allocate and deallocate multiple types
-     the same data structures over time (e.g. :c:type:`struct
-     task_struct`) effectively using fixed size allocations. Using the
-     SLAB reduces the frequency of the more heavy
-     allocation/deallocation operations.
+   * 内核通常会多次分配和释放多种相同类型的数据结构（例如 :c:type:`struct task_struct`），在这个过程中如果使用固定大小的分配，效率将会变高。SLAB 可帮助系统减少消耗资源更多的分配/释放操作。
 
-   * For variable size buffers (which occurs less frequently) a
-     geometric distribution of caches with fixed-size can be used
+   * 对于可变大小的缓冲区（发生频率较低），可以使用固定大小的几何分布缓存
 
-   * Reduces the memory allocation foot-print since we are searching a
-     much smaller memory area, compared to buddy which can span over a
-     larger area
+   * 减少了内存分配的占用空间，因为我们仅需要在比伙伴分配器覆盖范围更小的内存区域中搜索
 
-   * Employs cache optimization techniques (slab coloring)
+   * 使用缓存优化技术（slab 着色）
 
+SLAB 架构
+------------------
 
-.. slide:: Slab architecture
+.. slide:: SLAB 架构
    :inline-contents: True
    :level: 2
 
    .. image:: ../res/slab-overview.png
 
 
-.. slide:: Cache descriptors
+.. slide:: 缓存描述符
    :inline-contents: True
    :level: 2
 
-   * A name to identify the cache for stats
+   * 用于标识缓存的名称，用于统计信息
 
-   * object constructor and destructor functions
+   * 对象的构造函数和析构函数
 
-   * size of the objects
+   * 对象的大小
 
-   * Flags
+   * 标志
 
-   * Size of the slab in power of 2 pages
+   * 以 2 的幂次表示的页数作为 slab 的大小
 
-   * GFP masks
+   * GFP 掩码
 
-   * One or mores slabs, grouped by state: full, partially full, empty
+   * 一个或多个 slab，按状态分组：满、部分满、空
 
-.. slide:: SLAB descriptors
+.. slide:: SLAB 描述符
    :inline-contents: True
    :level: 2
 
-   * Number of objects
+   * 对象的数量
 
-   * Memory region where the objects are stored
+   * 存储对象的内存区域
 
-   * Pointer to the first free object
+   * 指向第一个空闲对象的指针
 
-   * Descriptor are stored either in
+   * 描述符可以存储在以下位置：
 
-     * the SLAB itself (if the object size is lower the 512 or if
-       internal fragmentation leaves enough space for the SLAB
-       descriptor)
+     * SLAB 本身（如果对象大小低于 512，或者如果内部碎片给 SLAB 描述符留有足够空间）
 
-     * in generic caches internally used by the SLAB allocator
+     * SLAB 分配器内部使用的通用缓存中
 
 
-.. slide:: Slab detailed architecture
+.. slide:: SLAB 详细结构
    :inline-contents: True
    :level: 2
 
    .. image:: ../res/slab-detailed-arch.png
 
 
-.. slide:: Generic vs specific caches
+.. slide:: 通用缓存与特定缓存
    :inline-contents: True
    :level: 2
 
-   * Generic caches are used internally by the slab allocator
+   * 通用缓存在 SLAB 分配器内部使用
 
-     * allocating memory for cache and slab descriptors
+     * 为缓存和 SLAB 描述符分配内存
 
-   * They are also used to implement :c:func:`kmalloc` by implementing
-     20 caches with object sizes geometrically distributed between
-     32bytes and 4MB
+   * 它们也用于通过实现 :c:func:`kmalloc`，具体实现方法为使用 20 种对象大小在 32 字节到 4MB 之间呈几何分布的缓存来实现 
 
-   * Specific cache are created on demand by kernel subsystems
+   * 特定缓存是由内核子系统根据需要动态创建的
 
 
-.. slide:: Object descriptors
+.. slide:: 对象描述符
    :inline-contents: True
    :level: 2
 
    .. image:: ../res/slab-object-descriptors.png
 
-.. slide:: Object descriptors
+.. slide:: 对象描述符
    :inline-contents: True
    :level: 2
 
-   * Only used for free objects
+   * 仅用于空闲对象
 
-   * An integer that points to the next free object
+   * 整数，指向下一个空闲对象
 
-   * The last free object uses a terminator value
+   * 最后一个空闲对象使用终止值
 
-   * Internal descriptors - stored in the slab
+   * 内部描述符——存储在 slab 中
 
-   * External descriptors - stored in generic caches
+   * 外部描述符——存储在通用缓存中
 
 
-.. slide:: SLAB coloring
+.. slide:: SLAB 着色
    :inline-contents: True
    :level: 2
 
    .. image:: ../res/slab-coloring.png
 
 
-Virtual memory management
+虚拟内存管理
 =========================
 
-.. slide:: Virtual memory management
+.. slide:: 虚拟内存管理
    :inline-contents: True
    :level: 2
 
-   * Used in both kernel and user space
+   * 在内核和用户空间中都使用
 
-   * Using virtual memory requires:
+   * 使用虚拟内存需要：
 
-     * reserving (allocating) a segment in the *virtual* address space
-       (be it kernel or user)
+     * 在*虚拟*地址空间中保留（分配）一个段（无论是内核还是用户）
 
-     * allocating one or more physical pages for the buffer
+     * 为缓冲区分配一个或多个物理页面
 
-     * allocating one or more physical pages for page tables and
-       internal structures
+     * 为页表和内部结构分配一个或多个物理页面
 
-     * mapping the virtual memory segment to the physical allocated
-       pages
+     * 将虚拟内存段映射到分配的物理页面上
 
-.. slide:: Address space descriptors
+.. slide:: 地址空间描述符
    :inline-contents: True
    :level: 2
 
@@ -402,82 +374,79 @@ Virtual memory management
                   +------------+          +------------+
 
 
-.. slide:: Address space descriptors
+地址空间描述符
+------------------
+
+.. slide:: 地址空间描述符
    :inline-contents: True
    :level: 2
 
-   * Page table is used either by:
+   * 页表由以下之一使用：
 
-     * The CPU's MMU
+     * CPU 的 MMU
 
-     * The kernel to handle TLB exception (some RISC processors)
+     * 内核，用于处理 TLB 异常（一些 RISC 处理器）
 
-   * The address space descriptor is used by the kernel to maintain
-     high level information such as file and file offset (for mmap
-     with files), read-only segment, copy-on-write segment, etc.
+   * 地址空间描述符由内核用于维护高级信息，例如文件和文件偏移（对于使用文件的 mmap），只读段，写时复制段等。
 
 
-.. slide:: Allocating virtual memory
+.. slide:: 分配虚拟内存
    :inline-contents: True
    :level: 2
 
-   * Search a free area in the address space descriptor
+   * 在地址空间描述符中搜索一个空闲区域
 
-   * Allocate memory for a new area descriptor
+   * 为新的区域描述符分配内存
 
-   * Insert the new area descriptor in the address space descriptor
+   * 将新的区域描述符插入地址空间描述符中
 
-   * Allocate physical memory for one or more page tables
+   * 为一个或多个页表分配物理内存
 
-   * Setup the page tables for the newly allocated area in the virtual
-     address space
+   * 在虚拟地址空间中设置新分配区域的页表
 
-   * Allocating (on demand) physical pages and map them in the virtual
-     address space by updating the page tables
+   * （按需）分配物理页面，并通过更新页表将它们映射到虚拟地址空间中
 
 
-.. slide:: Freeing virtual memory
+.. slide:: 释放虚拟内存
    :inline-contents: True
    :level: 2
 
-   * Removing the area descriptor
+   * 移除区域描述符
 
-   * Freeing the area descriptor memory
+   * 释放区域描述符内存
 
-   * Updating the page tables to remove the area from the virtual
-     address space
+   * 更新页表以从虚拟地址空间中删除该区域
 
-   * Flushing the TLB for the freed virtual memory area
+   * 刷新已释放虚拟内存区域的 TLB
 
-   * Freeing physical memory of the page tables associated with the
-     freed area
+   * 释放与已释放区域相关联的页表的物理内存
 
-   * Freeing physical memory of the freed virtual memory area
+   * 释放已释放虚拟内存区域的物理内存
 
 
-.. slide:: Linux virtual memory management
+.. slide:: Linux 虚拟内存管理
    :inline-contents: True
    :level: 2
 
-   * Kernel
+   * 内核
 
      * vmalloc
 
-       * area descriptor: :c:type:`struct vm_struct`
+       * 区域描述符：:c:type:`struct vm_struct`
 
-       * address space descriptor: simple linked list of :c:type:`struct vm_struct`
+       * 地址空间描述符：简单链表，由 :c:type:`struct vm_struct` 组成
 
-   * Userspace
+   * 用户空间
 
-     * area descriptor: :c:type:`struct vm_area_struct`
+     * 区域描述符：:c:type:`struct vm_area_struct`
 
-     * address space descriptor: :c:type:`struct mm_struct`, red-black tree
+     * 地址空间描述符：:c:type:`struct mm_struct`，红黑树
 
 
-Fault page handling
+缺页处理
 ===================
 
-.. slide:: Linux virtual memory management
+.. slide:: Linux 虚拟内存管理
    :inline-contents: True
    :level: 2
 
