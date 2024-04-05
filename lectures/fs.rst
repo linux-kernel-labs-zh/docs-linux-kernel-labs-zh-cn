@@ -1,79 +1,64 @@
 =====================
-Filesystem Management
+文件系统管理
 =====================
 
-`View slides <fs-slides.html>`_
+`查看幻灯片 <fs-slides.html>`_
 
 .. slideconf::
    :autoslides: False
    :theme: single-level
 
-Lecture objectives:
+课程目标：
 ===================
 
-.. slide:: Filesystem Management
+.. slide:: 文件系统管理
    :inline-contents: True
    :level: 2
 
-   * Filesystem abstractions
+   * 文件系统抽象
 
-   * Filesystem operations
+   * 文件系统操作
 
    * Linux VFS
 
-   * Overview of Linux I/O Management
+   * Linux I/O 管理概述
 
 
-Filesystem Abstractions
+文件系统抽象
 =======================
 
-A fileystem is a way to organize files and directories on storage
-devices such as hard disks, SSDs or flash memory. There are many types
-of filesystems (e.g. FAT, ext4, btrfs, ntfs) and on one running system
-we can have multiple instances of the same filesystem type in use.
+文件系统是一种在存储设备（如硬盘、固态硬盘或闪存）上组织文件和目录的方式。有许多类型的文件系统（例如FAT、ext4、btrfs、ntfs），在单个运行的系统上，我们可以同时使用同一种文件系统的多个实例。
 
-While filesystems use different data structures to organizing the
-files, directories, user data and meta (internal) data on storage
-devices there are a few common abstractions that are used in almost
-all filesystems:
+尽管不同文件系统用来组织存储设备上的文件、目录、用户数据和元数据（内部数据）的数据结构不一致，但几乎所有文件系统都使用了一些常见的抽象：
 
-.. slide:: Filesystem Abstractions
+.. slide:: 文件系统抽象
    :inline-contents: True
    :level: 2
 
-   * superblock
+   * 超级块（superblock）
 
-   * file
+   * 文件（file）
 
-   * inode
+   * 索引节点（inode）
 
-   * dentry
+   * 目录项（dentry）
 
 
-Some of these abstractions are present both on disk and in memory
-while some are only present in memory.
+其中一些抽象同时存在于磁盘和内存中，而另一些只存在于内存中。
 
-The *superblock* abstraction contains information about the filesystem
-instance such as the block size, the root inode, filesystem size. It
-is present both on storage and in memory (for caching purposes).
+*超级块* 抽象包含有关文件系统实例的信息，如块大小、根索引节点、文件系统大小。它既存在于存储中，也存在于内存中（用于缓存目的）。
 
-The *file* abstraction contains information about an opened file such
-as the current file pointer. It only exists in memory.
+*文件* 抽象包含有关已打开文件的信息，如指向当前文件的指针。它只存在于内存中。
 
-The *inode* is identifying a file on disk. It exists both on storage
-and in memory (for caching purposes). An inode identifies a file in a
-unique way and has various properties such as the file size, access
-rights, file type, etc.
+*索引节点* 用于标识磁盘上的文件。它既存在于存储中，也存在于内存中（用于缓存目的）。每个索引节点全系统唯一，用于标识文件，并具有各种属性，如文件大小、访问权限、文件类型等。
 
-.. note:: The file name is not a property of the file.
+.. note:: 文件名不是 file 的属性。
 
-The *dentry* associates a name with an inode. It exists both on
-storage and in memory (for caching purposes).
+*目录项* 将名称与索引节点关联起来。它既存在于存储中，也存在于内存中（用于缓存目的）。
 
-The following diagram shows the relationship between the various filesystem
-abstractions as they used in memory:
+下图显示了各种文件系统抽象在内存中的关系：
 
-.. slide:: Filesystem Abstractions - in memory
+.. slide:: 文件系统抽象——在内存中
    :inline-contents: True
    :level: 2
 
@@ -104,22 +89,17 @@ abstractions as they used in memory:
                                                | data |
                                                +------+
 
-Note that not all of the one to many relationships between the various
-abstractions are depicted.
+请注意，并非所有抽象之间的一对多关系都在图示中表示出来。
 
-Multiple file descriptors can point to the same *file* because we can
-use the :c:func:`dup` system call to duplicate a file descriptor.
+多个文件描述符可以指向同一个 *file*，因为我们可以使用 :c:func:`dup` 系统调用来复制文件描述符。
 
-Multiple *file* abstractions can point to the same *dentry* if we open
-the same path multiple times.
+如果我们多次打开相同的路径，多个 *file* 抽象可以指向同一个 *dentry*。
 
-Multiple *dentries* can point to the same *inode* when hard links are
-used.
+如果使用硬链接的话，多个 *dentry* 可以指向同一个 *inode*。
 
-The following diagram shows the relationship of the filesystem
-abstraction on storage:
+下图显示了存储中文件系统抽象之间的关系：
 
-.. slide:: Filesystem Abstractions - on storage
+.. slide:: 文件系统抽象——在存储中
    :inline-contents: True
    :level: 2
 
@@ -147,28 +127,18 @@ abstraction on storage:
 	            +------------+              ++++++++++++
 
 
-The diagram shows that the *superblock* is typically stored at the
-beginning of the fileystem and that various blocks are used with
-different purposes: some to store dentries, some to store inodes and
-some to store user data blocks. There are also blocks used to manage
-the available free blocks (e.g. bitmaps for the simple filesystems).
+该图示显示, *超级块* 通常存储在文件系统的开头，各种块用于不同的目的：一些用于存储 *dentry*，一些用于存储 *inode*，还有一些用于存储用户数据块。还有用于管理可用空闲块的块（例如简单文件系统的位图）。
 
-The next diagram show a very simple filesystem where blocks are
-grouped together by function:
+下图显示了一个非常简单的文件系统，其中块按功能分组：
 
-* the superblock contains information about the block size as well as
-  the IMAP, DMAP, IZONE and DZONE areas.
+* 超级块包含有关块大小以及 IMAP、DMAP、IZONE 和 DZONE 区域的信息。
 
-* the IMAP area is comprised of multiple blocks which contains a
-  bitmap for inode allocation; it maintains the allocated/free state
-  for all inodes in the IZONE area
+* IMAP 区域由多个块组成，其中包含用于 inode 分配的位图；它维护 IZONE 区域中所有 inode 的已分配/空闲状态。
 
-* the DMAP area is comprised of multiple blocks which contains a
-  bitmap for data blocks; it maintains the allocated/free state for
-  all blocks the DZONE area
+* DMAP 区域由多个块组成，其中包含用于数据块的位图；它维护 DZONE 区域中所有块的已分配/空闲状态。
 
 
-.. slide:: Simple filesystem example
+.. slide:: 简易文件系统示例
    :inline-contents: True
    :level: 2
 
@@ -184,18 +154,13 @@ grouped together by function:
       +--------------+--------+--------+---------+---------+
 
 
-Filesystem Operations
+文件系统操作
 =====================
 
-The following diagram shows a high level overview of how the file
-system drivers interact with the rest of the file system "stack". In
-order to support multiple filesystem types and instances Linux
-implements a large and complex subsystem that deals with filesystem
-management. This is called Virtual File System (or sometimes Virtual
-File Switch) and it is abbreviated with VFS.
+下图显示了文件系统驱动程序与文件系统“堆栈”的其他部分之间交互的高级概述。为了支持多种文件系统类型和实例，Linux 实现了一个庞大而复杂的子系统来处理文件系统管理。这被称为虚拟文件系统（有时也称为虚拟文件切换），英文简称为 VFS。
 
 
-.. slide:: Overview
+.. slide:: 概览
    :inline-contents: True
    :level: 2
 
@@ -225,236 +190,219 @@ File Switch) and it is abbreviated with VFS.
       |                                                            |
       +------------------------------------------------------------+
 
-VFS translates the complex file management related system calls to
-simpler operations that are implemented by the device drivers. These
-are some of the operations that a file system must implement:
+VFS 将与复杂的文件管理相关的系统调用转换为由设备驱动程序实现的简化操作。文件系统必须实现以下一些操作：
 
-.. slide:: Filesystem Operations
+.. slide:: 文件系统操作
    :inline-contents: True
    :level: 2
 
-   * Mount
+   * 挂载
 
-   * Open a file
+   * 打开文件
 
-   * Querying file attributes
+   * 查询文件属性
 
-   * Reading data from a file
+   * 从文件读取数据
 
-   * Writing file to a file
+   * 将数据写入文件
 
-   * Creating a file
+   * 创建文件
 
-   * Deleting a file
+   * 删除文件
 
 
-The next sections will look in-depth at some of these operations.
+接下来的章节将深入讨论其中的一些操作。
 
-Mounting a filesystem
+挂载文件系统
 ---------------------
 
-A summary of a typical implementation is presented below:
+典型实现总结如下：
 
-.. slide:: Mounting a filesystem
+.. slide:: 挂载文件系统
    :inline-contents: True
    :level: 2
 
-   * Input: a storage device (partition)
+   * 输入：存储设备（分区）
 
-   * Output: dentry pointing to the root directory
+   * 输出：指向根目录的 dentry
 
-   * Steps: check device, determine filesystem parameters, locate the root inode
+   * 步骤：检查设备，确定文件系统参数，定位根 inode
 
-   * Example: check magic, determine block size, read the root inode and create dentry
+   * 示例：检查魔数，确定块大小，读取根 inode 并创建 dentry
 
 
-Opening a file
+打开文件
 --------------
 
-A summary of a typical implementation is presented below:
+典型实现总结如下：
 
-.. slide:: Opening a file
+.. slide:: 打开文件
    :inline-contents: True
    :level: 2
 
-   * Input: path
+   * 输入：路径
 
-   * Output: file descriptor
+   * 输出：文件描述符
 
-   * Steps:
+   * 步骤：
 
-     * Determine the filesystem type
+     * 确定文件系统类型
 
-     * For each name in the path: lookup parent dentry, load inode,
-       load data, find dentry
+     * 对于路径中的每个名称：查找父级 dentry，加载 inode，加载数据，找到 dentry
 
-     * Create a new *file* that points to the last *dentry*
+     * 创建指向最后一个 dentry 的新的 *file*
 
-     * Find a free entry in the file descriptor table and set it to *file*
+     * 在文件描述符表中找到一个空闲条目，并将其设置为 *file*
 
 
-Querying file attributes
+查询文件属性
 ------------------------
 
-A summary of a typical implementation is presented below:
+典型实现总结如下：
 
-.. slide:: Querying file attributes
+.. slide:: 查询文件属性
    :inline-contents: True
    :level: 2
 
-   * Input: path
+   * 输入：路径
 
-   * Output: file attributes
+   * 输出：文件属性
 
-   * Steps:
+   * 步骤：
 
-     * Access `file->dentry->inode`
+     * 访问 `file->dentry->inode`
 
-     * Read file attributes from the *inode*
+     * 从 *inode* 中读取文件属性
 
-Reading data from a file
+从文件读取数据
 ------------------------
 
-A summary of a typical implementation is presented below:
+典型实现总结如下：
 
-.. slide:: Reading data from a file
+.. slide:: 从文件读取数据
    :inline-contents: True
    :level: 2
 
-   * Input: file descriptor, offset, length
+   * 输入：文件描述符、偏移量、长度
 
-   * Output: data
+   * 输出：数据
 
-   * Steps:
+   * 步骤：
 
-     * Access `file->dentry->inode`
+     * 访问 `file->dentry->inode`
 
-     * Determine data blocks
+     * 确定数据块
 
-     * Copy data blocks to memory
+     * 将数据块复制到内存中
 
 
-Writing data to a file
+向文件写入数据
 ----------------------
 
-A summary of a typical implementation is presented below:
+典型实现总结如下：
 
-.. slide:: Writing data to a file
+.. slide:: 向文件写入数据
    :inline-contents: True
    :level: 2
 
-   * Input: file descriptor, offset, length, data
+   * 输入：文件描述符、偏移量、长度、数据
 
-   * Output:
+   * 输出：
 
-   * Steps:
+   * 步骤：
 
-     * Allocate one or more data blocks
+     * 分配一个或多个数据块
 
-     * Add the allocated blocks to the inode and update file size
+     * 将分配的块添加到 inode 中并更新文件大小
 
-     * Copy data from userspace to internal buffers and write them to
-       storage
+     * 将数据从用户空间复制到内部缓冲区，并将其写入存储
 
 
-Closing a file
+关闭文件
 --------------
 
-A summary of a typical implementation is presented below:
+典型实现总结如下：
 
-.. slide:: Closing a file
+.. slide:: 关闭文件
    :inline-contents: True
    :level: 2
 
-   * Input: file descriptor
+   * 输入：文件描述符
 
-   * Output:
+   * 输出：
 
-   * Steps:
+   * 步骤：
 
-     * set the file descriptor entry to NULL
+     * 将文件描述符条目设置为 NULL
 
-     * Decrement file reference counter
+     * 减少文件引用计数器
 
-     * When the counter reaches 0 free *file*
+     * 当计数器达到 0 时释放 *file*
 
 
-Directories
+目录
 -----------
 
-.. slide:: Directories
+.. slide:: 目录
    :inline-contents: True
    :level: 2
 
-   Directories are special files which contain one or more dentries.
+   目录是包含一个或多个 *dentry* 的特殊文件。
 
-Creating a file
+创建文件
 ---------------
 
-A summary of a typical implementation is presented below:
+典型实现总结如下：
 
-.. slide:: Creating a file
+.. slide:: 创建文件
    :inline-contents: True
    :level: 2
 
-   * Input: path
+   * 输入：路径
 
-   * Output:
+   * 输出：
 
-   * Steps:
+   * 步骤：
 
-     * Determine the inode directory
+     * 确定 inode 目录
 
-     * Read data blocks and find space for a new dentry
+     * 读取数据块并为新 dentry 找到空间
 
-     * Write back the modified inode directory data blocks
+     * 写回修改后的 inode 目录数据块
 
 
-Deleting a file
+删除文件
 ---------------
 
-A summary of a typical implementation is presented below:
+典型实现总结如下：
 
-
-.. slide:: Deleting a file
+.. slide:: 删除文件
    :inline-contents: True
    :level: 2
 
-   * Input: path
+   * 输入：路径
 
-   * Output:
+   * 输出：
 
-   * Steps:
+   * 步骤：
 
-     * determine the parent inode
+     * 确定父级 inode
 
-     * read parent inode data blocks
+     * 读取父级 inode 数据块
 
-     * find and erase the dentry (check for links)
+     * 查找并删除 dentry（检查链接）
 
-     * when last file is closed: deallocate data and inode blocks
+     * 当最后一个 file 关闭时：释放数据块和 inode 块
 
 
-Linux Virtual File System
+Linux 虚拟文件系统
 =========================
 
-Although the main purpose for the original introduction of VFS in UNIX
-kernels was to support multiple filesystem types and instances, a side
-effect was that it simplified fileystem device driver development
-since command parts are now implement in the VFS. Almost all of the
-caching and buffer management is dealt with VFS, leaving just
-efficient data storage management to the filesystem device driver.
+尽管最初引入 VFS 到 UNIX 内核的主要目的是支持多个文件系统类型和实例，但一个副作用是简化了文件系统设备驱动程序的开发，因为现在命令的部分是在 VFS 中实现的。几乎所有的缓存和缓冲区管理都由 VFS 处理，只需将高效的数据存储管理留给文件系统设备驱动程序。
 
-In order to deal with multiple filesystem types, VFS introduced the
-common filesystem abstractions previously presented. Note that the
-filesystem driver can also use its own particular fileystem
-abstractions in memory (e.g. ext4 inode or dentry) and that there
-might be a different abstraction on storage as well. Thus we may end
-up with three slightly different filesystem abstractions: one for
-VFS - always in memory, and two for a particular filesystem - one in
-memory used by the filesystem driver, and one on storage.
+为了处理多个文件系统类型，VFS 引入了先前介绍的通用文件系统抽象。请注意，文件系统驱动程序还可以在内存中使用自己特定的文件系统抽象（例如 ext4 的 inode 或 dentry），而存储上可能存在不同的抽象。因此，我们可能会得到三种略有不同的文件系统抽象：一种是 VFS 的抽象——始终在内存中，另外两种是特定文件系统的抽象——一种是文件系统驱动程序使用的内存抽象，另一种是存储上的抽象。
 
-.. slide:: Virtual File System
+.. slide:: 虚拟文件系统
    :level: 2
    :inline-contents: True
 
@@ -490,32 +438,24 @@ memory used by the filesystem driver, and one on storage.
             +-------------+                    +-------------+
 
 
-Superblock Operations
+超级块操作
 ---------------------
 
-VFS requires that all filesystem implement a set of "superblock
-operations".
+VFS 要求所有文件系统实现一组“超级块操作”。
 
-They deal with initializing, updating and freeing the VFS superblock:
+它们负责初始化、更新和释放 VFS 超级块：
 
- * :c:func:`fill_super`) - reads the filesystem statistics (e.g. total
-   number of inode, free number of inodes, total number of blocks, free
-   number of blocks)
+ * :c:func:`fill_super`——读取文件系统统计信息（例如总的 inode 数目、空闲的 inode 数目、总块数、空闲的块数）
 
- * :c:func:`write_super` - updates the superblock information on storage
-   (e.g. updating the number of free inode or data blocks)
+ * :c:func:`write_super`——在存储上更新超级块信息（例如更新空闲 inode 或数据块的数目）
 
- * :c:func:`put_super` - free any data associated with the filsystem
-   instance, called when unmounting a filesystem
+ * :c:func:`put_super`——释放与文件系统实例相关联的任何数据，在卸载文件系统时调用
 
-The next class of operations are dealing with manipulating fileystem
-inodes. These operations will receive VFS inodes as parameters but the
-filesystem driver may use its own inode structures internally and, if
-so, they will convert in between them as necessary.
+下一类操作处理操作文件系统的 inode。这些操作接收 VFS inode 作为参数，但文件系统驱动程序可能在内部使用自己的 inode 结构，如果是这样，它们将根据需要在它们之间进行转换。
 
-A summary of the superblock operations are presented below:
+下面是超级块操作的摘要：
 
-.. slide:: Superblock Operations
+.. slide:: 超级块操作
    :level: 2
    :inline-contents: True
 
@@ -532,18 +472,14 @@ A summary of the superblock operations are presented below:
       * remount_fs
 
 
-Inode Operations
+Inode 操作
 ----------------
 
-The next set of operations that VFS calls when interacting with
-filesystem device drivers are the "inode operations". Non-intuitively
-these mostly deal with manipulating dentries - looking up a file name,
-creating, linking and removing files, dealing with symbolic links,
-creating and removing directories.
+当 VFS 与文件系统设备驱动程序交互时，调用的下一组操作是“inode 操作”。不符直觉的是，这些操作主要处理操作 dentry——查找文件名、创建、链接和删除文件、处理符号链接、创建和删除目录。
 
-This is the list of the most important inode operations:
+以下是重要 inode 操作列表：
 
-.. slide::  Inode Operations
+.. slide:: Inode 操作
    :level: 2
    :inline-contents: True
 
@@ -564,74 +500,63 @@ This is the list of the most important inode operations:
       * ...
 
 
-The Inode Cache
+Inode 缓存
 ---------------
 
-The inode cache is used to avoid reading and writing inodes to and
-from storage every time we need to read or update them. The cache uses
-a hash table and inodes are indexed with a hash function which takes
-as parameters the superblock (of a particular filesystem instance) and
-the inode number associated with an inode.
+inode 缓存用于避免每次需要读取或更新 inode 时都要对存储器执行 inode 读取和写入操作。缓存使用哈希表，inode 通过哈希函数进行索引，该哈希函数以超级块（特定文件系统实例的超级块）和与 inode 相关联的 inode 号作为参数。
 
-inodes are cached until either the filesystem is unmounted, the inode
-deleted or the system enters a memory pressure state. When this
-happens the Linux memory management system will (among other things)
-free inodes from the inode cache based on how often they were
-accessed.
+inode 被缓存，直到文件系统被卸载、inode 被删除或系统进入内存压力状态。当发生这种情况时，Linux 内存管理系统将根据 inode 的访问频率释放 inode 缓存中的 inode。
 
-.. slide:: The Inode Cache
+.. slide:: Inode 缓存
    :level: 2
    :inline-contents: True
 
-   * Caches inodes into memory to avoid costly storage operations
+   * 将 inode 缓存到内存中，以避免昂贵的存储操作
 
-   * An inode is cached until low memory conditions are triggered
+   * inode 被缓存，直到触发低内存条件
 
-   * inodes are indexed with a hash table
+   * inode 使用哈希表进行索引
 
-   * The inode hash function takes the superblock and inode number as
-     inputs
+   * inode 哈希函数以超级块和 inode 号作为输入
 
 
-The Dentry Cache
+目录项缓存
 ----------------
 
-.. slide:: The Dentry Cache
+.. slide:: 目录项缓存
    :level: 2
    :inline-contents: True
 
-   * State:
+   * 状态：
 
-     * Used – *d_inode* is valid and the *dentry* object is in use
+     * 已使用——*d_inode* 有效且 *dentry* 对象正在使用中
 
-     * Unused – *d_inode* is valid but the dentry object is not in use
+     * 未使用——*d_inode* 有效，但 *dentry* 对象未在使用中
 
-     * Negative – *d_inode* is not valid; the inode was not yet loaded
-       or the file was erased
+     * 负——*d_inode* 无效；尚未加载 inode 或文件已被删除
 
-   * Dentry cache
+   * 目录项缓存
 
-     * List of used dentries (dentry->d_state == used)
+     * 已使用的目录项列表（dentry->d_state == used）
 
-     * List of the most recent used dentries (sorted by access time)
+     * 最近使用的目录项列表（按访问时间排序）
 
-     * Hash table to avoid searching the tree
+     * 哈希表以避免搜索树
 
-The Page Cache
+页面缓存
 --------------
 
-.. slide::  The Page Cache
+.. slide:: 页面缓存
    :level: 2
    :inline-contents: True
 
-   * Caches file data and not block device data
+   * 缓存文件数据而非块设备数据
 
-   * Uses the :c:type:`struct address_space` to translate file offsets
-     to block offsets
+   * 使用 :c:type:`struct address_space` 将文件偏移转换为块偏移
 
-   * Used for both `read` / `write` and `mmap`
+   * 用于 `read` / `write` 和 `mmap`
 
-   * Uses a radix tree
+   * 使用基数树（radix tree）
 
 
 
@@ -642,23 +567,23 @@ The Page Cache
    .. code-block:: c
 
       /**
-       * struct address_space - Contents of a cacheable, mappable object.
-       * @host: Owner, either the inode or the block_device.
-       * @i_pages: Cached pages.
-       * @gfp_mask: Memory allocation flags to use for allocating pages.
-       * @i_mmap_writable: Number of VM_SHARED mappings.
-       * @nr_thps: Number of THPs in the pagecache (non-shmem only).
-       * @i_mmap: Tree of private and shared mappings.
-       * @i_mmap_rwsem: Protects @i_mmap and @i_mmap_writable.
-       * @nrpages: Number of page entries, protected by the i_pages lock.
-       * @nrexceptional: Shadow or DAX entries, protected by the i_pages lock.
-       * @writeback_index: Writeback starts here.
-       * @a_ops: Methods.
-       * @flags: Error bits and flags (AS_*).
-       * @wb_err: The most recent error which has occurred.
-       * @private_lock: For use by the owner of the address_space.
-       * @private_list: For use by the owner of the address_space.
-       * @private_data: For use by the owner of the address_space.
+       * struct address_space——可缓存、可映射对象的内容。
+       * @host: 所有者，可以是 inode 或 block_device。
+       * @i_pages: 缓存的页面。
+       * @gfp_mask: 用于分配页面的内存分配标志。
+       * @i_mmap_writable: VM_SHARED 映射的数量。
+       * @nr_thps: 页面缓存中的 THP 数量（仅用于非 shmem）。
+       * @i_mmap: 私有和共享映射的树。
+       * @i_mmap_rwsem: 保护 @i_mmap 和 @i_mmap_writable。
+       * @nrpages: 页面条目的数量，由 i_pages 锁保护。
+       * @nrexceptional: 阴影或 DAX 条目，由 i_pages 锁保护。
+       * @writeback_index: 写回的起始位置。
+       * @a_ops: 方法。
+       * @flags: 错误位和标志（AS_*）。
+       * @wb_err: 最近发生的错误。
+       * @private_lock: 由 address_space 所有者使用。
+       * @private_list: 由 address_space 所有者使用。
+       * @private_data: 由 address_space 所有者使用。
        */
       struct address_space {
 	struct inode		*host;
@@ -734,42 +659,32 @@ The Page Cache
       };
 
 
-.. slide:: Reading data
+.. slide:: 读取数据
    :level: 2
    :inline-contents: True
 
    .. code-block:: c
 
       /**
-       * generic_file_read_iter - generic filesystem read routine
-       * @iocb:	kernel I/O control block
-       * @iter:	destination for the data read
+       * generic_file_read_iter——通用的文件系统读取例程
+       * @iocb: 内核 I/O 控制块
+       * @iter: 用于存储读取数据的目标
        *
-       * This is the "read_iter()" routine for all filesystems
-       * that can use the page cache directly.
+       * 这是所有可以直接使用页面缓存的文件系统的“read_iter()”例程。
        *
-       * The IOCB_NOWAIT flag in iocb->ki_flags indicates that -EAGAIN shall
-       * be returned when no data can be read without waiting for I/O requests
-       * to complete; it doesn't prevent readahead.
+       * iocb->ki_flags 中的 IOCB_NOWAIT 标志表示，当没有数据可以在等待 I/O 请求完成的情况下读取时，应返回 -EAGAIN；它不会阻止预读。
        *
-       * The IOCB_NOIO flag in iocb->ki_flags indicates that no new I/O
-       * requests shall be made for the read or for readahead.  When no data
-       * can be read, -EAGAIN shall be returned.  When readahead would be
-       * triggered, a partial, possibly empty read shall be returned.
+       * iocb->ki_flags 中的 IOCB_NOIO 标志表示，对于读取或预读，不应发起新的 I/O 请求。当无法读取数据时，应返回 -EAGAIN。当触发预读时，应返回部分（可能为空）读取。
        *
-       * Return:
-       * * number of bytes copied, even for partial reads
-       * * negative error code (or 0 if IOCB_NOIO) if nothing was read
+       * 返回：
+       * * 拷贝的字节数，即使是部分读取
+       * * 负错误代码（如果 IOCB_NOIO）表示没有读取任何内容
        */
       ssize_t
       generic_file_read_iter(struct kiocb *iocb, struct iov_iter *iter)
 
       /*
-       * Generic "read page" function for block devices that have the normal
-       * get_block functionality. This is most of the block device filesystems.
-       * Reads the page asynchronously --- the unlock_buffer() and
-       * set/clear_buffer_uptodate() functions propagate buffer state into the
-       * page struct once IO has completed.
+       * 用于具有正常 get_block 功能的块设备的通用“读取页面”函数。这适用于大多数块设备文件系统。
+       * 异步读取页面——unlock_buffer() 和 set/clear_buffer_uptodate() 函数在 IO 完成后将缓冲区状态传播到页面结构中。
        */
       int block_read_full_page(struct page *page, get_block_t *get_block)
-
