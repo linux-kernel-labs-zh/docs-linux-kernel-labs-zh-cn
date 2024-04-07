@@ -1,46 +1,38 @@
 =========
-Debugging
+调试
 =========
 
-`View slides <debugging-slides.html>`_
+`查看幻灯片 <debugging-slides.html>`_
 
 .. slideconf::
    :autoslides: False
    :theme: single-level
 
-Lecture objectives:
+课程目标：
 ===================
 
-One essential part of Linux kernel development is debugging. In user space we had
-the support of the kernel so we could easily stop processes and use gdb to inspect
-their behavior. In the kernel, in order to use gdb we need to use hypervisor like
-QEMU or JTAG based hardware interfaces which are not always available. The Linux
-kernel provides a set of tools and debug options useful for investigating abnormal
-behavior.
+调试是 Linux 内核开发的一个重要部分。在用户空间中，我们可以依靠内核的支持，轻松地停止进程并使用 gdb 来检查它们的行为。在内核中，为了使用 gdb，我们需要使用像 QEMU 或基于 JTAG 的硬件接口这样的虚拟化程序，然而这些并不总是可用的。Linux 内核提供了一组有用的工具和调试选项，用于调查异常行为。
 
-In this lecture we will learn about:
+在本课程中，我们将学习以下内容：
 
-.. slide:: Debugging
+.. slide:: 调试
    :inline-contents: True
    :level: 2
 
-   * decoding an oops/panic
-   * list debugging
-   * memory debugging
-   * locking debugging
-   * profiling
+   * 解码 oops/panic
+   * 列表调试
+   * 内存调试
+   * 锁调试
+   * 性能分析
 
-Decoding an oops/panic
+解码 oops/panic
 ======================
 
-An oops is an inconsistent state that the kernel detects inside itself.
-Upon detecting an oops the Linux kernel kills the offending process,
-prints information that can help debug the problem and continues execution
-but with limited reliability.
+oops 是内核在自身内部检测到的一种不一致状态。在检测到 oops后，Linux 内核会终止有问题的进程，打印可以帮助调试问题的信息，并继续执行，但可靠性有限。
 
-Lets consider the following Linux kernel module:
+让我们考虑以下 Linux 内核模块：
 
-.. slide:: Oops module
+.. slide:: Oops 模块
    :inline-contents: True
    :level: 2
 
@@ -67,9 +59,7 @@ Lets consider the following Linux kernel module:
       module_init(so2_oops_init);
       module_exit(so2_oops_exit);
 
-Notice that ''do_oops'' function tries to write at an invalid memory address. Because the kernel
-cannot find a suitable physical page were to write, it kills the insmod task in the context of
-which ''do_oops'' runs. Then it prints the following oops message:
+请注意，''do_oops'' 函数试图写入一个无效的内存地址。因为内核无法找到合适的物理页面来进行写操作，它会终止在 ''do_oops'' 运行上下文中的 insmod 任务。然后，它会打印以下 oops 消息：
 
    .. code-block:: bash
 
@@ -112,10 +102,9 @@ which ''do_oops'' runs. Then it prints the following oops message:
       ---[ end trace 011848be72f8bb42 ]---
       Killed
 
-An oops contains information about the IP which caused the fault, register status, process,
-CPU on which the fault happend like below:
+oops 包含有关导致故障的 IP、寄存器状态、进程和发生故障的 CPU 的信息，如下所示：
 
-.. slide:: Oops information
+.. slide:: Oops 信息
    :inline-contents: True
    :level: 2
 
@@ -139,10 +128,9 @@ CPU on which the fault happend like below:
       Code: <a3> 42 00 00 00 5d c3 90 55 89 e5 83 ec 04 c7 04 24 24 70 81 c8 e8
       Killed
 
-Another important thing that an oops can provide is the stack trace of functions called before
-the fault happend:
+oops 还可以提供故障发生前调用的函数的堆栈跟踪信息：
 
-.. slide:: Oops stacktrace
+.. slide:: Oops 堆栈跟踪
    :inline-contents: True
    :level: 2
 
@@ -167,10 +155,10 @@ the fault happend:
       entry_INT80_32+0x2f/0x2f
       Killed
 
-Decoding an oops
+解码 oops
 ----------------
 
-.. slide:: Debugging
+.. slide:: 调试
    :inline-contents: True
    :level: 2
 
@@ -182,13 +170,9 @@ Decoding an oops
 addr2line
 ---------
 
-*addr2line* translates addresses into file names and line numbers. Given
-an address in an executable it uses the debugging information to figure out
-which file name and line number are associated with it.
+*addr2line* 将地址转换为文件名和行号。给定一个可执行文件中的地址，它使用调试信息来确定与之关联的文件名和行号。
 
-Modules are loaded at dynamic addresses but are compiled starting with 0 as
-a base address. So, in order to find the line number for a given dynamic address
-we need to know module's load address.
+模块在动态地址上加载，但是它们从 0 开始编译作为基地址。因此，为了找到给定动态地址的行号，我们需要知道模块的加载地址。
 
 .. slide:: addr2line
    :inline-contents: True
@@ -198,12 +182,12 @@ we need to know module's load address.
 
       $ addr2line -e oops.o  0x08
       $ skels/debugging/oops/oops.c:5
-      $ # 0x08 is the offset of the offending instruction inside the oops.ko module
+      $ # 0x08 是 oops.ko 模块中有问题的指令的偏移量
 
 objdump
 -------
 
-Similar we can determine the offending line using objdump:
+类似地，我们可以使用 objdump 确定有问题的行：
 
 .. slide:: objdump
    :inline-contents: True
@@ -247,16 +231,14 @@ gdb
       10
       11	static int so2_panic_init(void)
 
-Kernel panic
+内核崩溃
 ------------
 
-A kernel panic is a special type of oops where the kernel cannot continue execution. For example
-if the function do_oops from above was called in the interrupt context, the kernel wouldn't know how to kill
-and it will decide that it is better to crash the kernel and stop execution.
+内核崩溃（kernel panic）是一种特殊类型的 oops，其中内核无法继续执行。例如，如果上述的 do_oops 函数是在中断上下文中调用的，内核将不知道如何终止它，并决定最好的方式是崩溃内核并停止执行。
 
-Here is a sample code that will generate a kernel panic:
+以下是一个会导致内核崩溃的示例代码：
 
-.. slide:: Kernel panic
+.. slide:: 内核崩溃
    :inline-contents: True
    :level: 2
 
@@ -279,7 +261,7 @@ Here is a sample code that will generate a kernel panic:
           return 0;
       }
 
-Loading the module will generate the following kernel panic message:
+加载该模块将生成以下内核崩溃消息：
 
 .. code-block:: bash
 
@@ -336,13 +318,12 @@ Loading the module will generate the following kernel panic message:
     ---[ end Kernel panic - not syncing: Fatal exception in interrupt
 
 
-List debugging
+列表调试
 ==============
 
-In order to catch access to uninitialized elements the kernel uses poison
-magic values.
+为了捕获对未初始化元素的访问，内核使用毒药魔法值。
 
-.. slide:: List debugging
+.. slide:: 列表调试
    :inline-contents: True
    :level: 2
 
@@ -358,50 +339,40 @@ magic values.
       BUG: unable to handle kernel NULL pointer dereference at 00000100
       IP: crush+0x80/0xb0 [list]
 
-Memory debugging
+内存调试
 ================
 
-There are several tools for memory debugging:
+有多种用于内存调试的工具:
 
-.. slide:: Memory debugging
+.. slide:: 内存调试
    :inline-contents: True
    :level: 2
 
-   * SLAB/SLUB debugging
+   * SLAB/SLUB 调试
    * KASAN
    * kmemcheck
    * DEBUG_PAGEALLOC
 
-Slab debugging
+SLAB 调试
 ---------------
 
-Slab debugging uses a memory poison technique to detect several types of memory
-bugs in the SLAB/SUB allocators.
+SLAB 调试使用内存毒药技术来检测 SLAB/SUB 分配器中的多种内存错误。
 
-The allocated buffers are guarded with memory that has been filled in with
-special markers. Any adjacent writes to the buffer will be detected at a later
-time when other memory management operations on that buffer are performed
-(e.g. when the buffer is freed).
+分配的缓冲区使用填充了特殊标记的内存进行保护。当对缓冲区进行其他内存管理操作时（例如，释放缓冲区时），稍后会检测到对缓冲区的任何相邻写操作。
 
-Upon allocation of the buffer, the buffer it is also filled in with a special
-value to potentially detect buffer access before initialization (e.g. if the
-buffer holds pointers). The value is selected in such a way that it is unlikely
-to be a valid address and as such to trigger kernel bugs at the access time.
+在缓冲区分配时，缓冲区还被填充了一个特殊值，以便在初始化之前检测到对缓冲区的访问（例如，如果缓冲区保存指针）。该值不太可能是有效地址，以在访问时触发内核错误。
 
-A similar technique is used when freeing the buffer: the buffer is filled with
-another special value that will cause kernel bugs if pointers are accessed after
-the memory is freed. In this case, the allocator also checks the next time the
-buffer is allocated that the buffer was not modified.
+在释放缓冲区时，也使用类似的技术：缓冲区被填充了另一个特殊值，如果在内存释放后仍然访问指针，则会触发内核错误。在这种情况下，分配器在下次分配缓冲区时还会检查缓冲区是否被修改。
 
-The diagram bellow shows a summary of the way SLAB/SLUB poisoning works:
+下图概述了 SLAB/SLUB 毒药技术的工作方式:
 
 
-.. slide:: Slab debugging
+.. slide:: SLAB 调试
    :inline-contents: True
    :level: 2
 
    * CONFIG_DEBUG_SLAB
-   * poisoned based memory debuggers
+   * 基于毒药的内存调试器
 
    .. ditaa::
         +--------------+-----------------------+--------------+
@@ -421,9 +392,9 @@ The diagram bellow shows a summary of the way SLAB/SLUB poisoning works:
         +--------------+-----------------------+--------------+
 
 
-Example of an use before initialize bug:
+使用前未初始化错误的示例：
 
-.. slide:: Use before initialize bugs
+.. slide:: 使用前未初始化错误
    :inline-contents: True
    :level: 2
 
@@ -452,9 +423,9 @@ Example of an use before initialize bug:
 	   list_del(&m->lh);
       }
 
-Example of an use after free bug:
+释放后使用错误示例：
 
-.. slide:: Use after free bug
+.. slide:: 释放后使用错误
    :inline-contents: True
    :level: 2
 
@@ -484,10 +455,9 @@ Example of an use after free bug:
 	  list_del(&m->lh);
       }
 
-Another example of an use after free bug is shown below. Note that this time the
-bug is detected at the next allocation.
+另一个释放后使用错误的示例如下所示。请注意，这次错误在下次分配时被检测到。
 
-.. slide:: Use after free bug
+.. slide:: 释放后使用错误
    :inline-contents: True
    :level: 2
 
@@ -509,9 +479,9 @@ bug is detected at the next allocation.
 	  kfree(b);
       }
 
-Finally this is an example of a buffer overflow bug:
+最后，这是一个缓冲区溢出错误的例子：
 
-.. slide:: Buffer overflow bugs
+.. slide:: 缓冲区溢出错误
    :inline-contents: True
    :level: 2
 
@@ -551,39 +521,31 @@ DEBUG_PAGEALLOC
    :inline-contents: True
    :level: 2
 
-   * Memory debugger that works at a page level
-   * Detects invalid accesses either by:
+   * 在页面级别上工作的内存调试器
+   * 通过以下方式检测无效访问：
 
-     * Filling pages with poison byte patterns and checking the pattern at
-       reallocation
-     * Unmapping the dellocated pages from kernel space (just a few
-       architectures)
+     * 使用毒药字节模式填充页面，并在重新分配时检查模式
+     * 从内核空间取消映射已释放的页面（仅适用于少数体系结构）
 
 
 KASan
 -----
 
-KASan is a dynamic memory error detector designed to find use-after-free
-and out-of-bounds bugs.
+KASan 是一种动态内存错误检测器，旨在查找“释放后使用”和“越界访问”错误。
 
-The main idea of KASAN is to use shadow memory to record whether each byte
-of memory is safe to access or not, and use compiler's instrumentation to
-check the shadow memory on each memory access.
+KASAN 的主要思想是使用阴影内存记录每个字节的内存是否可以安全访问，并使用编译器的插桩在每次内存访问时检查阴影内存。
 
-Address sanitizer uses 1 byte of shadow memory to track 8 bytes of kernel
-address space. It uses 0-7 to encode the number of consecutive bytes at
-the beginning of the eigh-byte region that are valid.
+地址污点分析器使用 1 字节的阴影内存来跟踪 8 字节的内核地址空间。它使用 0-7 来编码八字节区域开头连续有效字节的数量。
 
-See `The Kernel Address Sanitizer (KASAN)` for more information and have a look
-at lib/test_kasan.c for an example of problems that KASan can detect.
+有关更多信息，请参阅 `内核地址污点分析器（KASAN）`，并查看 lib/test_kasan.c 以了解 KASan 可以检测到的问题示例。
 
 .. slide:: KASan
    :inline-contents: True
    :level: 2
 
-   * dynamic memory error detector
-   * finds user-after-free or out-of-bound bugs
-   * uses shadow memory to track memory operations
+   * 动态内存错误检测器
+   * 查找“释放后使用”或越界访问错误
+   * 使用阴影内存跟踪内存操作
    * lib/test_kasan.c
 
 
@@ -594,8 +556,7 @@ KASan vs DEBUG_PAGEALLOC
    :inline-contents: True
    :level: 2
 
-   KASan is slower than DEBUG_PAGEALLOC, but KASan works on sub-page granularity
-   level, so it able to find more bugs.
+   KASan 比 DEBUG_PAGEALLOC 慢，但 KASan 可以在子页面粒度级别上工作，因此能够发现更多的错误。
 
 
 KASan vs SLUB_DEBUG
@@ -605,36 +566,28 @@ KASan vs SLUB_DEBUG
    :inline-contents: True
    :level: 2
 
-   * SLUB_DEBUG has lower overhead than KASan.
-   * SLUB_DEBUG in most cases are not able to detect bad reads, KASan able to
-     detect both reads and writes.
-   * In some cases (e.g. redzone overwritten) SLUB_DEBUG detect bugs only on
-     allocation/freeing of object. KASan catch bugs right before it will happen,
-     so we always know exact place of first bad read/write.
+   * SLUB_DEBUG 的开销较低。
+   * SLUB_DEBUG 在大多数情况下无法检测到错误的读取，而 KASan 可以同时检测到读取和写入。
+   * 在某些情况下（例如，红区覆盖），SLUB_DEBUG 仅在对象分配/释放时检测到错误。KASan 在临近错误发生前捕捉错误，因此我们可以知道第一次错误读取/写入的确切位置。
 
 
 Kmemleak
 --------
 
-Kmemleak provides a way of detecting kernel memory leaks in a way similar to a
-tracing garbage collector. Since tracing pointers is not possible in C, kmemleak
-scans the kernel stacks as well as dynamically and statically kernel memory for
-pointers to allocated buffers. A buffer for which there is no pointer is
-considered as leaked. The basic steps to use kmemleak are presented bellow, for
-more information see `Kernel Memory Leak Detector`
+Kmemleak 提供了一种检测内核内存泄漏的方法，该方法类似于跟踪垃圾收集器。由于在 C 语言中无法跟踪指针，kmemleak 扫描内核堆栈以及动态和静态内核内存，查找指向分配缓冲区的指针。如果没有指向缓冲区的指针，则认为该缓冲区泄漏。以下是使用 kmemleak 的基本步骤，了解更多信息请参阅 `内核内存泄漏检测器`。
 
 
 .. slide:: Kmemleak
    :inline-contents: True
    :level: 2
 
-   * enable kernel config: `CONFIG_DEBUG_KMEMLEAK`
-   * setup: `mount -t debugfs nodev /sys/kernel/debug`
-   * trigger a memory scan: `echo scan > /sys/kernel/debug/kmemleak`
-   * show memory leaks: `cat /sys/kernel/debug/kmemleak`
-   * clear all possible leaks: `echo clear > /sys/kernel/debug/kmemleak`
+   * 启用内核配置: `CONFIG_DEBUG_KMEMLEAK`
+   * 设置: `mount -t debugfs nodev /sys/kernel/debug`
+   * 触发内存扫描: `echo scan > /sys/kernel/debug/kmemleak`
+   * 显示内存泄漏: `cat /sys/kernel/debug/kmemleak`
+   * 清除所有可能的泄漏: `echo clear > /sys/kernel/debug/kmemleak`
 
-As an example, lets look at the following simple module:
+作为示例，让我们看一下以下简单模块:
 
 .. slide:: Kmemleak example
    :inline-contents: True
@@ -654,10 +607,9 @@ As an example, lets look at the following simple module:
       MODULE_LICENSE("GPL v2");
       module_init(leak_init);
 
-Loading the module and triggering a kmemleak scan will issue the
-following report:
+加载模块并触发 kmemleak 扫描将生成以下报告:
 
-.. slide:: Kmemleak report
+.. slide:: Kmemleak 报告
    :inline-contents: True
    :level: 2
 
@@ -685,28 +637,24 @@ following report:
       [<(ptrval)>] do_int80_syscall_32+0x6a/0x1a0
 
 
-.. note:: Notice that we did not had to unload the module to detect the memory
-          leak since kmemleak detects that the allocated buffer is not
-          reachable anymore.
+.. note:: 请注意，我们无需卸载模块就能检测到内存泄漏，因为 kmemleak 会检测到分配的缓冲区不再可达。
 
-
-Lockdep checker
+Lockdep 检查器
 ===============
 
-.. slide:: Lockdep checker
+.. slide:: Lockdep 检查器
    :inline-contents: True
    :level: 2
 
    * CONFIG_DEBUG_LOCKDEP
-   * Detects lock inversio, circular dependencies, incorrect usage of locks
-     (including interrupt context)
-   * Maintains dependency between classes of locks not individual locks
-   * Each scenario is only checked once and hashed
+   * 检测锁反转、循环依赖、锁的错误使用（包括中断上下文）
+   * 维护锁类之间的依赖关系，而不是个别锁
+   * 每个场景只检查一次并进行哈希处理
 
 
-Lets take for example the following kernel module that runs two kernel threads:
+让我们用以下运行两个内核线程的内核模块为例：
 
-.. slide:: AB BA Deadlock Example
+.. slide:: AB BA 死锁示例
    :inline-contents: True
    :level: 2
 
@@ -737,10 +685,9 @@ Lets take for example the following kernel module that runs two kernel threads:
       }
 
 
-Loading this module with lockdep checker active will produce the following
-kernel log:
+加载此模块并启用 lockdep 检查器将生成以下内核日志：
 
-.. slide:: AB BA Deadlock Report
+.. slide:: AB BA 死锁报告
    :inline-contents: True
    :level: 2
 
@@ -763,14 +710,11 @@ kernel log:
       which lock already depends on the new lock.
 
 
-As you can see, although the deadlock condition did not trigger (because thread
-A did not complete execution before thread B started execution) the lockdep
-checker identified a potential deadlock scenario.
+正如你所看到的，尽管死锁条件没有触发（因为线程 A 在线程 B 开始执行之前未完成执行），但 lockdep 检查器识别出了潜在的死锁情况。
 
-Lockdep checker will provide even more information to help determine what caused
-the deadlock, like the dependency chain:
+Lockdep 检查器将提供更多信息，以帮助确定是什么导致了死锁，例如依赖链：
 
-.. slide:: AB BA Deadlock Report (dependency chain)
+.. slide:: AB BA 死锁报告（依赖链）
    :inline-contents: True
    :level: 2
 
@@ -793,17 +737,17 @@ the deadlock, like the dependency chain:
 	    kthread+0xeb/0x100
 	    ret_from_fork+0x2e/0x38
 
-and even an unsafe locking scenario:
+甚至还有一种不安全的加锁场景：
 
-.. slide:: AB BA Deadlock Report (unsafe locking scenario)
+.. slide:: AB BA 死锁报告（不安全的加锁场景）
    :inline-contents: True
    :level: 2
 
    ::
 
-      other info that might help us debug this:
+      其他可能帮助我们调试的信息：
 
-      Possible unsafe locking scenario:
+      可能的不安全加锁场景：
 
       CPU0                    CPU1
       ----                    ----
@@ -812,14 +756,12 @@ and even an unsafe locking scenario:
 	                      lock(b);
       lock(a);
 
-      *** DEADLOCK ***
+      *** 死锁 ***
 
 
-Another example of unsafe locking issues that lockdep checker detects
-is unsafe locking from interrupt context. Lets consider the following
-kernel module:
+Lockdep 检查器检测到的另一个不安全加锁问题的示例是来自中断上下文的不安全加锁。让我们考虑以下内核模块：
 
-.. slide:: IRQ Deadlock Example
+.. slide:: IRQ 死锁示例
    :inline-contents: True
    :level: 2
 
@@ -847,10 +789,9 @@ kernel module:
       }
 
 
-As in the previous case, loading the module will trigger a lockdep
-warning:
+与前一个案例类似，加载该模块将触发 lockdep 警告：
 
-.. slide:: IRQ Deadlock Report
+.. slide:: IRQ 死锁报告
    :inline-contents: True
    :level: 2
 
@@ -880,16 +821,15 @@ warning:
       restore_all+0x0/0x8d
 
 
-The warning will also provide additional information and a potential unsafe
-locking scenario:
+该警告还将提供额外的信息和一个潜在的不安全加锁场景：
 
-.. slide:: IRQ Deadlock Report
+.. slide:: IRQ 死锁报告
    :inline-contents: True
    :level: 2
 
    ::
 
-       Possible unsafe locking scenario:
+       可能的不安全加锁场景：
 
               CPU0
 	      ----
@@ -921,15 +861,15 @@ perf
    :inline-contents: True
    :level: 2
 
-   * performance counters, tracepoints, kprobes, uprobes
-   * hardware events: CPU cycles, TLB misses, cache misses
-   * software events: page fauls , context switches
-   * collects backtraces (user + kernel)
+   * 性能计数器，跟踪点，kprobes，uprobes
+   * 硬件事件: CPU 周期，TLB 缺失，缓存缺失
+   * 软件事件: 页面错误，上下文切换
+   * 收集回溯信息（用户空间 + 内核空间）
 
-Other tools
+其他工具
 ===========
 
-.. slide:: Other tools
+.. slide:: 其他工具
    :inline-contents: True
    :level: 2
 
