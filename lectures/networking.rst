@@ -1,33 +1,33 @@
 ==================
-Network Management
+网络管理
 ==================
 
-`View slides <networking-slides.html>`_
+`查看幻灯片 <networking-slides.html>`_
 
 .. slideconf::
    :autoslides: False
    :theme: single-level
 
-Lecture objectives:
+课程目标：
 ===================
 
-.. slide:: Network Management
+.. slide:: 网络管理
    :inline-contents: True
    :level: 2
 
-   * Socket implementation
+   * 套接字实现
 
-   * Routing implementation
+   * 路由实现
 
-   * Network Device Interface
+   * 网络设备接口
 
-   * Hardware and Software Acceleration Techniques
+   * 硬件和软件加速技术
 
 
-Network Management Overview
+网络管理概述
 ===========================
 
-.. slide:: Network Management Overview
+.. slide:: 网络管理概述
    :inline-contents: True
    :level: 2
 
@@ -65,10 +65,10 @@ Network Management Overview
       +---------------------------+
 
 
-Sockets Implementation Overview
+Sockets 实现概述
 ===============================
 
-.. slide:: Sockets Implementation Overview
+.. slide:: Sockets 实现概述
    :inline-contents: True
    :level: 2
 
@@ -94,10 +94,10 @@ Sockets Implementation Overview
                   +---------------+
 
 
-Sockets Families and Protocols
+Sockets 系列和协议
 ===============================
 
-.. slide:: Sockets Families and Protocols
+.. slide:: Sockets 系列和协议
    :inline-contents: True
    :level: 2
 
@@ -142,10 +142,10 @@ Sockets Families and Protocols
       +-------------------+          +-------------------+
 
 
-Example: UDP send
+示例：UDP 发送
 -----------------
 
-.. slide:: Example: UDP send
+.. slide:: 示例：UDP 发送
    :inline-contents: True
    :level: 2
 
@@ -162,7 +162,7 @@ Example: UDP send
       close(s);
 
 
-.. slide:: Example: UDP send
+.. slide:: 示例：UDP 发送
    :inline-contents: True
    :level: 2
 
@@ -194,30 +194,24 @@ Example: UDP send
                                          routing
 
 
-Network processing phases
+网络处理阶段
 =========================
 
-.. slide:: Network processing phases
+.. slide:: 网络处理阶段
    :inline-contents: True
    :level: 2
 
-   * Interrupt handler - device driver fetches data from the RX ring,
-     creates a network packet and queues it to the network stack for
-     processing
+   * 中断处理程序——设备驱动程序从 RX 环获取数据，创建网络数据包，并将其放到网络栈队列等待处理
 
-   * NET_SOFTIRQ - packet goes through the stack layer and it is
-     processed: decapsulate Ethernet frame, check IP packet and route
-     it, if local packet decapsulate protocol packet (e.g. TCP) and
-     queues it to a socket
+   * NET_SOFTIRQ——数据包通过网络栈层，并进行处理：解封装以太网帧，检查 IP 数据包并进行路由，如果是本地数据包，则解封装协议数据包（例如 TCP）并将其放到套接字里的队列
 
-   * Process context - application fetches data from the socket queue
-     or pushes data to the socket queue
+   * 进程上下文——应用程序从套接字里的队列获取数据或将数据推送到套接字里的队列
 
 
-Packet Routing
+数据包路由
 ==============
 
-.. slide:: Packet Routing
+.. slide:: 数据包路由
    :inline-contents: True
    :level: 2
 
@@ -258,10 +252,10 @@ Packet Routing
       +-----------------------+   +-----------------------+
 
 
-Routing Table(s)
+路由表
 ----------------
 
-.. slide:: Routing Table
+.. slide:: 路由表
    :inline-contents: True
    :level: 2
 
@@ -287,58 +281,47 @@ Routing Table(s)
       32767:  from all lookup default
 
 
-Routing Policy Database
+路由策略数据库
 -----------------------
 
-.. slide:: Routing Policy Database
+.. slide:: 路由策略数据库
    :inline-contents: True
    :level: 2
 
-   * "Regular" routing only uses the destination address
+   * “常规”路由仅使用目标地址进行路由
 
-   * To increase flexibility a "Routing Policy Database" is used that
-     allows different routing based on other fields such as the source
-     address, protocol type, transport ports, etc.
+   * 为了增加灵活性，系统使用了“路由策略数据库”，其可以根据其他字段（如源地址、协议类型、传输端口等）进行不同的路由选择
 
-   * This is encoded as a list of rules that are evaluated based on
-     their priority (priority 0 is the highest)
+   * 这被编码为一系列规则，根据优先级进行评估（优先级 0 最高）
 
-   * Each rule has a selector (how to match the packet) and an
-     action (what action to take if the packet matches)
+   * 每个规则都有一个选择器（用于匹配数据包）和一个动作（如果数据包匹配，则采取什么动作）
 
-   * Selectors: source address, destination address, type of service (TOS),
-     input interface, output interface, etc.
+   * 选择器：源地址、目标地址、服务类型（TOS）、输入接口、输出接口等
 
-   * Action: lookup / unicast - use given routing table, blackhole -
-     drop packet, unreachable - send ICMP unreachable message and drop
-     packet, etc.
+   * 动作：查找（lookup）/单播（unicast）——使用给定的路由表，黑洞（blackhole）——丢弃数据包，不可达（unreachable）——发送 ICMP 不可达消息并丢弃数据包等。
 
 
 
-Routing table processing
+路由表处理
 ------------------------
 
-.. slide:: Routing table processing
+.. slide:: 路由表处理
    :inline-contents: True
    :level: 2
 
-   * Special table for local addreses -> route packets to sockets
-     based on family, type, ports
+   * 本地地址的特殊表 -> 根据地址族、类型、端口将数据包路由到套接字
 
-   * Check every routing entry for starting with the most specific
-     routes (e.g. 192.168.0.0/24 is checked before 192.168.0.0/16)
+   * 从最具体的路由开始检查每个路由条目（例如，192.168.0.0/24 在 192.168.0.0/16 之前）
 
-   * A route matches if the packet destination addreess logical ORed
-     with the subnet mask equals the subnet address
+   * 如果数据包目标地址与子网掩码进行逻辑 OR 运算后等于子网地址，则表示路由匹配
 
-   * Once a route matches the following information is retrieved:
-     interface, link layer next-hop address, network next host address
+   * 一旦路由匹配，将检索以下信息：接口、链路层下一跳地址、网络下一跳地址
 
 
-Forwarding Information Database
+转发信息数据库
 -------------------------------
 
-.. slide:: Forward Information Database (removed in 3.6)
+.. slide:: 转发信息数据库（在 3.6 版本移除）
    :inline-contents: True
    :level: 2
 
@@ -347,13 +330,13 @@ Forwarding Information Database
    .. image::  ../res/fidb-overview.png
 
 
-.. slide:: Forward Information Database (removed in 3.6)
+.. slide:: 转发信息数据库（在 3.6 版本移除）
    :inline-contents: True
    :level: 2
 
    .. image::  ../res/fidb-details.png
 
-.. slide:: Routing Cache (removed in 3.6)
+.. slide:: 路由缓存（在 3.6 版本移除）
    :inline-contents: True
    :level: 2
 
@@ -386,9 +369,9 @@ Netfilter
    :level: 2
 
 
-   * Framework that implements packet filtering and NAT
+   * 实现数据包过滤和 NAT 的框架
 
-   * It uses hooks inserted in key places in the packet flow:
+   * 它在数据包流中的关键位置插入钩子（hook）：
 
      * NF_IP_PRE_ROUTING
 
@@ -404,17 +387,17 @@ Netfilter
 
 
 
-Network packets / skbs (struct sk_buff)
+网络数据包/skb（结构 sk_buff）
 =======================================
 
-.. slide:: Network packets (skbs)
+.. slide:: 网络数据包/skb
    :inline-contents: True
    :level: 2
 
    .. image:: ../res/skb.png
 
 
-.. slide:: struct sk_buff
+.. slide:: 结构 sk_buff
    :inline-contents: True
    :level: 2
 
@@ -454,19 +437,19 @@ Network packets / skbs (struct sk_buff)
 
    .. code-block:: c
 
-      /* reserve head room */
+      /* 预留头部空间 */
       void skb_reserve(struct sk_buff *skb, int len);
 
-      /* add data to the end */
+      /* 在尾部添加数据 */
       unsigned char *skb_put(struct sk_buff *skb, unsigned int len);
 
-      /* add data to the top */
+      /* 在顶部添加数据 */
       unsigned char *skb_push(struct sk_buff *skb, unsigned int len);
 
-      /* discard data at the top */
+      /* 丢弃顶部的数据 */
       unsigned char *skb_pull(struct sk_buff *skb, unsigned int len);
 
-      /* discard data at the end */
+      /* 丢弃尾部的数据 */
       unsigned char *skb_trim(struct sk_buff *skb, unsigned int len);
 
       unsigned char *skb_transport_header(const struct sk_buff *skb);
@@ -490,7 +473,7 @@ Network packets / skbs (struct sk_buff)
       void skb_set_mac_header(struct sk_buff *skb, const int offset);
 
 
-.. slide:: skb data management
+.. slide:: skb 数据管理
    :inline-contents: True
    :level: 2
 
@@ -512,79 +495,76 @@ Network packets / skbs (struct sk_buff)
                               End
 
 
-Network Device
+网络设备
 ==============
 
-.. slide:: Network Device Interface
+.. slide:: 网络设备接口
    :inline-contents: True
    :level: 2
 
    .. image::  ../res/net-dev-hw.png
 
 
-.. slide:: Advanced features
+.. slide:: 高级特性
    :inline-contents: True
    :level: 2
 
-   * Scatter-Gather
+   * Scatter-Gather（散列-聚集）
 
-   * Checksum offloading: Ethernet, IP, UDP, TCP
+   * 校验和外包：以太网、IP、UDP、TCP
 
-   * Adaptive interrupt handling (coalescence, adaptive)
+   * 自适应中断处理（聚合、自适应）
 
 
 
-Hardware and Software Acceleration Techniques
+硬件和软件加速技术
 =============================================
 
-.. slide:: TCP offload
+.. slide:: TCP 卸载
    :inline-contents: True
    :level: 2
 
-   * Full offload - Implement TCP/IP stack in hardware
+   * 完全外包——在硬件中实现 TCP/IP 协议栈
 
-   * Issues:
+   * 问题：
 
-     * Scaling number of connections
+     * 连接数量的扩展
 
-     * Security
+     * 安全性
 
-     * Conformance
+     * 一致性
 
-.. slide:: Performance observation
+.. slide:: 性能观察
    :inline-contents: True
    :level: 2
 
-   * Performance is proportional with the number of packets to be
-     processed
+   * 性能与要处理的数据包数量成正比
 
-   * Example: if an end-point can process 60K pps
+   * 例如：如果一个端点可以每秒处理 60K 个数据包
 
      * 1538 MSS -> 738Mbps
      * 2038 MSS -> 978Mbps
      * 9038 MSS -> 4.3Gbps
      * 20738 MSS -> 9.9Gbps
 
-.. slide:: Stateless offload
+.. slide:: 无状态外包
    :inline-contents: True
    :level: 2
 
-   * The networking stack processes large packets
+   * 网络堆栈处理大数据包
 
-   * TX path: the hardware splits large packets in smaller packets
-     (TCP Segmentation Offload)
+   * 发送路径：硬件将大数据包分割为较小的数据包（TCP 分段外包）
 
-   * RX path: the hardware aggregates small packets into larger
-     packets (Large Receive Offload - LRO)
+   * 接收路径：硬件将小数据包聚合成较大的数据包（大体量接收外包——简称 LRO）
 
 
-.. slide:: TCP Segmentation Offload)
+.. slide:: TCP 分段外包
    :inline-contents: True
    :level: 2
 
    .. image::  ../res/tso.png
 
-.. slide:: Large Receive Offload
+.. slide:: 大体量接收外包
    :inline-contents: True
    :level: 2
 
