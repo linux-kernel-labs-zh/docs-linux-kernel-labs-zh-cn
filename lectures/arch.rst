@@ -1,29 +1,29 @@
 ==================
-Architecture Layer
+体系结构层
 ==================
 
-`View slides <arch-slides.html>`_
+`查看幻灯片 <arch-slides.html>`_
 
 .. slideconf::
    :autoslides: False
    :theme: single-level
 
-Lecture objectives:
+课程目标：
 ===================
 
-.. slide:: Introduction
+.. slide:: 简介
    :inline-contents: True
    :level: 2
 
-   * Overview of the arch layer
+   * 体系结构层概述
 
-   * Overview of the boot process
+   * 引导过程概述
 
 
-Overview of the arch layer
+体系结构层概述
 ==========================
 
-.. slide:: Overview of the arch layer
+.. slide:: 体系结构层概述
    :level: 2
    :inline-contents: True
 
@@ -59,157 +59,153 @@ Overview of the arch layer
       +--------------------------------------------------------+
 
 
-Boot strap
+引导（boot）过程
 ----------
 
-.. slide:: Bootstrap
+.. slide:: 引导过程
    :level: 2
    :inline-contents: True
 
-   * The first kernel code that runs
+   * 第一个运行的内核代码
 
-   * Typically runs with the MMU disabled
+   * 通常在 MMU 禁用的情况下运行
 
-   * Move / Relocate kernel code
+   * 移动/重新定位内核代码
 
 
-Boot strap
+引导过程
 ----------
 
-.. slide:: Bootstrap
+.. slide:: 引导过程
    :level: 2
    :inline-contents: True
 
-   * The first kernel code that runs
+   * 第一个运行的内核代码
 
-   * Typically runs with the MMU disabled
+   * 通常在 MMU 禁用的情况下运行
 
-   * Copy bootloader arguments and determine kernel run location
+   * 复制引导加载程序（bootloader）参数并确定内核运行位置
 
-   * Move / relocate kernel code to final location
+   * 将内核代码移动/重新定位到最终位置
 
-   * Initial MMU setup - map the kernel
+   * 初始 MMU 设置——映射内核
 
 
 
-Memory setup
+内存设置
 ------------
 
-.. slide:: Memory Setup
+.. slide:: 内存设置
    :level: 2
    :inline-contents: True
 
-   * Determine available memory and setup the boot memory allocator
+   * 确定可用内存并设置引导内存分配器
 
-   * Manages memory regions before the page allocator is setup
+   * 在页面分配器建立之前管理内存区域
 
-   * Bootmem - used a bitmap to track free blocks
+   * Bootmem——使用位图跟踪空闲块
 
-   * Memblock - deprecates bootmem and adds support for memory ranges
+   * Memblock——取代 bootmem 并支持内存范围
 
-     * Supports both physical and virtual addresses
+     * 同时支持物理地址和虚拟地址
 
-     * support NUMA architectures
+     * 支持 NUMA 架构
 
 
-MMU management
+MMU 管理
 --------------
 
-.. slide:: MMU management
+.. slide:: MMU 管理
    :level: 2
    :inline-contents: True
 
-   * Implements the generic page table manipulation APIs: types,
-     accessors, flags
+   * 实现通用的页表操作 API：类型、访问器、标志
 
-   * Implement TLB management APIs: flush, invalidate
+   * 实现 TLB 管理 API：刷新、使无效
 
 
-Thread Management
+线程管理
 -----------------
 
-.. slide:: Thread Management
+.. slide:: 线程管理
    :level: 2
    :inline-contents: True
 
-   * Defines the thread type (struct thread_info) and implements
-     functions for allocating threads (if needed)
+   * 定义线程类型（struct thread_info）并实现分配线程的函数（如果需要）
 
-   * Implement :c:func:`copy_thread` and :c:func:`switch_context`
+   * 实现 :c:func:`copy_thread` 和 :c:func:`switch_context`
 
 
-Time Management
+时间管理
 ----------------
 
-.. slide:: Timer Management
+.. slide:: 时间管理
    :level: 2
    :inline-contents: True
 
-   * Setup the timer tick and provide a time source
+   * 设置定时器节拍并提供时间源
 
-   * Mostly transitioned to platform drivers
+   * 大部分转移到平台驱动程序
 
-     * clock_event_device - for scheduling timers
+     * clock_event_device——用于调度定时器
 
-     * clocksource - for reading the time
+     * clocksource——用于读取时间
 
 
-IRQs and exception management
+中断和异常管理
 -----------------------------
 
-.. slide:: IRQs and exception management
+.. slide:: 中断和异常管理
    :level: 2
    :inline-contents: True
 
-   * Define interrupt and exception handlers / entry points
+   * 定义中断和异常处理程序/入口点
 
-   * Setup priorities
+   * 设置优先级
 
-   * Platform drivers for interrupt controllers
+   * 为中断控制器提供平台驱动程序
 
 
-System calls
+系统调用
 ------------
 
-.. slide:: System calls
+.. slide:: 系统调用
    :level: 2
    :inline-contents: True
 
-   * Define system call entry point(s)
+   * 定义系统调用入口点
 
-   * Implement user-space access primitives (e.g. copy_to_user)
+   * 实现用户空间访问原语（例如，copy_to_user）
 
 
-Platform Drivers
+平台驱动程序
 ----------------
 
-.. slide:: Platform Drivers
+.. slide:: 平台驱动程序
    :level: 2
    :inline-contents: True
 
-   * Platform and architecture specific drivers
+   * 平台和体系结构特定的驱动程序
 
-   * Bindings to platform device enumeration methods (e.g. device tree
-     or ACPI)
+   * 与平台设备枚举方法绑定（例如，设备树或 ACPI）
 
-Machine specific code
+机器特定代码
 ---------------------
 
-.. slide:: Machine specific code
+.. slide:: 机器特定代码
    :level: 2
    :inline-contents: True
 
-   * Some architectures use a "machine" / "platform" abstraction
+   * 一些体系结构使用“机器”/“平台”抽象
 
-   * Typical for architecture used in embedded systems with a lot of
-     variety (e.g. ARM, powerPC)
+   * 在使用大量不同种类的嵌入式系统中很常见（例如，ARM、powerPC）
 
 
-Overview of the boot process
+引导过程概述
 ============================
 
 
-.. slide:: Boot flow inspection
+.. slide:: 引导流程检查
    :level: 2
    :inline-contents: True
 
