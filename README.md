@@ -26,7 +26,7 @@
 
 - 本仓库是最*上游*的文档仓库，大家贡献提交请在这里完成
 - 提交之后会自动通过 Github action 把文档放到 [linux-zh](https://github.com/linux-kernel-labs-zh/linux-zh) 这个*中游*仓库里，这个仓库负责用文档生成网站
-- 网站生成之后，会通过 Github action 把生成的静态网页内容托管在 [linux-kernel-labs-zh.github.io](https://github.com/linux-kernel-labs-zh/linux-kernel-labs-zh.github.io) 这个*下游*仓库里，之后同步到 vercel 就可以在 https://linux-kernel-labs-zh.vercel.app 看到自己提交的改动了。
+- 网站生成之后，会通过 Github action 把生成的静态网页内容托管在 [linux-kernel-labs-zh.github.io](https://github.com/linux-kernel-labs-zh/linux-kernel-labs-zh.github.io) 这个*下游*仓库里，之后同步到 vercel 就可以在 https://linux-kernel-labs-zh.xyz 看到自己提交的改动了。
 
 ## 贡献指南
 
