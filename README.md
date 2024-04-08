@@ -4,7 +4,7 @@
 
 # Linux 内核实验室中文教程
 
-这是 linux kernel labs ([linux-kernel-labs/linux-kernel-labs.github.io](https://linux-kernel-labs.github.io/refs/heads/master/)) 教程的中文翻译版本，翻译后的版本托管在 Github pages 上，网址为 https://linux-kernel-labs-zh.vercel.app/
+这是 linux kernel labs ([linux-kernel-labs/linux-kernel-labs.github.io](https://linux-kernel-labs.github.io/refs/heads/master/)) 教程的中文翻译版本，翻译后的版本托管在 Github pages 上，网址为 https://linux-kernel-labs-zh.xyz
 
 ## 介绍
 
