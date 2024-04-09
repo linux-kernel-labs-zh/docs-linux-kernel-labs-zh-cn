@@ -1,66 +1,56 @@
 =========================
-Assignment 0 - Kernel API
+作业 0——内核 API
 =========================
 
--  Deadline: :command:`Sunday, 26 March 2023, 23:00`
+-  截止日期: :command:`2023 年 3 月 26 日，23:00`
 
-Assignment's Objectives
+作业目标
 =======================
 
-*  getting familiar with the qemu setup
-*  loading/unloading kernel modules
-*  getting familiar with the list API implemented in the kernel
-*  have fun :)
+*  熟悉 qemu 的设置
+*  加载/卸载内核模块
+*  熟悉内核中实现的列表 API
+*  玩得开心 :)
 
-Statement
+说明
 =========
 
-Write a kernel module called `list` (the resulting file must be called `list.ko`) which stores data (strings)
-in an internal list.
+编写名为 `list` 的内核模块（生成的文件必须命名为 `list.ko`），该模块在内部列表中存储数据（字符串）。
 
-It is mandatory to use `the list API <https://github.com/torvalds/linux/blob/master/include/linux/list.h>`__
-implemented in the kernel.
-For details you can take a look at `the laboratory 2 <https://linux-kernel-labs.github.io/refs/heads/master/so2/lab2-kernel-api.html>`__.
+必须使用内核中实现的 `列表 API <https://github.com/torvalds/linux/blob/master/include/linux/list.h>`__。有关详细信息，请参阅 `实验 2 </so2/lab2-kernel-api.html>`__。
 
-The module exports a directory named :command:`list` to procfs. The directory contains two files:
+该模块向 procfs 导出名为 :command:`list` 的目录。该目录包含两个文件：
 
--   :command:`management`: with write-only access; is the interface for transmitting commands to the kernel module
--   :command:`preview`: with read-only access; is the interface through which the internal contents of the kernel list can be viewed.
+-   :command:`management`：只能写入；用于向内核模块传输命令的接口
+-   :command:`preview`：只读；用于查看内核列表的内部内容的接口。
 
-`The code skeleton <https://github.com/linux-kernel-labs/linux/blob/master/tools/labs/templates/assignments/0-list/list.c>`__ implements the two procfs files.
-You will need to create a list and implement support for `adding` and `reading` data. Follow the TODOs in the code for details.
+`代码骨架 <https://github.com/linux-kernel-labs/linux/blob/master/tools/labs/templates/assignments/0-list/list.c>`__ 实现了这两个 procfs 文件。你需要创建一个列表，并实现对数据的 `添加` 和 `读取` 支持。请按照代码中的 TODO 进行操作。
 
-To interact with the kernel list, you must write commands (using the `echo` command) in the `/proc/list/management` file:
+要与内核列表进行交互，你必须在 `/proc/list/management` 文件中编写命令（使用 `echo` 命令）：
 
-- `addf name`: adds the `name` element to the top of the list
-- `adde name`: adds the `name` element to the end of the list
-- `delf name`: deletes the first appearance of the `name` item from the list
-- `dela name`: deletes all occurrences of the `name` element in the list
+- `addf name`：将 `name` 元素添加到列表的顶部
+- `adde name`：将 `name` 元素添加到列表的末尾
+- `delf name`：删除列表中第一个 `name` 项
+- `dela name`：删除列表中所有的 `name` 元素
 
-Viewing the contents of the list is done by viewing the contents of the `/proc/list/preview` file (use the` cat` command).
-The format contains one element on each line.
+要想查看列表内容，可以查看 `/proc/list/preview` 文件的内容（使用 `cat` 命令）。格式为每行一个元素。
 
-Testing
+测试
 =======
 
-In order to simplify the assignment evaluation process, but also to reduce the mistakes of the submitted assignments,
-the assignment evaluation will be done automatically with the help of a
-`test script <https://github.com/linux-kernel-labs/linux/blob/master/tools/labs/templates/assignments/0-list/checker/_checker>`__ called `_checker`.
-The test script assumes that the kernel module is called `list.ko`.
+为了简化作业评估过程，同时也为了减少提交作业时的错误，作业评估将通过一个名为 `_checker` 的 `测试脚本 <https://github.com/linux-kernel-labs/linux/blob/master/tools/labs/templates/assignments/0-list/checker/_checker>`__ 自动进行。测试脚本假定内核模块名为 `list.ko`。
 
-QuickStart
+快速入门
 ==========
 
-It is mandatory to start the implementation of the assignment from the code skeleton found in the `list.c <https://gitlab.cs.pub.ro/so2/0-list/-/blob/master/src/list.c>`__ file.
-You should follow the instructions in the `README.md file <https://gitlab.cs.pub.ro/so2/0-list/-/blob/master/README.md>`__ of the `assignment's repo <https://gitlab.cs.pub.ro/so2/0-list>`__.
+必须从 `list.c <https://gitlab.cs.pub.ro/so2/0-list/-/blob/master/src/list.c>`__ 文件中找到的代码骨架开始实现作业。你应该按照 `任务仓库 <https://gitlab.cs.pub.ro/so2/0-list>`__ 的 `README.md 文件 <https://gitlab.cs.pub.ro/so2/0-list/-/blob/master/README.md>`__ 中的说明进行操作。
 
-Tips
+提示
 ----
 
-To increase your chances of getting the highest grade, read and follow the Linux kernel
-coding style described in the `Coding Style document <https://elixir.bootlin.com/linux/v4.19.19/source/Documentation/process/coding-style.rst>`__.
+要想增加获得最高分的机会，请阅读并遵循 Linux 内核编码风格，该风格在 `代码风格文档 <https://elixir.bootlin.com/linux/v4.19.19/source/Documentation/process/coding-style.rst>`__ 中有描述。
 
-Also, use the following static analysis tools to verify the code:
+此外，使用以下静态分析工具来验证代码：
 
 - checkpatch.pl
 
@@ -83,29 +73,24 @@ Also, use the following static analysis tools to verify the code:
    $ sudo apt-get install cppcheck
    $ cppcheck /path/to/your/list.c
 
-Penalties
+处罚
 ---------
-Information about assigments penalties can be found on the
-`General Directions page <https://ocw.cs.pub.ro/courses/so2/teme/general>`__.
 
-In exceptional cases (the assigment passes the tests by not complying with the requirements)
-and if the assigment does not pass all the tests, the grade will may decrease more than mentioned above.
+有关作业处罚的信息可以在 `基本说明页面 <https://ocw.cs.pub.ro/courses/so2/teme/general>`__ 中找到。
 
-Submitting the assigment
+在特殊情况下（作业通过测试，但不符合要求）会有处罚；如果作业未通过所有测试，成绩可能会降低更多。
+
+提交作业
 ------------------------
 
-The assignment will be graded automatically using the `vmchecker-next <https://github.com/systems-cs-pub-ro/vmchecker-next/wiki/Student-Handbook>`__ infrastructure.
-The submission will be made on moodle on the `course's page <https://curs.upb.ro/2022/course/view.php?id=5121>`__ to the related assignment.
-You will find the submission details in the `README.md file <https://gitlab.cs.pub.ro/so2/0-list/-/blob/master/README.md>`__ of the `repo <https://gitlab.cs.pub.ro/so2/0-list/-/blob/master>`__.
+使用 `vmchecker-next <https://github.com/systems-cs-pub-ro/vmchecker-next/wiki/Student-Handbook>`__ 基础设施自动对作业进行评分。提交将在 moodle 上的 `课程页面 <https://curs.upb.ro/2022/course/view.php?id=5121>`__ 上与相关作业相关联。你可以在 `仓库 <https://gitlab.cs.pub.ro/so2/0-list/-/blob/master>`__ 的 `README.md 文件 <https://gitlab.cs.pub.ro/so2/0-list/-/blob/master/README.md>`__ 中找到提交详细信息。
 
-Resources
+资源
 =========
 
-We recommend that you use gitlab to store your homework. Follow the directions in
-`README.md file <https://gitlab.cs.pub.ro/so2/0-list/-/blob/master/README.md>`__.
+我们建议你使用 gitlab 存储作业。请按照 `README.md 文件 <https://gitlab.cs.pub.ro/so2/0-list/-/blob/master/README.md>`__ 中的说明进行操作。
 
-Questions
+问题
 =========
 
-For questions about the topic, you can consult the mailing `list archives <http://cursuri.cs.pub.ro/pipermail/so2/>`__
-or you can write a question on the dedicated Teams channel.
+如果你有相关的问题，你可以查阅邮件 `列表存档 <http://cursuri.cs.pub.ro/pipermail/so2/>`__，或在专用的 Teams 频道上提出问题。
