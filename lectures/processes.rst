@@ -2,7 +2,7 @@
 进程
 ====
 
-`View slides <processes-slides.html>`_
+`查看幻灯片 <processes-slides.html>`_
 
 .. slideconf::
    :autoslides: False

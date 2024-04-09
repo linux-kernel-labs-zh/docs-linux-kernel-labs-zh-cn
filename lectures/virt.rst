@@ -2,7 +2,7 @@
 虚拟化
 ==============
 
-查看幻灯片 <virt-slides.html>
+`查看幻灯片 <virt-slides.html>`_
 
 .. slideconf::
    :autoslides: False

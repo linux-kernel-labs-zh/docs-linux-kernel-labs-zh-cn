@@ -1,14 +1,14 @@
 ==================================
-SO2 Lecture 07 - Memory Management
+SO2 课程 07——内存管理
 ==================================
 
-`View slides <lec7-memory-management-slides.html>`_
+`查看幻灯片 <lec7-memory-management-slides.html>`_
 
 .. slideconf::
    :autoslides: False
    :theme: single-level
 
-.. slide:: SO2 Lecture 07 - Memory Management
+.. slide:: SO2 课程 07——内存管理
    :inline-contents: False
    :level: 1
 

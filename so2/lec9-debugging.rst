@@ -1,14 +1,14 @@
 =================================
-SO2 Lecture 09 - Kernel debugging
+SO2 课程 09——内核调试
 =================================
 
-`View slides <lec9-debugging-slides.html>`_
+`查看幻灯片 <lec9-debugging-slides.html>`_
 
 .. slideconf::
    :autoslides: False
    :theme: single-level
 
-.. slide:: SO2 Lecture 09 - Kernel debugging
+.. slide:: SO2 课程 09——内核调试
    :inline-contents: False
    :level: 1
 

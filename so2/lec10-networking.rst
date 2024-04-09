@@ -1,14 +1,14 @@
 ===========================
-SO2 Lecture 10 - Networking
+SO2 课程 10——网络
 ===========================
 
-`View slides <lec10-networking-slides.html>`_
+`查看幻灯片 <lec10-networking-slides.html>`_
 
 .. slideconf::
    :autoslides: False
    :theme: single-level
 
-.. slide:: SO2 Lecture 10 - Networking
+.. slide:: SO2 课程 10——网络
    :inline-contents: False
    :level: 1
 

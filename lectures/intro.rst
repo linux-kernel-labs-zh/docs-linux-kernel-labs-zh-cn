@@ -2,7 +2,7 @@
     介绍
 ============
 
-`View slides <intro-slides.html>`_
+`查看幻灯片 <intro-slides.html>`_
 
 .. slideconf::
    :autoslides: False

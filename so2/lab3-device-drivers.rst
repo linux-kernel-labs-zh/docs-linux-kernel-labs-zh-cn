@@ -1,5 +1,5 @@
 =====================================
-SO2 Lab 03 - Character device drivers
+SO2 实验 03——字符设备驱动
 =====================================
 
 .. include:: ../labs/device_drivers.rst

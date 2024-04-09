@@ -1,5 +1,5 @@
 ======================================
-SO2 Lab 04 - I/O access and Interrupts
+SO2 实验 04——I/O 访问和中断
 ======================================
 
 .. include:: ../labs/interrupts.rst
