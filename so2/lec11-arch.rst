@@ -1,14 +1,14 @@
 ===================================
-SO2 Lecture 11 - Architecture Layer
+SO2 课程 11——体系结构层
 ===================================
 
-`View slides <lec11-arch-slides.html>`_
+`查看幻灯片 <lec11-arch-slides.html>`_
 
 .. slideconf::
    :autoslides: False
    :theme: single-level
 
-.. slide:: SO2 Lecture 11 - Architecture Layer
+.. slide:: SO2 课程 11——体系结构层
    :inline-contents: False
    :level: 1
 

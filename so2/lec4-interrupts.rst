@@ -1,14 +1,14 @@
 =============================
-SO2 Lecture 04 - Interrupts
+SO2 课程 04——中断
 =============================
 
-`View slides <lec4-interrupts-slides.html>`_
+`查看幻灯片 <lec4-interrupts-slides.html>`_
 
 .. slideconf::
    :autoslides: False
    :theme: single-level
 
-.. slide:: SO2 Lecture 04 - Interrupts
+.. slide:: SO2 课程 04——中断
    :inline-contents: False
    :level: 1
 

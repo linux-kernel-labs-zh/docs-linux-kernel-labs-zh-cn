@@ -2,7 +2,7 @@
 系统调用
 =======
 
-`View slides <syscalls-slides.html>`_
+`查看幻灯片 <syscalls-slides.html>`_
 
 .. slideconf::
    :autoslides: False

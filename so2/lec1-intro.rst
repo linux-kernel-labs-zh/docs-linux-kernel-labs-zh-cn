@@ -1,14 +1,14 @@
 ==============================================================
-SO2 课程 01 - 课程概要以及 Linux 内核介绍
+SO2 课程 01——课程概要以及 Linux 内核介绍
 ==============================================================
 
-`View slides <lec1-intro-slides.html>`_
+`查看幻灯片 <lec1-intro-slides.html>`_
 
 .. slideconf::
    :autoslides: False
    :theme: single-level
 
-.. slide:: SO2 Lecture 01 - Course overview and Linux kernel introduction
+.. slide:: SO2 课程 01——课程概要以及 Linux 内核介绍
    :inline-contents: False
    :level: 1
 

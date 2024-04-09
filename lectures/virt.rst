@@ -2,7 +2,7 @@
 Virtualization
 ==============
 
-`View slides <virt-slides.html>`_
+`查看幻灯片 <virt-slides.html>`_
 
 .. slideconf::
    :autoslides: False

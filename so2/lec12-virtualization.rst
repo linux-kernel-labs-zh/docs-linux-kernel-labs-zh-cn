@@ -1,14 +1,14 @@
 ===============================
-SO2 Lecture 12 - Virtualization
+SO2 课程 12——虚拟化
 ===============================
 
-`View slides <lec12-virtualization-slides.html>`_
+`查看幻灯片 <lec12-virtualization-slides.html>`_
 
 .. slideconf::
    :autoslides: False
    :theme: single-level
 
-.. slide:: SO2 Lecture 12 - Virtualization
+.. slide:: SO2 课程 12——虚拟化
    :inline-contents: False
    :level: 1
 

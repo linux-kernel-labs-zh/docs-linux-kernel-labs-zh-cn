@@ -2,7 +2,7 @@
 中断
 =========
 
-`View slides <interrupts-slides.html>`_
+`查看幻灯片 <interrupts-slides.html>`_
 
 .. slideconf::
    :autoslides: False

@@ -1,14 +1,14 @@
 ===========================================
-SO2 Lecture 05 - Symmetric Multi-Processing
+SO2 课程 05——对称多处理
 ===========================================
 
-`View slides <lec5-smp-slides.html>`_
+`查看幻灯片 <lec5-smp-slides.html>`_
 
 .. slideconf::
    :autoslides: False
    :theme: single-level
 
-.. slide:: SO2 Lecture 05 - Symmetric Multi-Processing
+.. slide:: SO2 课程 05——对称多处理
    :inline-contents: False
    :level: 1
 

@@ -1,14 +1,14 @@
 ==============================
-SO2 Lecture 06 - Address Space
+SO2 课程 06——地址空间
 ==============================
 
-`View slides <lec6-address-space-slides.html>`_
+`查看幻灯片 <lec6-address-space-slides.html>`_
 
 .. slideconf::
    :autoslides: False
    :theme: single-level
 
-.. slide:: SO2 Lecture 06 - Address Space
+.. slide:: SO2 课程 06——地址空间
    :inline-contents: False
    :level: 1
 
