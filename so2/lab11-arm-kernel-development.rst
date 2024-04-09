@@ -1,5 +1,5 @@
 ======================================
-SO2 Lab 11 - Kernel Development on ARM
+SO2 实验 11——ARM 内核开发
 ======================================
 
 .. include:: ../labs/arm_kernel_development.rst

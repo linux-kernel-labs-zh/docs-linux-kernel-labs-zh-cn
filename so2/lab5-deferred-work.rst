@@ -1,5 +1,5 @@
 ==========================
-SO2 Lab 05 - Deferred work
+SO2 实验 05——延迟工作
 ==========================
 
 .. include:: ../labs/deferred_work.rst

@@ -1,17 +1,17 @@
 =========================
-SO2 Lab 01 - Introduction
+SO2 实验 01——介绍
 =========================
 
-Lab objectives
+实验目标
 ==============
 
-* presenting the rules and objectives of the Operating Systems 2 lab
-* introducing the lab documentation
-* introducing the Linux kernel and related resources
-* creating simple modules
-* describing the process of kernel module compilation
-* presenting how a module can be used with a kernel
-* simple kernel debugging methods
+* 介绍操作系统 2 实验的规则和目标
+* 介绍实验文档
+* 介绍 Linux 内核及相关资源
+* 创建简单的模块
+* 描述内核模块编译的过程
+* 展示模块如何与内核一起使用
+* 简单的内核调试方法
 
 .. include:: ../labs/introduction.rst
     :start-after: [SECTION-ABOUT-BEGIN]
@@ -47,11 +47,9 @@ Lab objectives
 
 .. note::
 
-    If you want to learn how to easily browse through the Linux source code
-    and how to debug kernel code, read the `Good to know <#good-to-know>`__
-    section.
+    如果你想学习如何轻松浏览 Linux 源代码和调试内核代码，请阅读 `了解更多 <#了解更多>`__ 部分。
 
-Exercises
+练习
 =========
 
 .. include:: ../labs/introduction.rst
@@ -97,11 +95,10 @@ Exercises
 
 .. _good-to-know:
 
-Good to know
+了解更多
 ============
 
-The following sections contain useful information for getitng used to the Linux
-kernel code and debugging techniques.
+以下部分包含帮助你适应 Linux 内核代码和调试技术的有用信息。
 
 .. include:: ../labs/introduction.rst
     :start-after: [SECTION-CODE-NAVIGATION-BEGIN]

@@ -1,14 +1,14 @@
 ==========================
-SO2 Lecture 03 - Processes
+SO2 课程 03——进程
 ==========================
 
-`View slides <lec3-processes-slides.html>`_
+`查看幻灯片 <lec3-processes-slides.html>`_
 
 .. slideconf::
    :autoslides: False
    :theme: single-level
 
-.. slide:: SO2 Lecture 03 - Processes
+.. slide:: SO2 课程 03——进程
    :inline-contents: False
    :level: 1
 

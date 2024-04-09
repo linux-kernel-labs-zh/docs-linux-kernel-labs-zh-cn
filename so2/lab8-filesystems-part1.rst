@@ -1,5 +1,5 @@
 =========================================
-SO2 Lab 08 - File system drivers (Part 1)
+SO2 实验 08——文件系统驱动（第一部分）
 =========================================
 
 .. include:: ../labs/filesystems_part1.rst
@@ -7,13 +7,7 @@ SO2 Lab 08 - File system drivers (Part 1)
     :end-before: [SURVEY-LABEL]
 
 .. important::
-   In order to have a better understanding of what we do well and we can do
-   better, what factors affect your implication in teaching, extracurricular
-   but also professional activities, we ask you to complete `this survey
-   <https://forms.office.com/r/SqBF2kfzk5>`_. The survey is a short one,
-   having answers with check marks, with an estimated completion time of
-   3-5 minutes. Obviously, we will send you the analysis of the survey and
-   use it to improve the teaching activities.
+   为了更好地了解我们在教学、课外活动和职业活动中做得好和可以做得更好的方面，我们请你填写 `这份调查问卷 <https://forms.office.com/r/SqBF2kfzk5>`_。这份调查问卷非常简短，你只需选择答案，预计完成时间为 3-5 分钟。当然，我们将向你发送调查分析结果，并将用它来改进教学活动。
 
 .. include:: ../labs/filesystems_part1.rst
     :start-after: [SURVEY-LABEL]
