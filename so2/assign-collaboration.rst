@@ -1,32 +1,29 @@
 =============
-Collaboration
+合作
 =============
 
-Collaboration is essential in open source world and we encourage you
-to pick a team partner to work on selected assignments.
+在开源世界中，合作是至关重要的，我们鼓励你选择一个团队合作伙伴来共同完成选定的任务。
 
-Here is a simple guide to get you started:
+以下是一个简单的指南，帮助你入门：
 
-1. Use Github / Gitlab
+1. 使用 Github / Gitlab
 ----------------------
 
-Best way to share your work inside the team is to use a version control system (VCS)
-in order to track each change. Mind that you must make your repo private and only allow
-read/write access rights to team members.
+在团队内部共享你的工作成果的最佳方式是使用版本控制系统（VCS）来跟踪每一次更改。请注意，你必须将你的存储库设置为私有，并仅授予团队成员读/写访问权限。
 
-2. Start with a skeleton for the assignment
+2. 从任务的骨架开始
 -------------------------------------------
 
-Add `init`/`exit` functions, driver operations and global structures that you driver might need.
+添加 `init`/`exit` 函数、驱动程序操作和可能需要的全局结构。
 
 .. code-block:: c
 
   // SPDX-License-Identifier: GPL-2.0
   /*
-   * uart16550.c - UART16550 driver
+   * uart16550.c——UART16550 驱动程序
    *
-   * Author: John Doe <john.doe@mail.com>
-   * Author: Ionut Popescu <ionut.popescu@mail.com>
+   * 作者：John Doe <john.doe@mail.com>
+   * 作者：Ionut Popescu <ionut.popescu@mail.com>
    */
   struct uart16550_dev {
      struct cdev cdev;
@@ -93,13 +90,12 @@ Add `init`/`exit` functions, driver operations and global structures that you dr
   MODULE_AUTHOR("John Doe <john.doe@mail.com");
   MODULE_AUTHOR("Ionut Popescu <ionut.popescu@mail.com");
 
-3. Add a commit for each individual change
-------------------------------------------
+3. 为每个单独的更改添加提交
+---------------------------------------
 
-First commit must always be the skeleton file. And the rest of the code should be on top of skeleton file.
-Please write a good commit mesage. Explain briefly what the commit does and *why* it is necessary.
+首个提交必须是骨架文件。而其余的代码应该在骨架文件的基础上进行添加。请认真写提交消息。简要解释该提交的内容以及 *为什么* 它是必要的。
 
-Follow the seven rules of writing a good commit message: https://cbea.ms/git-commit/#seven-rules
+遵循良好提交消息的七个规则：[点击这里](https://cbea.ms/git-commit/#seven-rules)
 
 .. code-block:: console
 
@@ -107,32 +103,28 @@ Follow the seven rules of writing a good commit message: https://cbea.ms/git-com
   Author: John Doe <john.doe@mail.com>
   Date:   Mon Apr 4 11:54:39 2022 +0300
 
-    uart16550: Add initial skeleton for ssignment #2
+    uart16550：为任务 #2 添加初始骨架
 
-    This adds simple skeleton file for uart16550 assignment. Notice
-    module init/exit callbacks and file_operations dummy implementation
-    for open/release/read/write/ioctl.
+    这个提交添加了 uart16550 任务的简单骨架文件。请注意模块的 init/exit 回调和 open/release/read/write/ioctl 的 file_operation 的虚拟实现。
 
     Signed-off-by: John Doe <john.doe@mail.com>
 
-4. Split the work inside the team
----------------------------------
+4. 在团队内拆分工作
+----------------------------
 
-Add `TODOs` with each team member tasks. Try to split the work evenly.
+将每个团队成员的任务添加进 `TODO`。尽量平均地拆分工作。
 
-Before starting to code, make a plan. On top of your skeleton file, add TODOs with each member tasks. Agree on global
-structures and the overlall driver design. Then start coding.
+在开始编码之前，制定一个计划。在骨架文件的顶部，将每个成员的任务添加进 `TODO`。就全局结构和整体驱动程序设计达成一致。然后开始编码。
 
-5. Do reviews
--------------
+5. 进行代码审查
+------------------------
 
-Create Pull Requests with your commits and go through review rounds with your team members. You can follow `How to create a PR` `video <https://www.youtube.com/watch?v=YvoHJJWvn98>`_.
+创建包含你的提交的 PR，并与团队成员进行审查。你可以参考 `创建拉取请求教程` 的 `视频 <https://www.youtube.com/watch?v=YvoHJJWvn98>`_。
 
-6. Merge the work
------------------
+6. 合并工作
+--------------------
 
-The final work is the result of merging all the pull requests. Following the commit messages
-one should clearly understand the progress of the code and how the work was managed inside the team.
+最终的工作是合并所有 PR 的结果。根据提交消息，他人应该能够清楚地了解代码的进展以及在团队内工作是如何管理的。
 
 .. code-block:: console
 
