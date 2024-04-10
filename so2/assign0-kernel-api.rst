@@ -40,10 +40,10 @@
 
 为了简化作业评估过程，同时也为了减少提交作业时的错误，作业评估将通过一个名为 `_checker` 的 `测试脚本 <https://github.com/linux-kernel-labs/linux/blob/master/tools/labs/templates/assignments/0-list/checker/_checker>`__ 自动进行。测试脚本假定内核模块名为 `list.ko`。
 
-快速入门
+快速开始
 ==========
 
-必须从 `list.c <https://gitlab.cs.pub.ro/so2/0-list/-/blob/master/src/list.c>`__ 文件中找到的代码骨架开始实现作业。你应该按照 `任务仓库 <https://gitlab.cs.pub.ro/so2/0-list>`__ 的 `README.md 文件 <https://gitlab.cs.pub.ro/so2/0-list/-/blob/master/README.md>`__ 中的说明进行操作。
+你必须从 `list.c <https://gitlab.cs.pub.ro/so2/0-list/-/blob/master/src/list.c>`__ 文件中找到的代码骨架开始实现作业。你应该按照 `任务仓库 <https://gitlab.cs.pub.ro/so2/0-list>`__ 的 `README.md 文件 <https://gitlab.cs.pub.ro/so2/0-list/-/blob/master/README.md>`__ 中的说明进行操作。
 
 提示
 ----
@@ -73,12 +73,12 @@
    $ sudo apt-get install cppcheck
    $ cppcheck /path/to/your/list.c
 
-处罚
+扣分项
 ---------
 
-有关作业处罚的信息可以在 `基本说明页面 <https://ocw.cs.pub.ro/courses/so2/teme/general>`__ 中找到。
+有关作业扣分项的信息可以在 `基本说明页面 <https://ocw.cs.pub.ro/courses/so2/teme/general>`__ 中找到。
 
-在特殊情况下（作业通过测试，但不符合要求）会有处罚；如果作业未通过所有测试，成绩可能会降低更多。
+在特殊情况下（作业通过测试，但不符合要求）以及如果作业未通过所有测试，成绩可能会降低更多。
 
 提交作业
 ------------------------
