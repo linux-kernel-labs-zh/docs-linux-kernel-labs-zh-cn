@@ -1,73 +1,64 @@
 ==================================
-Assignment 1 - Kprobe based tracer
+作业 1——基于 Kprobe 的跟踪器
 ==================================
 
--  Deadline: :command:`Monday, 10 April 2023, 23:00`
+-  截止日期： :command:`2023 年 4 月 10 日，23:00`
 
-Assignment's Objectives
+作业目标
 =======================
 
-*  gaining knowledge related to the instrumentation of functions in the Linux kernel (``kretprobes`` mechanism)
-*  gaining knowledge regarding the ``/proc`` file system from the Linux kernel
-*  get familiar with data structures specific to the Linux kernel (``hash table`` and ``list``)
+*  掌握与 Linux 内核中函数仪器化（instrumentation）相关的知识 (``kretprobes`` 机制)
+*  掌握 Linux 内核中的 ``/proc`` 文件系统
+*  熟悉 Linux 内核特定的数据结构 (``哈希表`` 和 ``链表``)
 
-Statement
+题目描述
 =========
 
-Build a kernel operations surveillant.
+构建一个内核操作监视器（surveillant）。
 
-With this surveillant, we aim to intercept:
+通过这个监视器，我们的目标是拦截：
 
-* ``kmalloc`` and ``kfree`` calls
-* ``schedule`` calls
-* ``up`` and ``down_interruptible`` calls
-* ``mutex_lock`` and ``mutex_unlock`` calls
+* ``kmalloc`` 和 ``kfree`` 调用
+* ``schedule`` 调用
+* ``up`` 和 ``down_interruptible`` 调用
+* ``mutex_lock`` 和 ``mutex_unlock`` 调用
 
-The surveillant will hold, at the process level, the number of calls for each of the above functions.
-For the ``kmalloc`` and ``kfree`` calls the total quantity of allocated and deallocated memory will be
-shown.
+监视器将在进程级别上保存上述每个函数的调用次数。对于 ``kmalloc`` 和 ``kfree`` 调用，将显示已分配和释放的内存总量。
 
-The surveillant will be implemented as a kernel module with the name ``tracer.ko``.
+监视器需要以内核模块的形式实现，名称为 ``tracer.ko``。
 
-Implementation details
+实现细节
 ----------------------
 
-The interception will be done by recording a sample (``kretprobe``) for each of the above functions. The
-surveillant will retain a list/hashtable with the monitored processes and will account for
-the above information for these processes.
+拦截将通过记录每个上述函数的样本 (``kretprobe``) 来完成。监视器将保留一个包含被监视进程的列表/哈希表，并为这些进程记录上述信息。
 
-For the control of the list/hashtable with the monitored processes, a char device called ``/dev/tracer``
-will be used, with major `10` and minor `42`. It will expose an ``ioctl`` interface with two arguments:
+为了控制包含被监视进程的列表/哈希表，我们需要使用名为 ``/dev/tracer`` 的字符设备，主设备号为 `10`，次设备号为 `42`。它将暴露一个带有两个参数的 ``ioctl`` 接口：
 
-* the first argument is the request to the monitoring subsystem:
+* 第一个参数是对监视子系统的请求：
 
     * ``TRACER_ADD_PROCESS``
     * ``TRACER_REMOVE_PROCESS``
 
-* the second argument is the PID of the process for which the monitoring request will be executed
+* 第二个参数是要执行监视请求的进程的 PID
 
-In order to create a char device with major `10` you will need to use the `miscdevice <https://elixir.bootlin.com/linux/latest/source/include/linux/miscdevice.h>`__ interface in the kernel.
-Definitions of related macros can be found in the `tracer.h header <https://gitlab.cs.pub.ro/so2/1-tracer/-/blob/master/src/tracer.h>`__.
+为了使用主设备号 `10` 创建字符设备，你需要在内核中使用 `miscdevice <https://elixir.bootlin.com/linux/latest/source/include/linux/miscdevice.h>`__ 接口。相关宏的定义可以在 `tracer.h 头文件 <https://gitlab.cs.pub.ro/so2/1-tracer/-/blob/master/src/tracer.h>`__ 中找到。
 
-Since the ``kmalloc`` function is inline for instrumenting the allocated amount of memory, the ``__kmalloc``
-function will be inspected as follows:
+由于 ``kmalloc`` 函数是内联的，无法对分配的内存量进行仪器化，因此我们将检查 ``__kmalloc`` 函数：
 
-* a ``kretprobe`` will be used, which will retain the amount of memory allocated and the address of the allocated memory area.
-* the ``.entry_handler`` and ``.handler`` fields in the ``kretprobe`` structure will be used to retain information about the amount of memory allocated and the address from which the allocated memory starts.
+* 我们需要使用 ``kretprobe``，它将保留已分配的内存量和已分配内存区域的地址。
+* ``kretprobe`` 结构中的 ``.entry_handler`` 和 ``.handler`` 字段将用于保留已分配的内存量和分配的内存起始地址。
 
 .. code-block:: C
 
     static struct kretprobe kmalloc_probe = {
-       .entry_handler = kmalloc_probe_entry_handler, /* entry handler */
-       .handler = kmalloc_probe_handler, /* return probe handler */
+       .entry_handler = kmalloc_probe_entry_handler, /* 进入处理程序 */
+       .handler = kmalloc_probe_handler, /* 返回 probe 处理程序 */
        .maxactive = 32,
     };
 
-Since the ``kfree`` function only receives the address of the memory area to be freed, in order to determine
-the total amount of memory freed, we will need to determine its size based on the address of the area.
-This is possible because there is an address-size association made when inspecting the ``__kmalloc`` function.
+由于 ``kfree`` 函数只接收要释放的内存区域的地址，为了确定释放的总内存量，我们需要根据该区域的地址确定其大小。这是可行的，因为系统在检查 ``__kmalloc`` 函数时进行了地址大小的关联。
 
-For the rest of the instrumentation functions it is enough to use a ``kretprobe``.
+对于其余的仪器化函数，使用 ``kretprobe`` 就足够了。
 
 .. code-block:: C
 
@@ -76,18 +67,11 @@ For the rest of the instrumentation functions it is enough to use a ``kretprobe`
        .maxactive = 32,
     };
 
-The virtual machine kernel has the ``CONFIG_DEBUG_LOCK_ALLOC`` option enabled where the ``mutex_lock`` symbol
-is a macro that expands to ``mutex_lock_nested``. Thus, in order to obtain information about the ``mutex_lock``
-function you will have to instrument the ``mutex_lock_nested`` function.
+虚拟机内核已启用 ``CONFIG_DEBUG_LOCK_ALLOC`` 选项，其中 ``mutex_lock`` 符号是一个将展开为 ``mutex_lock_nested`` 的宏。因此，为了获取有关 ``mutex_lock`` 函数的信息，你需要对 ``mutex_lock_nested`` 函数进行仪器化。
 
-Processes that have been added to the list/hashtable and that end their execution will be removed
-from the list/hashtable. Also, a process will be removed from the dispatch list/hashtable following
-the ``TRACER_REMOVE_PROCESS`` operation.
+添加到列表/哈希表的进程在执行结束时将从列表/哈希表中移除。此外，根据 ``TRACER_REMOVE_PROCESS`` 操作，系统将从调度列表/哈希表中移除一个进程。
 
-The information retained by the surveillant will be displayed via the procfs file system, in the ``/proc/tracer`` file.
-For each monitored process an entry is created in the ``/proc/tracer`` file having as first field the process PID.
-The entry will be read-only, and a read operation on it will display the retained results. An example of
-displaying the contents of the entry is:
+监视器保留的信息将通过 procfs 文件系统显示在 ``/proc/tracer`` 文件中。每个受监视的进程，在 ``/proc/tracer`` 文件中都会有一个条目，其第一个字段是进程的 PID。该条目是只读的，对其进行读操作将显示保留的结果。显示条目内容的示例：
 
 .. code-block:: console
 
@@ -98,31 +82,23 @@ displaying the contents of the entry is:
     1244  0       0     0           0           1221   100   1023   1023   1002
     1337  123     99    125952      101376      193821 992   81921  7421   6392
 
-Testing
+测试
 =======
 
-In order to simplify the assignment evaluation process, but also to reduce the mistakes of the submitted assignments,
-the assignment evaluation will be done automatically with the help of a
-`test script <https://github.com/linux-kernel-labs/linux/blob/master/tools/labs/templates/assignments/1-tracer/checker/_checker>`__ called `_checker`.
-The test script assumes that the kernel module is called `tracer.ko`.
+为了简化作业评估过程，同时也为了减少提交作业时的错误，作业评估将通过一个名为 `_checker` 的 `测试脚本 <https://github.com/linux-kernel-labs/linux/blob/master/tools/labs/templates/assignments/1-tracer/checker/_checker>`__ 自动进行。测试脚本假定内核模块名为 `tracer.ko`。
 
-QuickStart
+快速开始
 ==========
 
-It is mandatory to start the implementation of the assignment from the code skeleton found in the `src <https://gitlab.cs.pub.ro/so2/1-tracer/-/tree/master/src>`__ directory.
-There is only one header in the skeleton called `tracer.h <https://gitlab.cs.pub.ro/so2/1-tracer/-/blob/master/src/tracer.h>`__.
-You will provide the rest of the implementation. You can add as many `*.c`` sources and additional `*.h`` headers.
-You should also provide a Kbuild file that will compile the kernel module called `tracer.ko`.
-Follow the instructions in the `README.md file <https://gitlab.cs.pub.ro/so2/1-tracer/-/blob/master/README.md>`__ of the `assignment's repo <https://gitlab.cs.pub.ro/so2/1-tracer>`__.
+你必须从 `src <https://gitlab.cs.pub.ro/so2/1-tracer/-/tree/master/src>`__ 目录中的代码模板开始实现作业。模板中只有一个名为 `tracer.h <https://gitlab.cs.pub.ro/so2/1-tracer/-/blob/master/src/tracer.h>`__ 的头文件。你需要提供其余的实现。你可以添加任意数量的 `*.c` 源文件和额外的 `*.h` 头文件。你还应该提供一个名为 `tracer.ko` 的 Kbuild 文件来编译内核模块。请按照 `作业仓库 <https://gitlab.cs.pub.ro/so2/1-tracer>`__ 的 `README.md 文件 <https://gitlab.cs.pub.ro/so2/1-tracer/-/blob/master/README.md>`__ 中的说明进行操作。
 
 
-Tips
+提示
 ----
 
-To increase your chances of getting the highest grade, read and follow the Linux kernel
-coding style described in the `Coding Style document <https://elixir.bootlin.com/linux/v4.19.19/source/Documentation/process/coding-style.rst>`__.
+要想增加获得最高分的机会，请阅读并遵循 Linux 内核中描述的 `编码风格规范 <https://elixir.bootlin.com/linux/v4.19.19/source/Documentation/process/coding-style.rst>`__。
 
-Also, use the following static analysis tools to verify the code:
+此外，使用以下静态分析工具来验证代码：
 
 - checkpatch.pl
 
@@ -145,38 +121,30 @@ Also, use the following static analysis tools to verify the code:
    $ sudo apt-get install cppcheck
    $ cppcheck /path/to/your/tracer.c
 
-Penalties
+扣分项
 ---------
 
-Information about assigments penalties can be found on the
-`General Directions page <https://ocw.cs.pub.ro/courses/so2/teme/general>`__. In addition, the following
-elements will be taken into account:
+关于作业扣分的信息可以在 `基本说明文件 <https://ocw.cs.pub.ro/courses/so2/teme/general>`__ 中找到。此外，以下因素还将被考虑：
 
-* *-2*: missing of proper disposal of resources (``kretprobes``, entries in ``/proc``)
-* *-2*: data synchronization issues for data used by multiple executing instances (e.g. the list/hashtable)
+* *-2*：未正确释放资源 (``kretprobes``, ``/proc`` 中的条目)
+* *-2*：多个执行实例使用的数据的数据同步问题（例如，列表/哈希表）
 
-In exceptional cases (the assigment passes the tests but it is not complying with the requirements)
-and if the assigment does not pass all the tests, the grade may decrease more than mentioned above.
+在特殊情况下（作业通过了测试但不符合要求），以及如果作业未全部通过测试，成绩可能会降低得更多。
 
-Submitting the assigment
+提交作业
 ------------------------
 
-The assignment will be graded automatically using the `vmchecker-next <https://github.com/systems-cs-pub-ro/vmchecker-next/wiki/Student-Handbook>`__ infrastructure.
-The submission will be made on moodle on the `course's page <https://curs.upb.ro/2022/course/view.php?id=5121>`__ to the related assignment.
-You will find the submission details in the `README.md file <https://gitlab.cs.pub.ro/so2/1-tracer/-/blob/master/README.md>`__ of the `repo <https://gitlab.cs.pub.ro/so2/1-tracer>`__.
+作业将由 `vmchecker-next <https://github.com/systems-cs-pub-ro/vmchecker-next/wiki/Student-Handbook>`__ 基础设施自动评分。提交作业将在 moodle 的 `课程页面 <https://curs.upb.ro/2022/course/view.php?id=5121>`__ 上与相关作业相关联。你可以在 `仓库 <https://gitlab.cs.pub.ro/so2/1-tracer>`__ 的 `README.md 文件 <https://gitlab.cs.pub.ro/so2/1-tracer/-/blob/master/README.md>`__ 中找到提交详细信息。
 
-
-Resources
+资源
 =========
 
-* `Documentation/kprobes.txt <https://www.kernel.org/doc/Documentation/kprobes.txt>`__ - description of the ``kprobes`` subsystem from Linux kernel sources.
-* `samples/kprobes/ <https://elixir.bootlin.com/linux/latest/source/samples/kprobes>`__ - some examples of using ``kprobes`` from Linux kernel sources.
+* `Documentation/kprobes.txt <https://www.kernel.org/doc/Documentation/kprobes.txt>`__ ——Linux 内核源代码中关于 ``kprobes`` 子系统的描述。
+* `samples/kprobes/ <https://elixir.bootlin.com/linux/latest/source/samples/kprobes>`__ ——Linux 内核源代码中使用 ``kprobes`` 的一些示例。
 
-We recommend that you use gitlab to store your homework. Follow the directions in
-`README <https://gitlab.cs.pub.ro/so2/1-tracer/-/blob/master/README.md>`__.
+我们建议你使用 gitlab 来存储你的作业。请按照 `README <https://gitlab.cs.pub.ro/so2/1-tracer/-/blob/master/README.md>`__ 中的说明操作。
 
-Questions
+问题
 =========
 
-For questions about the topic, you can consult the mailing `list archives <http://cursuri.cs.pub.ro/pipermail/so2/>`__
-or you can write a question on the dedicated Teams channel.
+如有相关问题，你可以参考邮件 `列表存档 <http://cursuri.cs.pub.ro/pipermail/so2/>`__ 或在专用的 Teams 频道上提问。
