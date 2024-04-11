@@ -1,99 +1,83 @@
 ==========================
-Assignment 2 - Driver UART
+作业 2——驱动 UART
 ==========================
 
--  Deadline: :command:`Sunday, 30 April 2023, 23:00`
--  The assigment is individual
+-  截止日期: :command:`2023 年 4 月 30 日，23:00`
+-  此作业为个人完成
 
-Assignment's Objectives
+作业目标
 =======================
 
-*  consolidating the knowledge of device drivers
-*  read hardware documentation and track the desired functionality in the documentation
-*  work with interrupts; use of non-blocking functions in interrupt context
-*  use of buffers; synchronization
-*  kernel modules with parameters
+*  巩固设备驱动的知识
+*  阅读硬件文档并在文档中追踪所需功能
+*  使用中断；在中断上下文中使用非阻塞函数
+*  使用缓冲区；同步
+*  带参数的内核模块
 
-Statement
+任务描述
 =========
 
-Write a kernel module that implements a driver for the serial port (`UART16550`).
-The device driver must support the two standard serial ports in a PC, `COM1` and `COM2` (`0x3f8` and `0x2f8`,
-in fact the entire range of `8` addresses `0x3f8-0x3ff` and `0x2f8-0x2ff` specific to the two ports).
-In addition to the standard routines (`open`, `read`, `write`, `close`),
-the driver must also have support for changing communication parameters using an `ioctl` operation (`UART16550_IOCTL_SET_LINE`).
+编写一个内核模块，实现串口 (`UART16550`) 的驱动程序。该设备驱动程序必须支持计算机中的两个标准串口, `COM1` 和 `COM2` (`0x3f8` 和 `0x2f8`，实际上是两个串口的整个 `8` 地址范围 `0x3f8-0x3ff` 和 `0x2f8-0x2ff`)。除了标准例程 (`open`, `read`, `write`, `close`) 外，驱动程序还必须支持使用 `ioctl` 操作 (`UART16550_IOCTL_SET_LINE`) 更改通信参数。
 
-The driver must use interrupts for both reception and transmission to reduce latency and CPU usage time.
-`Read` and `write` calls must also be blocking. :command:`Assignments that do not meet these requirements will not be considered.`
-It is recommended that you use a buffer for the read routine and another buffer for the write routine for each serial port in the driver.
+驱动程序必须使用中断来进行接收和发送，以减少延迟和 CPU 使用时间。 `read` 和 `write` 调用也必须是阻塞的。 :command:`不符合这些要求的作业将不予考虑。` 建议你为驱动程序中每个串行端口的读取例程使用一个缓冲区，并为写入例程使用另一个缓冲区。
 
-A blocking read call means that the read routine called from the user-space will be blocked until :command:`at least` one byte is read
-(the read buffer in the kernel is empty and no data can be read).
-A blocking write call means that the write routine called from the user-space will be blocked until :command:`at least` one byte is written
-(the write buffer in the kernel is full and no data can be written).
+当用户空间发起读取操作时，如果内核的读缓冲区为空，没有数据可读，那么阻塞读调用将会等待，直到 :command:`至少` 有一个字节被读取。同样，当用户空间发起写入操作时，如果内核的写缓冲区已满，没有空间可写，那么阻塞写调用也将会等待，直到 :command:`至少` 有一个字节被写入。
 
-Buffers Scheme
+缓冲区方案
 --------------
 
 .. image:: ../img/buffers-scheme.png
 
-Data transfer between the various buffers is a `Producer-Consumer <https://en.wikipedia.org/wiki/Producer%E2%80%93consumer_problem>`__ problem. Example:
+各个缓冲区之间的数据传输是 `生产者-消费者 <https://zh.wikipedia.org/zh-cn/生产者消费者问题>`__ 问题。例如：
 
--   The process is the producer and the device is the consumer if it is written from the process to the device; the process will block until there is at least one free space in the consumer's buffer
+-   如果从进程写入设备，则进程是生产者，设备是消费者；如果消费者缓冲区没有剩余空间，则进程将被阻塞，直到消费者缓冲区至少有一个空闲空间为止。
 
--   The process is the consumer and the device is the producer if it is read from a process from the device; the process will block until there is at least one element in the producer's buffer.
+-   如果从设备读取数据到进程中，则进程是消费者，设备是生产者；如果生产者缓冲区没有内容，进程将被阻塞，直到生产者的缓冲区中至少有一个元素为止。
 
-Implementation Details
+实现细节
 ======================
 
--  the driver will be implemented as a kernel module named :command:`uart16550.ko`
--  the driver will be accessed as a character device driver, with different functions depending on the parameters transmitted to the load module:
+-  该驱动程序以名为 :command:`uart16550.ko` 的内核模块形式实现。
+-  该驱动程序是字符设备驱动，会根据传递给加载模块的参数，提供不同的功能操作。
 
-   -  the `major` parameter will specify the major with which the device must be registered
-   -  the `option` parameter will specify how it works:
+   -  `major` 参数指定设备必须注册的主设备号。
+   -  `option` 参数指定驱动程序的工作方式：
 
-      -  OPTION_BOTH: will also register COM1 and COM2, with the major given by the `major` parameter and the minors 0 (for COM1) and 1 (for COM2);
-      -  OPTION_COM1: will only register COM1, with the major `major` and minor 0;
-      -  OPTION_COM2: will only register COM2, with the major `major` and minor 1;
-   -  to learn how to pass parameters in Linux, see `tldp <https://tldp.org/LDP/lkmpg/2.6/html/x323.html>`__
-   -  the default values are `major=42` and `option=OPTION_BOTH`.
--  the interrupt number associated with COM1 is 4 (`IRQ_COM1`) and the interrupt number associated with COM2 is 3 (`IRQ_COM2`)
--  `the header <https://gitlab.cs.pub.ro/so2/2-uart/-/blob/master/src/uart16550.h>`__ with the definitions needed for special operations;
--  a starting point in implementing read / write routines is the `example <https://ocw.cs.pub.ro/courses/so2/laboratoare/lab04?&#sincronizare_-_cozi_de_asteptare>`__ of uppercase / lowercase character device driver; the only difference is that you have to use two buffers, one for read and one for write;
--  you can use `kfifo <https://lwn.net/Articles/347619/>`__ for buffers;
--  you do not have to use deferred functions to read / write data from / to ports (you can do everything from interrupt context);
--  you will need to synchronize the read / write routines with the interrupt handling routine for the routines to be blocking; it is recommended to use `synchronization with waiting queues <https://ocw.cs.pub.ro/courses/so2/laboratoare/lab04?&#sincronizare_-_cozi_de_asteptare>`__
--  In order for the assigment to work, the `default serial driver` must be disabled:
+      -  OPTION_BOTH：还会注册 COM1 和 COM2，主设备号由 `major` 参数给出，次设备号为 0（对应 COM1）和 1（对应 COM2）；
+      -  OPTION_COM1：仅注册 COM1，主设备号为 `major`，次设备号为 0。
+      -  OPTION_COM2：仅注册 COM2，主设备号为 `major`，次设备号为 1。
+   -  如果你不熟悉如何在 Linux 中传递参数，请参阅 `tldp <https://tldp.org/LDP/lkmpg/2.6/html/x323.html>`__。
+   -  默认值为 `major=42` 和 `option=OPTION_BOTH`。
+-  COM1 关联的中断号为 4 (`IRQ_COM1`)，COM2 关联的中断号为 3 (`IRQ_COM2`)
+-  需要使用 `header <https://gitlab.cs.pub.ro/so2/2-uart/-/blob/master/src/uart16550.h>`__ 中的定义来进行特殊操作。
+-  在实现读/写例程时，可以参考大写/小写字符设备驱动程序的 `示例 <https://ocw.cs.pub.ro/courses/so2/laboratoare/lab04?&#sincronizare_-_cozi_de_asteptare>`__；唯一的区别是你需要使用两个缓冲区，一个用于读取，另一个用于写入。
+-  可以使用 `kfifo <https://lwn.net/Articles/347619/>`__ 作为缓冲区。
+-  不需要使用延迟函数从端口读取/写入数据（可以在中断上下文中完成所有操作）。
+-  需要在读/写例程与中断处理例程之间进行同步，以使例程成为阻塞例程；建议使用 `等待队列进行同步 <https://ocw.cs.pub.ro/courses/so2/laboratoare/lab04?&#sincronizare_-_cozi_de_asteptare>`__。
+-  为了使作业正常工作，必须禁用 `默认串口驱动程序`：
 
-   -  `cat /proc/ioports | grep serial` will detect the presence of the default driver on the regions where COM1 and COM2 are defined
-   -  in order to deactivate it, the kernel must be recompiled, either by setting the serial driver as the module, or by deactivating it completely (this modification is already made on the virtual machine)
+   -  `cat /proc/ioports | grep serial` 可以检测到默认驱动程序是否存在于定义 COM1 和 COM2 的区域。
+   - 为了停用它，必须重新编译内核，可以将串口驱动程序设置为模块，或者完全停用它（虚拟机上已经进行了这个修改）。
 
       -  `Device Drivers -> Character devices -> Serial driver -> 8250/16550 and compatible serial support.`
 
-Testing
+测试
 =======
-In order to simplify the assignment evaluation process, but also to reduce the mistakes of the submitted assignments,
-the assignment evaluation will be done automatically with the help of a
-`test script <https://gitlab.cs.pub.ro/so2/2-uart/-/blob/master/checker/2-uart-checker/_checker>`__ called `_checker`.
-The test script assumes that the kernel module is called `uart16550.ko`.
 
-QuickStart
+为了简化作业评估过程，同时也为了减少提交作业时的错误，作业评估将通过一个名为 `_checker` 的 `测试脚本 <https://github.com/linux-kernel-labs/linux/blob/master/tools/labs/templates/assignments/2-uart-checker/checker/_checker>`__ 自动进行。测试脚本假定内核模块名为 `uart16550.ko`。
+
+快速开始
 ==========
 
-It is mandatory to start the implementation of the assignment from the code skeleton found in the `src <https://gitlab.cs.pub.ro/so2/2-uart/-/tree/master/src>`__ directory.
-There is only one header in the skeleton called `uart16550.h <https://gitlab.cs.pub.ro/so2/2-uart/-/blob/master/src/uart16550.h>`__.
-You will provide the rest of the implementation. You can add as many `*.c`` sources and additional `*.h`` headers.
-You should also provide a Kbuild file that will compile the kernel module called `uart16550.ko`.
-Follow the instructions in the `README.md file <https://gitlab.cs.pub.ro/so2/2-uart/-/blob/master/README.md>`__ of the `assignment's repo <https://gitlab.cs.pub.ro/so2/2-uart>`__.
+你必须从 `src <https://gitlab.cs.pub.ro/so2/2-uart/-/tree/master/src>`__ 目录中的代码模板开始实现作业。模板中只有一个名为 `uart16550.h <https://gitlab.cs.pub.ro/so2/1-tracer/-/blob/master/src/uart16550.h>`__ 的头文件。你需要提供其余的实现。你可以添加任意数量的 `*.c` 源文件和额外的 `*.h` 头文件。你还应该提供一个名为 `uart16550.ko` 的 Kbuild 文件来编译内核模块。请按照 `作业仓库 <https://gitlab.cs.pub.ro/so2/2-uart>`__ 的 `README.md 文件 <https://gitlab.cs.pub.ro/so2/2-uart/-/blob/master/README.md>`__ 中的说明进行操作。
 
 
-Tips
+提示
 ----
 
-To increase your chances of getting the highest grade, read and follow the Linux kernel
-coding style described in the `Coding Style document <https://elixir.bootlin.com/linux/v4.19.19/source/Documentation/process/coding-style.rst>`__.
+要想增加获得最高分的机会，请阅读并遵循 Linux 内核中描述的 `编码风格规范 <https://elixir.bootlin.com/linux/v4.19.19/source/Documentation/process/coding-style.rst>`__。
 
-Also, use the following static analysis tools to verify the code:
+此外，使用以下静态分析工具来验证代码：
 
 - checkpatch.pl
 
@@ -116,37 +100,31 @@ Also, use the following static analysis tools to verify the code:
    $ sudo apt-get install cppcheck
    $ cppcheck /path/to/your/list.c
 
-Penalties
----------
+扣分规则
+----------
 
-Information about assigments penalties can be found on the
-`General Directions page <https://ocw.cs.pub.ro/courses/so2/teme/general>`__.
+有关作业扣分的信息可以在“基本说明页面 <https://ocw.cs.pub.ro/courses/so2/teme/general>`__ 上找到。
 
-In exceptional cases (the assigment passes the tests by not complying with the requirements)
-and if the assigment does not pass all the tests, the grade will may decrease more than mentioned above.
+在特殊情况下（作业通过了测试但不符合要求），以及如果作业未全部通过测试，成绩可能会降低得更多。
 
-Submitting the assigment
+提交作业
 ------------------------
 
-The assignment will be graded automatically using the `vmchecker-next <https://github.com/systems-cs-pub-ro/vmchecker-next/wiki/Student-Handbook>`__ infrastructure.
-The submission will be made on moodle on the `course's page <https://curs.upb.ro/2022/course/view.php?id=5121>`__ to the related assignment.
-You will find the submission details in the `README.md file <https://gitlab.cs.pub.ro/so2/2-uart/-/blob/master/README.md>`__ of the `repo <https://gitlab.cs.pub.ro/so2/2-uart>`__.
+作业将由 `vmchecker-next <https://github.com/systems-cs-pub-ro/vmchecker-next/wiki/Student-Handbook>`__ 基础设施自动评分。提交作业将在 moodle 的 `课程页面 <https://curs.upb.ro/2022/course/view.php?id=5121>`__ 上与相关作业相关联。你可以在 `仓库 <https://gitlab.cs.pub.ro/so2/2-uart>`__ 的 `README.md 文件 <https://gitlab.cs.pub.ro/so2/2-uart/-/blob/master/README.md>`__ 中找到提交详细信息。
 
 
-Resources
+资源
 =========
 
--  serial port documentation can be found on `tldp <https://tldp.org/HOWTO/Serial-HOWTO-19.html>`__
--  `table with registers <http://www.byterunner.com/16550.html>`__
--  `datasheet 16550 <https://pdf1.alldatasheet.com/datasheet-pdf/view/9301/NSC/PC16550D.html>`__
--  `alternative documentation <https://en.wikibooks.org/wiki/Serial_Programming/8250_UART_Programming>`__
+-  串口文档可以在 `tldp <https://tldp.org/HOWTO/Serial-HOWTO-19.html>`__ 上找到。
+-  `寄存器表 <http://www.byterunner.com/16550.html>`__
+-  `16550 数据手册 <https://pdf1.alldatasheet.com/datasheet-pdf/view/9301/NSC/PC16550D.html>`__
+-  `备选文档 <https://en.wikibooks.org/wiki/Serial_Programming/8250_UART_Programming>`__
 
-We recommend that you use gitlab to store your homework. Follow the directions in
-`README <https://gitlab.cs.pub.ro/so2/2-uart/-/blob/master/README.md>`__.
+我们建议你使用 GitLab 存储作业。请按照 `README <https://gitlab.cs.pub.ro/so2/2-uart/-/blob/master/README.md>`__ 中的说明操作。
 
 
-Questions
+问题
 =========
 
-For questions about the topic, you can consult the mailing `list archives <http://cursuri.cs.pub.ro/pipermail/so2/>`__
-or you can write a question on the dedicated Teams channel.
+如有相关问题，你可以参考邮件 `列表存档 <http://cursuri.cs.pub.ro/pipermail/so2/>`__ 或在专用的 Teams 频道上提问。
