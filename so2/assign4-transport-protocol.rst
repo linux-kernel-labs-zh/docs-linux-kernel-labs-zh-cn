@@ -1,27 +1,27 @@
 =====================================
-Assignment 4 - SO2 Transport Protocol
+作业 4——SO2 传输协议
 =====================================
 
-- Deadline: :command:`Monday, 29 May 2023, 23:00`
-- This assignment can be made in teams (max 2). Only one of them must submit the assignment, and the names of the student should be listed in a README file.
+- 截止日期: :command:`星期一，2023 年 5 月 29 日，23:00`
+- 这个作业可以由团队完成（最多 2 人）。只需其中一人提交作业，学生姓名应列在 README 文件中。
 
-Implement a simple datagram transport protocol - STP (*SO2 Transport Protocol*).
+实现一个简单的数据报传输协议——STP (*SO2 传输协议)。
 
-Assignment's Objectives
+作业目标
 =======================
 
-* gaining knowledge about the operation of the networking subsystem in the Linux kernel
-* obtaining skills to work with the basic structures of the networking subsystem in Linux
-* deepening the notions related to communication and networking protocols by implementing a protocol in an existing protocol stack
+* 了解 Linux 内核中的网络子系统运行原理
+* 掌握在 Linux 中使用网络子系统基本结构的技能
+* 通过在现有协议栈中实现一个协议，加深与通信和网络协议相关的概念
 
-Statement
+任务描述
 =========
 
-Implement, in the Linux kernel, a protocol called STP (*SO2 Transport Protocol*), at network and transport level, that works using datagrams (it is not connection-oriented and does not use flow-control elements).
+在 Linux 内核中实现一个名为 STP (*SO2 传输协议*) 的协议，该协议在网络和传输层使用数据报（它不面向连接，也不使用流控制元素）。
 
-The STP protocol acts as a Transport layer protocol (port-based multiplexing) but operates at level 3 (Network) of `the OSI stack <http://en.wikipedia.org/wiki/OSI_model>`__, above the Data Link level.
+STP 协议在作用层面上是传输层协议（基于端口的多路复用），但在 `OSI 模型 <http://zh.wikipedia.org/zh-cn/OSI模型>`__ 的第 3 层（网络层）上运行，位于数据链路层之上。
 
-The STP header is defined by the ``struct stp_header`` structure:
+STP 头部由 ``struct stp_header`` 结构定义：
 
 .. code-block:: c
 
@@ -34,53 +34,50 @@ The STP header is defined by the ``struct stp_header`` structure:
   };
 
 
-where:
+其中：
 
-  * ``len`` is the length of the packet in bytes (including the header);
-  * ``dst`` and ``src`` are the destination and source ports, respectively;
-  * ``flags`` contains various flags, currently unused (marked *reserved*);
-  * ``csum`` is the checksum of the entire package including the header; the checksum is calculated by exclusive OR (XOR) between all bytes.
+  * ``len`` 是数据包的大小（包括头部）（以字节为单位）；
+  * ``dst`` 和 ``src`` 分别是目标端口和源端口；
+  * ``flags`` 包含各种标志，目前未使用（标记为 *reserved*）；
+  * ``csum`` 是整个包（包括头部）的校验和；校验和通过对所有字节进行异或（XOR）计算得出。
 
-Sockets using this protocol will use the ``AF_STP`` family.
+使用该协议的套接字将使用 ``AF_STP`` 协议族。
 
-The protocol must work directly over Ethernet. The ports used are between ``1`` and ``65535``. Port ``0`` is not used.
+该协议必须直接在以太网上工作。使用的端口范围为 ``1`` 到 ``65535``。端口 ``0`` 未使用。
 
-The definition of STP-related structures and macros can be found in the `assignment support header <https://gitlab.cs.pub.ro/so2/4-stp/-/blob/master/src/stp.h>`__.
+STP 相关结构和宏的定义可以在 `作业支持头文件 <https://gitlab.cs.pub.ro/so2/4-stp/-/blob/master/src/stp.h>`__ 中找到。
 
-Implementation Details
+实现细节
 ======================
 
-The kernel module will be named **af_stp.ko**.
+内核模块需要命名为 **af_stp.ko**。
 
-You have to define a structure of type `net_proto_family <http://elixir.free-electrons.com/linux/v5.10/source/include/linux/net.h#L211>`__, which provides the operation to create STP sockets.
-Newly created sockets are not associated with any port or interface and cannot receive / send packets.
-You must initialize the `socket ops field <http://elixir.free-electrons.com/linux/v5.10/source/include/linux/net.h#L125>`__ with the list of operations specific to the STP family.
-This field refers to a structure `proto_ops <http://elixir.free-electrons.com/linux/v5.10/source/include/linux/net.h#L139>`__ which must include the following functions:
+你必须定义一个类型为 `net_proto_family <http://elixir.free-electrons.com/linux/v5.10/source/include/linux/net.h#L211>`__ 的结构，该结构可创建 STP 套接字。新创建的套接字不与任何端口或接口相关联，无法接收/发送数据包。你必须使用特定于 STP 协议族的操作来初始化 `socket ops 字段 <http://elixir.free-electrons.com/linux/v5.10/source/include/linux/net.h#L125>`__。该字段指向结构 `proto_ops <http://elixir.free-electrons.com/linux/v5.10/source/include/linux/net.h#L139>`__，其中必须包含以下函数：
 
-* ``release``: releases an STP socket
-* ``bind``: associates a socket with a port (possibly also an interface) on which packets will be received / sent:
+* ``release``：释放一个 STP 套接字
+* ``bind``：将套接字与端口关联（可能还包括接口），以便接收/发送数据包：
 
-  * there may be bind sockets only on one port (not on an interface)
-  * sockets associated with only one port will be able to receive packets sent to that port on all interfaces (analogous to UDP sockets associated with only one port); these sockets cannot send packets because the interface from which they can be sent via the standard sockets API cannot be specified
-  * two sockets cannot be binded to the same port-interface combination:
+  * 只能在一个端口上绑定套接字（不能在接口上绑定）
+  * 与一个端口关联的套接字将能够接收发送到该端口的所有接口上的数据包（类似于仅与一个端口关联的 UDP 套接字）；这些套接字不能发送数据包，因为无法指定可以通过标准套接字 API 发送的接口
+  * 两个套接字不能绑定到相同的端口——接口组合：
 
-    * if there is a socket already binded with a port and an interface then a second socket cannot be binded to the same port and the same interface or without a specified interface
-    * if there is a socket already binded to a port but without a specified interface then a second socket cannot be binded to the same port (with or without a specified interface)
+    * 如果已经有一个与端口和接口绑定的套接字，则第二个套接字不能绑定到相同的端口和相同的接口或相同端口接口不指定
+    * 如果已经有一个绑定到端口但没有指定接口的套接字，则不能将第二个套接字绑定到相同的端口（无论是否指定接口）
 
-  * we recommend using a hash table for bind instead of other data structures (list, array); in the kernel there is a hash table implementation in the `hashtable.h header <http://elixir.free-electrons.com/linux/v4.9.11/source/include/linux/hashtable.h>`__
+  * 我们建议在绑定操作中使用哈希表而不是其他数据结构（如列表、数组）；在内核 `hashtable.h 头文件中 <http://elixir.free-electrons.com/linux/v4.9.11/source/include/linux/hashtable.h>`__ 中有一个哈希表实现
 
-* ``connect``: associates a socket with a remote port and hardware address (MAC address) to which packets will be sent / received:
+* ``connect``：将套接字与远程端口和硬件地址（MAC 地址）关联，从而可以发送/接收数据包：
 
-  * this should allow ``send`` / ``recv`` operations on the socket instead of ``sendmsg`` / ``recvmsg`` or ``sendto`` / ``recvfrom``
-  * once connected to a host, sockets will only accept packets from that host
-  * once connected, the sockets can no longer be disconnected
+  * 这使得套接字可以执行 ``send`` / ``recv`` 操作而不是 ``sendmsg`` / ``recvmsg`` 或 ``sendto`` / ``recvfrom``
+  * 一旦连接到主机，套接字将只接受来自该主机的数据包
+  * 一旦连接，套接字将无法断开连接
 
-* ``sendmsg``, ``recvmsg``: send or receive a datagram on an STP socket:
+* ``sendmsg``, ``recvmsg``：在 STP 套接字上发送或接收数据报：
 
-  * for the *receive* part, metainformation about the host that sent the packet can be stored in the `cb field in sk_buff <http://elixir.free-electrons.com/linux/v5.10/source/include/linux/skbuff.h#L742>`__
+  * 对于 *接收* 部分，有关发送数据包的主机的元信息可以存储在 `sk_buff 中的 cb 字段 <http://elixir.free-electrons.com/linux/v5.10/source/include/linux/skbuff.h#L742>`__ 中
 
-* ``poll``: the default function ``datagram_poll`` will have to be used
-* for the rest of the operations the predefined stubs in the kernel will have to be used (``sock_no_*``)
+* ``poll``：必须使用默认函数 ``datagram_poll``
+* 对于其他操作，必须使用内核中预定义的 stub 函数 (``sock_no_*``)。
 
 .. code-block:: c
 
@@ -105,84 +102,68 @@ This field refers to a structure `proto_ops <http://elixir.free-electrons.com/li
             .sendpage = sock_no_sendpage,
     };
 
-Socket operations use a type of address called ``sockaddr_stp``, a type defined in the `assignment support header <https://github.com/linux-kernel-labs/linux/blob/master/tools/labs/templates/assignments/4-stp/stp.h>`__.
-For the *bind* operation, only the port and the index of the interface on which the socket is bind will be considered.
-For the *receive* operation, only the ``addr`` and ``port`` fields in the structure will be filled in with the MAC address of the host that sent the packet and with the port from which it was sent.
-Also, when sending a packet, the destination host will be obtained from the ``addr`` and ``port`` fields of this structure.
+套接字操作使用一种称为 ``sockaddr_stp`` 的地址类型，这种类型在 `作业支持头文件 <https://github.com/linux-kernel-labs/linux/blob/master/tools/labs/templates/assignments/4-stp/stp.h>`__ 中定义。对于 *bind* 操作，只需要考虑套接字绑定的端口和接口索引。对于 *receive* 操作，只需要使用该结构中的 ``addr`` 和 ``port`` 字段填充发送数据包的主机的 MAC 地址以及发送数据包的端口。此外，在发送数据包时，目标主机将从此结构的 ``addr`` 和 ``port`` 字段获取。
 
-You need to register a structure `packet_type <http://elixir.free-electrons.com/linux/v5.10/source/include/linux/netdevice.h#L2501>`__, using the call `dev_add_pack <http://elixir.free-electrons.com/linux/v5.10/source/net/core/dev.c#L521>`__ to be able to receive STP packets from the network layer.
+你需要使用 `dev_add_pack <http://elixir.free-electrons.com/linux/v5.10/source/net/core/dev.c#L521>`__ 调用，注册一个 `packet_type <http://elixir.free-electrons.com/linux/v5.10/source/include/linux/netdevice.h#L2501>`__ 结构，来能够从网络层接收 STP 数据包。
 
-The protocol will need to provide an interface through the *procfs* file system for statistics on sent / received packets.
-The file must be named ``/proc/net/stp_stats``, specified by the ``STP_PROC_FULL_FILENAME`` macro in `assignment support header <https://gitlab.cs.pub.ro/so2/4-stp/-/blob/master/src/stp.h>`__.
-The format must be of simple table type with ``2`` rows: on the first row the header of the table, and on the second row the statistics corresponding to the columns.
-The columns of the table must be in order:
+该协议需要通过 *procfs* 文件系统提供一个接口，用于统计发送/接收的数据包。该文件必须命名为 ``/proc/net/stp_stats``，该名称由 `作业支持头文件 <https://gitlab.cs.pub.ro/so2/4-stp/-/blob/master/src/stp.h>`__ 中的 ``STP_PROC_FULL_FILENAME`` 宏指定。格式必须是简单表格类型，具有 ``2`` 行：第一行是表格的标题，第二行是对应列的统计数据。表格的列必须按顺序排列：
 
 .. code::
 
     RxPkts HdrErr CsumErr NoSock NoBuffs TxPkts
 
-where:
+其中：
 
-* ``RxPkts`` - the number of packets received
-* ``HdrErr`` - the number of packets received with header errors (packets too short or with source or destination 0 ports)
-* ``CsumErr`` - the number of packets received with checksum errors
-* ``NoSock`` - the number of received packets for which no destination socket was found
-* ``NoBuffs`` - the number of received packets that could not be received because the socket queue was full
-* ``TxPkts`` - the number of packets sent
+* ``RxPkts`` ——接收到的数据包数量
+* ``HdrErr`` ——接收到的带有头部错误的数据包数量（数据包过短或源/目标端口为 0）
+* ``CsumErr`` ——接收到的有校验和错误的数据包数量
+* ``NoSock`` ——未找到目标套接字的接收数据包数量
+* ``NoBuffs`` ——接收队列已满而无法接收的数据包数量
+* ``TxPkts`` ——发送的数据包数量
 
-To create or delete the entry specified by ``STP_PROC_FULL_FILENAME`` we recommend using the functions `proc_create <http://elixir.free-electrons.com/linux/v5.10/source/include/linux/proc_fs.h#L108>`__ and `proc_remove <http://elixir.free-electrons.com/linux/v5.10/source/fs/proc/generic.c#L772>`__.
+我们建议使用 `proc_create <http://elixir.free-electrons.com/linux/v5.10/source/include/linux/proc_fs.h#L108>`__ 和 `proc_remove <http://elixir.free-electrons.com/linux/v5.10/source/fs/proc/generic.c#L772>`__ 函数来创建或删除由 ``STP_PROC_FULL_FILENAME`` 指定的项。
 
-Sample Protocol Implementations
+示例协议实现
 -------------------------------
 
-For examples of protocol implementation, we recommend the implementation of `PF_PACKET <http://elixir.free-electrons.com/linux/v5.10/source/net/packet/af_packet.c>`__ sockets and the various functions in `UDP implementation <http://elixir.free-electrons.com/linux/v5.10/source/net/ipv4/udp.c>`__ or `IP implementation <http://elixir.free-electrons.com/linux/v5.10/source/net/ipv4/af_inet.c>`__.
+关于协议实现的示例，我们推荐参考 `PF_PACKET <http://elixir.free-electrons.com/linux/v5.10/source/net/packet/af_packet.c>`__ 套接字的实现以及 `UDP 实现 <http://elixir.free-electrons.com/linux/v5.10/source/net/ipv4/udp.c>`__ 或 `IP 实现 <http://elixir.free-electrons.com/linux/v5.10/source/net/ipv4/af_inet.c>`__ 中的各种函数。
 
-Testing
+测试
 =======
 
-In order to simplify the assignment evaluation process, but also to reduce the mistakes of the submitted assignments,
-the assignment evaluation will be done automatically with the help of a
-`test script <https://gitlab.cs.pub.ro/so2/3-raid/-/blob/master/checker/4-stp-checker/_checker>`__ called `_checker`.
-The test script assumes that the kernel module is called `af_stp.ko`.
+为了简化作业评估过程，同时减少提交作业的错误，作业评估将使用一个名为 `_checker` 的 `测试脚本 <https://gitlab.cs.pub.ro/so2/3-raid/-/blob/master/checker/4-stp-checker/_checker>`__ 进行自动评估。测试脚本假设内核模块命名为 `af_stp.ko`。
 
 tcpdump
 -------
 
-You can use the ``tcpdump`` utility to troubleshoot sent packets.
-The tests use the loopback interface; to track sent packets you can use a command line of the form:
+你可以使用 ``tcpdump`` 实用程序来排查发送的数据包。测试使用回环接口；要跟踪发送的数据包，可以使用以下形式的命令行：
 
 .. code:: console
 
     tcpdump -i lo -XX
 
-You can use a static version of `tcpdump <http://elf.cs.pub.ro/so2/res/teme/tcpdump>`__.
-To add to the ``PATH`` environment variable in the virtual machine, copy this file to ``/linux/tools/labs/rootfs/bin``.
-Create the directory if it does not exist. Remember to give the ``tcpdump`` file execution permissions:
+你可以使用静态版本的 `tcpdump <http://elf.cs.pub.ro/so2/res/teme/tcpdump>`__。要将其添加到虚拟机的 ``PATH`` 环境变量中，请将该文件复制到 ``/linux/tools/labs/rootfs/bin``。如果该目录不存在，请创建该目录。记得给 ``tcpdump`` 文件赋予执行权限：
 
 .. code:: console
 
-    # Connect to the docker using ./local.sh docker interactive
+    # 使用 ./local.sh docker interactive 连接到 docker
     cd /linux/tools/labs/rootfs/bin
     wget http://elf.cs.pub.ro/so2/res/teme/tcpdump
     chmod +x tcpdump
 
-QuickStart
+快速入门
 ==========
 
-It is mandatory to start the implementation of the assignment from the code skeleton found in the `src <https://gitlab.cs.pub.ro/so2/4-stp/-/tree/master/src>`__ directory.
-There is only one header in the skeleton called `stp.h <https://gitlab.cs.pub.ro/so2/4-stp/-/blob/master/src/stp.h>`__.
-You will provide the rest of the implementation. You can add as many `*.c`` sources and additional `*.h`` headers.
-You should also provide a Kbuild file that will compile the kernel module called `af_stp.ko`.
-Follow the instructions in the `README.md file <https://gitlab.cs.pub.ro/so2/4-stp/-/blob/master/README.md>`__ of the `assignment's repo <https://gitlab.cs.pub.ro/so2/4-stp>`__.
+必须从 `src <https://gitlab.cs.pub.ro/so2/4-stp/-/tree/master/src>`__ 目录中找到的代码骨架开始实现作业。骨架中只有一个名为 `stp.h <https://gitlab.cs.pub.ro/so2/4-stp/-/blob/master/src/stp.h>`__ 的头文件。你需要提供其余的实现。你可以添加任意数量的 `*.c`` 源文件和额外的 `*.h`` 头文件。你还应该提供一个名为 `af_stp.ko` 的内核模块的 Kbuild 文件。请按照 `作业仓库 <https://gitlab.cs.pub.ro/so2/4-stp>`__ 的 `README.md 文件 <https://gitlab.cs.pub.ro/so2/4-stp/-/blob/master/README.md>`__ 中的说明进行操作。
 
 
 
-Tips
+提示
 ----
 
-To increase your chances of getting the highest grade, read and follow the Linux kernel coding style described in the `Coding Style document <https://elixir.bootlin.com/linux/v5.10/source/Documentation/process/coding-style.rst>`__.
+为了增加获得最高评分的机会，请阅读并遵循 `Linux 内核编码风格 <https://elixir.bootlin.com/linux/v5.10/source/Documentation/process/coding-style.rst>`__。
 
-Also, use the following static analysis tools to verify the code:
+此外，使用以下静态分析工具验证代码：
 
 * checkpatch.pl
 
@@ -205,49 +186,45 @@ Also, use the following static analysis tools to verify the code:
      $ sudo apt-get install cppcheck
      $ cppcheck /path/to/your/file.c
 
-Penalties
+扣分项
 ---------
 
-Information about assigments penalties can be found on the `General Directions page <https://ocw.cs.pub.ro/courses/so2/teme/general>`__.
+有关作业扣分的信息可以在 `通用指导页面 <https://ocw.cs.pub.ro/courses/so2/teme/general>`__ 上找到。
 
-In exceptional cases (the assigment passes the tests by not complying with the requirements) and if the assigment does not pass all the tests, the grade will may decrease more than mentioned above.
+在特殊情况下（作业通过测试，但不符合要求），以及如果作业未通过所有测试，分数可能会降低得更多。
 
-Submitting the assigment
+提交作业
 ------------------------
 
-The assignment will be graded automatically using the `vmchecker-next <https://github.com/systems-cs-pub-ro/vmchecker-next/wiki/Student-Handbook>`__ infrastructure.
-The submission will be made on moodle on the `course's page <https://curs.upb.ro/2022/course/view.php?id=5121>`__ to the related assignment.
-You will find the submission details in the `README.md file <https://gitlab.cs.pub.ro/so2/4-stp/-/blob/master/README.md>`__ of the `repo <https://gitlab.cs.pub.ro/so2/4-stp>`__.
+作业将使用 `vmchecker-next <https://github.com/systems-cs-pub-ro/vmchecker-next/wiki/Student-Handbook>`__ 基础设施进行自动评分。提交将在 moodle 的 `课程页面 <https://curs.upb.ro/2022/course/view.php?id=5121>`__ 上与相关作业相关联。你可以在 `仓库 <https://gitlab.cs.pub.ro/so2/4-stp>`__ 的 `README.md 文件 <https://gitlab.cs.pub.ro/so2/4-stp/-/blob/master/README.md>`__ 中找到提交详细信息。
 
 
-Resources
+资源
 =========
 
-* `Lecture 10 - Networking <https://linux-kernel-labs.github.io/refs/heads/master/so2/lec10-networking.html>`__
-* `Lab 10 - Networking <https://linux-kernel-labs.github.io/refs/heads/master/so2/lab10-networking.html>`__
-* Linux kernel sources
+* `课程 10 ——网络 </so2/lec10-networking.html>`__
+* `实验 10 ——网络 </so2/lab10-networking.html>`__
+* Linux 内核源代码
 
-  * `Implementing PF_PACKET sockets <http://elixir.free-electrons.com/linux/v5.10/source/net/packet/af_packet.c>`__
-  * `Implementation of the UDP protocol <http://elixir.free-electrons.com/linux/v5.10/source/net/ipv4/udp.c>`__
-  * `Implementation of the IP protocol <http://elixir.free-electrons.com/linux/v5.10/source/net/ipv4/af_inet.c>`__
+  * `PF_PACKET 套接字实现 <http://elixir.free-electrons.com/linux/v5.10/source/net/packet/af_packet.c>`__
+  * `UDP 协议实现 <http://elixir.free-electrons.com/linux/v5.10/source/net/ipv4/udp.c>`__
+  * `IP 协议实现 <http://elixir.free-electrons.com/linux/v5.10/source/net/ipv4/af_inet.c>`__
 
-* Understanding Linux Network Internals
+* 理解 Linux 网络内部的工作原理
 
-  * chapters 8-13
+  * 第 8-13 章
 
-* `assignment support header <https://gitlab.cs.pub.ro/so2/4-stp/-/blob/master/src/stp.h>`__
+* `作业支持头文件 <https://gitlab.cs.pub.ro/so2/4-stp/-/blob/master/src/stp.h>`__
 
-We recommend that you use gitlab to store your homework. Follow the directions in `README <https://gitlab.cs.pub.ro/so2/4-stp/-/blob/master/README.md>`__.
+我们建议你使用 GitLab 存储你的作业。请按照 `README <https://gitlab.cs.pub.ro/so2/4-stp/-/blob/master/README.md>`__ 中的说明进行操作。
 
-Questions
+问题
 =========
 
-For questions about the topic, you can consult the mailing `list archives <http://cursuri.cs.pub.ro/pipermail/so2/>`__
-or you can write a question on the dedicated Teams channel.
+如果有相关的问题，请查阅邮件 `列表归档 <http://cursuri.cs.pub.ro/pipermail/so2/>`__ 或在专用 Teams 频道上提问。
 
-Before you ask a question, make sure that:
+在提问之前，请确保：
 
-   - you have read the statement of the assigment well
-   - the question is not already presented on the `FAQ page <https://ocw.cs.pub.ro/courses/so2/teme/tema2/faq>`__
-   - the answer cannot be found in the `mailing list archives <http://cursuri.cs.pub.ro/pipermail/so2/>`__
-
+   - 你已经仔细阅读了作业说明
+   - 问题在 `FAQ 页面 <https://ocw.cs.pub.ro/courses/so2/teme/tema2/faq>`__ 上没有被提出
+   - 答案无法在 `邮件列表归档 <http://cursuri.cs.pub.ro/pipermail/so2/>`__ 中找到
