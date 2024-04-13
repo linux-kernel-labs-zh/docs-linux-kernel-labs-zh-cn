@@ -132,11 +132,11 @@
    :inline-contents: True
    :level: 2
 
-   * 使临界区 **原子化**（例如使用原子指令）
+   * 使临界区 **原子化** (例如使用原子指令)
 
-   * 在临界区期间 **禁用抢占**（例如禁用中断、后半部分处理程序或线程抢占）
+   * 在临界区期间 **禁用抢占** (例如禁用中断、后半部分处理程序或线程抢占)
 
-   * **序列化访问**临界区（例如使用自旋锁或互斥锁，同一时间只允许有一个上下文或线程进入临界区）
+   * **序列化访问** 临界区 (例如使用自旋锁或互斥锁，同一时间只允许有一个上下文或线程进入临界区)
 
 
 
@@ -170,15 +170,15 @@ Linux 内核中存在多个并发源，具体多少个取决于内核配置和�
 
    * 基于整数：
 
-     * 简单操作：:c:func:`atomic_inc`（原子递增）, :c:func:`atomic_dec`（原子递减）, :c:func:`atomic_add`（原子加法）, :c:func:`atomic_sub`（原子减法）
+     * 简单操作: :c:func:`atomic_inc` (原子递增), :c:func:`atomic_dec` (原子递减), :c:func:`atomic_add` (原子加法), :c:func:`atomic_sub` (原子减法)
 
-     * 条件操作：:c:func:`atomic_dec_and_test`（原子递减并测试）, :c:func:`atomic_sub_and_test`（原子减法并测试）
+     * 条件操作: :c:func:`atomic_dec_and_test` (原子递减并测试), :c:func:`atomic_sub_and_test` (原子减法并测试)
 
    * 基于位操作：
 
-     * 简单操作：:c:func:`test_bit`（测试位）, :c:func:`set_bit`（设置位）, :c:func:`change_bit`（修改位）
+     * 简单操作: :c:func:`test_bit` (测试位), :c:func:`set_bit` (设置位), :c:func:`change_bit` (修改位)
 
-     * 条件操作：:c:func:`test_and_set_bit`（测试并设置位）, :c:func:`test_and_clear_bit`（测试并清除位）, :c:func:`test_and_change_bit`（测试并修改位）
+     * 条件操作: :c:func:`test_and_set_bit` (测试并设置位), :c:func:`test_and_clear_bit` (测试并清除位), :c:func:`test_and_change_bit` (测试并修改位)
 
 例如，我们可以使用 :c:func:`atomic_dec_and_test` 来实现资源计数器的递减和值检查的原子操作：
 
@@ -595,9 +595,9 @@ CPU 核心发出读取或写入请求将触发状态转换，如下所示：
    :inline-contents: True
    :level: 2
 
-   * 在进程上下文中使用 :c:func:`spin_lock_bh`（将 :c:func:`local_bh_disable` 和 :c:func:`spin_lock` 结合起来）和 :c:func:`spin_unlock_bh`（将 :c:func:`spin_unlock` 和 :c:func:`local_bh_enable` 结合起来）
+   * 在进程上下文中使用 :c:func:`spin_lock_bh` (将 :c:func:`local_bh_disable` 和 :c:func:`spin_lock` 结合起来) 和 :c:func:`spin_unlock_bh` (将 :c:func:`spin_unlock` 和 :c:func:`local_bh_enable` 结合起来)
 
-   * 在软中断上下文中使用：:c:func:`spin_lock` 和 :c:func:`spin_unlock`（如果与中断处理程序共享数据，则使用 :c:func:`spin_lock_irqsave` 和 :c:func:`spin_lock_irqrestore` ）
+   * 在软中断上下文中使用：:c:func:`spin_lock` 和 :c:func:`spin_unlock` (如果与中断处理程序共享数据，则使用 :c:func:`spin_lock_irqsave` 和 :c:func:`spin_lock_irqrestore`)
 
 
 如前所述，考虑到抢占，Linux 内核中的并发源还可以是其他进程。
@@ -659,7 +659,7 @@ CPU 核心发出读取或写入请求将触发状态转换，如下所示：
 
    * 比起自旋锁具有更高的延迟
 
-从概念上讲，:c:`mutex_lock` 操作相对简单：如果互斥锁未被获取，我们可以通过原子交换操作走捷径：
+从概念上讲, :c:`mutex_lock` 操作相对简单：如果互斥锁未被获取，我们可以通过原子交换操作走捷径：
 
 
 .. slide:: :c:func:`mutex_lock` 捷径
@@ -907,7 +907,7 @@ RCU 将数据结构的删除更新分为两个阶段：
 
 在第一步中，可以看到在读者遍历列表时，所有元素都被引用。在第二步中，写者移除了元素 B。由于仍然有读者持有对其的引用，回收被推迟。在第三步中，静默周期刚刚过去，可以注意到没有对元素 B 的引用了。其他元素仍然有来自在元素被移除后开始列表遍历的读者的引用。在第四步中，我们最终执行回收（释放元素）。
 
-现在我们已经介绍了RCU在高层次上的工作原理，让我们看一下用于遍历列表以及向列表中添加和删除元素的API：
+现在我们已经介绍了 RCU 在高层次上的工作原理，让我们看一下用于遍历列表以及向列表中添加和删除元素的 API：
 
 
 .. slide:: 列表 RCU API 速查表

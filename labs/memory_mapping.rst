@@ -129,7 +129,7 @@ mmap 系统调用有以下参数：
 
    int (*mmap)(struct file *filp, struct vm_area_struct *vma);
 
-*filp* 字段是一个指针，指向在用户空间打开设备时创建的 :c:type:`struct file`。 *vma* 字段用于指示设备应该将内存映射到哪一个虚拟地址空间。驱动程序应该分配内存 (使用 :c:func:`kmalloc`, :c:func:`vmalloc` 或者 :c:func:`alloc_pages`), 然后使用辅助函数（如:c:func:`remap_pfn_range`）根据 *vma* 参数将其映射到用户地址空间。
+*filp* 字段是一个指针，指向在用户空间打开设备时创建的 :c:type:`struct file`。 *vma* 字段用于指示设备应该将内存映射到哪一个虚拟地址空间。驱动程序应该分配内存 (使用 :c:func:`kmalloc`, :c:func:`vmalloc` 或者 :c:func:`alloc_pages`), 然后使用辅助函数 (如 :c:func:`remap_pfn_range`) 根据 *vma* 参数将其映射到用户地址空间。
 
 :c:func:`remap_pfn_range` 将连续的物理地址空间映射到由 :c:type:`vm_area_struct` 表示的虚拟空间：
 
@@ -289,9 +289,10 @@ mmap 系统调用有以下参数：
 
 .. attention:: vmalloc 页面不是物理连续的，因此需要为每个页面单独使用 :c:func:`remap_pfn_range`。
 
-               遍历所有虚拟页面，并对于每个页面:
-               * 确定物理地址
-               * 使用 :c:func:`remap_pfn_range` 进行映射
+               遍历所有虚拟页面，并对于每个页面：
+
+                 * 确定物理地址
+                 * 使用 :c:func:`remap_pfn_range` 进行映射
 
                确保每次都确定物理地址，并且只映射一个页面。
 

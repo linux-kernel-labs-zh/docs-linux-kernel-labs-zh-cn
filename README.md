@@ -2,7 +2,7 @@
 [![Forks](https://img.shields.io/github/forks/linux-kernel-labs-zh/docs-linux-kernel-labs-zh-cn.svg)](https://github.com/linux-kernel-labs-zh/docs-linux-kernel-labs-zh-cn/network/members)
 [![Watchers](https://img.shields.io/github/watchers/linux-kernel-labs-zh/docs-linux-kernel-labs-zh-cn.svg)](https://github.com/linux-kernel-labs-zh/docs-linux-kernel-labs-zh-cn/watchers)
 
-# Linux 内核实验室中文教程
+# Linux 内核实验中文教程
 
 这是 linux kernel labs ([linux-kernel-labs/linux-kernel-labs.github.io](https://linux-kernel-labs.github.io/refs/heads/master/)) 教程的中文翻译版本，翻译后的版本托管在 Github pages 上，网址为 https://linux-kernel-labs-zh.xyz
 
