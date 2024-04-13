@@ -653,7 +653,7 @@ minfs
 3. 创建和销毁 minfs 索引节点
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-挂载操作中，我们需要初始化根索引节点，并且为了获得根索引节点，我们需要实现与索引节点相关的函数。也就是说，你需要实现 ``minfs_alloc_inode`` 和 ``minfs_destroy_inode`` 函数。按照标有 ``TODO 3`` 的指示进行操作。你可以将 :c:func:`minix_alloc_inode`` 和 :c:func:`minix_destroy_inode` 函数作为参考。
+挂载操作中，我们需要初始化根索引节点，并且为了获得根索引节点，我们需要实现与索引节点相关的函数。也就是说，你需要实现 ``minfs_alloc_inode`` 和 ``minfs_destroy_inode`` 函数。按照标有 ``TODO 3`` 的指示进行操作。你可以将 :c:func:`minix_alloc_inode` 和 :c:func:`minix_destroy_inode` 函数作为参考。
 
 为了实现，请查看 ``minfs.h`` 头文件中的宏和结构。
 

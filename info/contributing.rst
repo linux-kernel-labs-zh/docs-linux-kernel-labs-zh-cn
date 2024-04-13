@@ -1,16 +1,16 @@
 ===========================
-对 Linux 内核实验室项目做贡献
+向 Linux 内核实验项目做贡献
 ===========================
 
-``Linux 内核实验室`` 是一个开放的平台。你可以通过对文档、练习或基础设施的贡献来帮助它变得更好。无论是对错别字的修正还是在文档中添加新的部分，所有的贡献我们都欢迎。
+``Linux 内核实验`` 是一个开放的平台。你可以通过对文档、练习或基础设施的贡献来帮助它变得更好。无论是对错别字的修正还是在文档中添加新的部分，所有的贡献我们都欢迎。
 
-所有需要进行贡献的信息都可以在 `linux 内核实验室 Linux 仓库 <https://github.com/linux-kernel-labs/linux>`_ 中找到。如果要改变任何东西，你需要从你自己的 fork 创建一个拉取请求（``Pull Request``，``PR``）到这个仓库。PR 将由团队成员进行审核，并在解决任何可能的问题后合并。
+所有需要进行贡献的信息都可以在 `Linux 内核实验 Linux 仓库 <https://github.com/linux-kernel-labs/linux>`_ 中找到。如果要改变任何东西，你需要从你自己的 fork 创建一个拉取请求（``Pull Request``，``PR``）到这个仓库。PR 将由团队成员进行审核，并在解决任何可能的问题后合并。
 
 ********
 仓库结构
 ********
 
-`Linux 内核实验室仓库 <https://github.com/linux-kernel-labs/linux>`_ 是 Linux 内核仓库的一个 fork，增加了以下内容：
+`Linux 内核实验仓库 <https://github.com/linux-kernel-labs/linux>`_ 是 Linux 内核仓库的一个 fork，增加了以下内容：
 
   * ``/tools/labs``: 包含实验室和:ref:`虚拟机（VM）基础设施<vm_link>`
 

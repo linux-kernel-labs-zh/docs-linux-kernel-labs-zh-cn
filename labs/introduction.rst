@@ -112,7 +112,7 @@ Cscope 也可以作为独立工具使用，但与编辑器结合使用时更加�
             set cscopequickfix=s-,c-,d-,i-,t-,e-,g-
     endif
 
-脚本在当前目录或父目录中搜索名为 :file:`cscope.out` 的文件。如果 :command:`vim` 找到该文件，你可以使用快捷键 :code:`Ctrl + ]` 或 :code:`Ctrl+\ g`（按下 control-\\ 然后按 g）直接跳转到光标所在单词的定义（函数、变量、结构等）。类似地，你可以使用 :code:`Ctrl+\ s` 前往光标所在单词的使用位置。
+脚本在当前目录或父目录中搜索名为 :file:`cscope.out` 的文件。如果 :command:`vim` 找到该文件，你可以使用快捷键 :code:`Ctrl + ]` 或 :code:`Ctrl+\ g` (按下 control-\\ 然后按 g) 直接跳转到光标所在单词的定义（函数、变量、结构等）。类似地，你可以使用 :code:`Ctrl+\ s` 前往光标所在单词的使用位置。
 
 你可以从以下网址获取一个启用了 cscope 的 :file:`.vimrc` 文件（还包含其他好用的东西）：https://github.com/ddvlad/cfg/blob/master/\_vimrc。以下指南基于该文件，同时也展示了具有相同效果的基本 :command:`vim` 命令。
 
@@ -367,7 +367,7 @@ Linux 内核的主要优势是可以访问源代码和其开放式开发系统�
   -  你可以在 :ref:`vm_link` 找到有关虚拟机的更多详细信息。
 
 .. important::
-    在解决练习之前，**仔细**阅读所有要点。
+    在解决练习之前, **仔细** 阅读所有要点。
 
 ..
   _[SECTION-EXERCISES-REMARKS-END]
