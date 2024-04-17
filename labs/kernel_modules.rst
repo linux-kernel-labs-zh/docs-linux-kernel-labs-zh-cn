@@ -1015,7 +1015,7 @@ Extra Exercises
 请指定两种过滤方式。
 
 .. hint::
-    阅读 `Dynamic debugging`_ 部分并查看 :command:`dyndbg` 的选项（例如 :command:`line` 、:command:`format`）。
+    阅读 `动态调试`_ 部分并查看 :command:`dyndbg` 的选项（例如 :command:`line` 、:command:`format`）。
 
 执行过滤操作并检查 :file:`dynamic_debug/control` 文件。发生了什么变化？如何知道哪些调用被激活了？
 
@@ -1028,7 +1028,7 @@ Extra Exercises
 正如你注意到的那样，只有在插入模块后才能激活/过滤 :c:func:`pr_debug` 调用。在某些情况下，查看模块初始化期间的消息可能会很有帮助。可以通过使用一个名为 :command:`dyndbg` 的默认（伪）参数作为初始化模块的参数来实现。使用此参数，你可以添加/删除 :command:`dyndbg` 标志。
 
 .. hint::
-    阅读 `Dynamic debugging`_ 部分的最后一部分，查看可用的标志（例如： :command:`+/- p`）。
+    阅读 `动态调试`_ 部分的最后一部分，查看可用的标志（例如： :command:`+/- p`）。
 
 阅读 `模块初始化时的调试消息部分 <https://01.org/linuxgraphics/gfx-docs/drm/admin-guide/dynamic-debug-howto.html#debug-messages-at-module-initialization-time>`_ ，并插入模块以便在初始化期间显示 :c:func:`my_debug_func`（即 :c:func:`dyndbg_init`）中的消息。
 
