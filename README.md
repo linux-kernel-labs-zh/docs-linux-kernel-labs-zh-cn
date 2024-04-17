@@ -4,7 +4,9 @@
 
 # Linux 内核实验中文教程
 
-本文档是 linux kernel labs ([linux-kernel-labs/linux-kernel-labs.github.io](https://linux-kernel-labs.github.io/refs/heads/master/)) 教程的中文翻译版本，翻译后的版本托管在 Vercel 上，网址为 https://linux-kernel-labs-zh.xyz
+本文档是 linux kernel labs ([linux-kernel-labs/linux-kernel-labs.github.io](https://linux-kernel-labs.github.io/refs/heads/master/)) 教程的中文翻译版本，翻译后的版本托管在 Vercel 上，网址为 [https://linux-kernel-labs-zh.xyz](https://linux-kernel-labs-zh.xyz)。
+
+实验是在基于 QEMU 的虚拟机上运行。内核代码在主机上开发和构建，然后部署和运行在虚拟机上。要配置实验环境，你可以克隆/下载 [Linux-zh](https://github.com/linux-kernel-labs-zh/linux-zh) 仓库到你的 Linux 系统上（发行版建议 Debian/Ubuntu，可以是物理机也可以是虚拟机），之后依据[虚拟机配置](https://linux-kernel-labs-zh.xyz/info/vm.html)中的说明进行操作。
 
 ## 介绍
 
