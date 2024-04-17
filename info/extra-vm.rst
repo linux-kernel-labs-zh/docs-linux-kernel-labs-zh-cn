@@ -8,7 +8,7 @@ QEMU 虚拟机的默认 Yocto 镜像（core-image-minimal-qemu）仅提供了运
 
 要使用新的镜像，需要更改 ``tools/labs/qemu/Makefile`` 中的 ``YOCTO_IMAGE`` 变量：
 
-… code-block:: shell
+.. code-block:: shell
 
    YOCTO_IMAGE = core-image-sato-qemu$(ARCH).ext4
 
