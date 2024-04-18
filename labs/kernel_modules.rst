@@ -788,20 +788,19 @@ KDB 具有各种命令来控制和定义被调试系统的上下文：
 
 为了使用内核模块，我们将按照 :ref:`上述 <exercises-summary>` 步骤进行操作。
 
-首先在 `tools/labs` 目录下运行以下命令生成名为 **1-2-test-mod** 的任务骨架，然后构建并复制模块到虚拟机中。
+在 :file:`tools/labs` 目录下运行以下命令生成 **1-2-test-mod** 任务的骨架，然后构建模块。
 
 .. code-block:: bash
 
   $ LABS=kernel_modules make skels
   $ make build
-  $ make copy
 
-这些命令将构建并复制当前实验骨架中的所有模块。
+这些命令将构建当前实验骨架中的所有模块。
 
 .. warning::
   在解决练习 3 之前，编译 ``3-error-mod`` 时会出现编译错误。为了避免此问题，删除 :file:`skels/kernel_modules/3-error-mod/` 目录，并从 ``skels/Kbuild`` 中删除相应的行。
 
-使用 :command:`make boot` 启动虚拟机，使用 `minicom -D serial.pts` 连接到串行控制台，并执行以下任务：
+使用 :command:`make console` 启动虚拟机，并执行以下任务：
 
 * 加载内核模块。
 

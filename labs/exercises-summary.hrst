@@ -1,10 +1,11 @@
 .. important::
 
-   要解决练习，你需要执行以下步骤：
+   我们强烈建议你使用 `这个仓库 <https://gitlab.cs.pub.ro/so2/so2-labs>`__ 中的配置。
+
+   要解决练习问题，你需要执行以下步骤：
 
       * 用模板来准备骨架
       * 构建模块
-      * 将模块复制到虚拟机
       * 启动虚拟机并在虚拟机中测试模块。
 
    当前实验名称为 |LAB_NAME|。请参阅任务名称的练习。
@@ -28,16 +29,15 @@
 
       tools/labs $ make build
 
-   然后，复制模块并启动虚拟机：
+   然后，启动虚拟机：
 
    .. code-block:: shell
 
-      tools/labs $ make copy
-      tools/labs $ make boot
+      tools/labs $ make console
 
    模块将放置在 /home/root/skels/|LAB_NAME|/<task_name> 目录中。
 
-   或者，我们可以通过 :command:`scp` 命令复制文件，以避免重新启动虚拟机。有关通过网络连接到虚拟机的详细信息，请参阅 :ref:`vm_interaction_link`。
+   重新构建模块时，无需停止虚拟机！本地 `skels` 目录与虚拟机共享。
 
    请查看 `练习`_ 部分以获取更详细的信息。
 
