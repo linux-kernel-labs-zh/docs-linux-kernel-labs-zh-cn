@@ -2,6 +2,11 @@
 操作系统 2
 ===================
 
+.. toctree::
+   :caption: 最好了解
+   :maxdepth: 1
+
+   grading.rst
 
 .. toctree::
    :caption: 课程
