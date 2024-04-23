@@ -14,7 +14,10 @@
 
 ## 实验环境配置
 
-实验是在基于 QEMU 的虚拟机上运行。内核代码在主机上开发和构建，然后部署和运行在虚拟机上。要配置实验环境，你可以克隆/下载 [Linux-zh](https://github.com/linux-kernel-labs-zh/linux-zh) 仓库到你的 Linux 系统上（发行版建议 Debian/Ubuntu，可以是物理机也可以是虚拟机），之后依据[虚拟机配置](https://linux-kernel-labs-zh.xyz/info/vm.html)中的说明进行操作。
+实验在基于 QEMU 的虚拟机中进行。首先在主机上开发和构建内核代码，然后将其部署至虚拟机执行。配置实验环境有两种方法：
+
+1. **使用 Docker（推荐方式）**：请参照 [so2-labs 仓库](https://github.com/linux-kernel-labs-zh/so2-labs)中的指南进行配置。
+2. **手动配置**：克隆或下载 [Linux-zh 仓库](https://github.com/linux-kernel-labs-zh/linux-zh) 至你的 Linux 系统（推荐使用 Debian/Ubuntu 发行版，支持物理机、虚拟机或 WSL），并根据[虚拟机配置指南](https://linux-kernel-labs-zh.xyz/info/vm.html#section-2)配置环境。
 
 ## 项目结构介绍：
 
