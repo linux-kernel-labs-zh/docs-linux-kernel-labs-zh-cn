@@ -61,7 +61,6 @@
 在典型的操作系统架构中，操作系统内核负责安全且公平地管理多个应用程序对硬件资源的访问和共享。
 
 .. slide:: 典型操作系统架构
-
    :level: 2
    :inline-contents: True
 
@@ -179,7 +178,6 @@
 
 
 .. slide:: 用户和内核共享虚拟地址空间
-
    :level: 2
    :inline-contents: True
 
@@ -633,7 +631,7 @@ Linux VFS 还实现了一个复杂的缓存机制，包括以下内容：
    :level: 2
    :inline-contents: True
 
-   .. image:: ../img/lectures/Monolithic_kernel.svg
+   .. image:: ../img/lectures/Networking_stack.svg
 
 
 Linux 安全模块
