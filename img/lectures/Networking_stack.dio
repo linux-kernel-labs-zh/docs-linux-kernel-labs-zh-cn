@@ -1,0 +1,52 @@
+<mxfile host="65bd71144e">
+    <diagram id="l14nezjFhkmAgCZZq4Vt" name="Page-1">
+        <mxGraphModel dx="1496" dy="611" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="2" value="伯克利套接字（Socket）接口" style="rounded=0;whiteSpace=wrap;html=1;shadow=1;fontSize=20;" vertex="1" parent="1">
+                    <mxGeometry x="160" y="80" width="400" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="3" value="传输层" style="rounded=0;whiteSpace=wrap;html=1;shadow=1;fontSize=20;" vertex="1" parent="1">
+                    <mxGeometry x="160" y="170" width="400" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="5" value="TCP" style="rounded=0;whiteSpace=wrap;html=1;shadow=1;fontSize=20;" vertex="1" parent="1">
+                    <mxGeometry x="160" y="224" width="197.5" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="6" value="UDP" style="rounded=0;whiteSpace=wrap;html=1;shadow=1;fontSize=20;" vertex="1" parent="1">
+                    <mxGeometry x="362" y="224" width="197.5" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="7" value="网络层" style="rounded=0;whiteSpace=wrap;html=1;shadow=1;fontSize=20;" vertex="1" parent="1">
+                    <mxGeometry x="160" y="310" width="400" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="9" value="IP" style="rounded=0;whiteSpace=wrap;html=1;shadow=1;fontSize=20;" vertex="1" parent="1">
+                    <mxGeometry x="160" y="364" width="110" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="10" value="路由" style="rounded=0;whiteSpace=wrap;html=1;shadow=1;fontSize=20;" vertex="1" parent="1">
+                    <mxGeometry x="274" y="364" width="120" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="11" value="NetFilter" style="rounded=0;whiteSpace=wrap;html=1;shadow=1;fontSize=20;" vertex="1" parent="1">
+                    <mxGeometry x="398" y="364" width="162" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="12" value="数据链路层" style="rounded=0;whiteSpace=wrap;html=1;shadow=1;fontSize=20;" vertex="1" parent="1">
+                    <mxGeometry x="160" y="453" width="400" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="13" value="以太网" style="rounded=0;whiteSpace=wrap;html=1;shadow=1;fontSize=20;" vertex="1" parent="1">
+                    <mxGeometry x="160" y="507" width="110" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="14" value="ARP" style="rounded=0;whiteSpace=wrap;html=1;shadow=1;fontSize=20;" vertex="1" parent="1">
+                    <mxGeometry x="274" y="507" width="120" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="15" value="桥接" style="rounded=0;whiteSpace=wrap;html=1;shadow=1;fontSize=20;" vertex="1" parent="1">
+                    <mxGeometry x="398" y="507" width="162" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="16" value="排队规则&lt;br&gt;（queuing discipline，qdisk）" style="rounded=0;whiteSpace=wrap;html=1;shadow=1;fontSize=20;" vertex="1" parent="1">
+                    <mxGeometry x="160" y="599" width="400" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="17" value="网络设备驱动程序" style="rounded=0;whiteSpace=wrap;html=1;shadow=1;fontSize=20;" vertex="1" parent="1">
+                    <mxGeometry x="160" y="689" width="400" height="50" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

@@ -1,0 +1,82 @@
+<mxfile host="65bd71144e">
+    <diagram id="k0FPUSnzgOY_u6sl6N65" name="Page-1">
+        <mxGraphModel dx="1421" dy="580" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="2" value="内存" style="rounded=0;whiteSpace=wrap;html=1;fontSize=20;shadow=1;fontFamily=Helvetica;" parent="1" vertex="1">
+                    <mxGeometry x="354" y="80" width="106" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="3" value="" style="rounded=0;whiteSpace=wrap;html=1;fontSize=20;shadow=1;fontFamily=Helvetica;" parent="1" vertex="1">
+                    <mxGeometry x="150" y="180" width="120" height="200" as="geometry"/>
+                </mxCell>
+                <mxCell id="4" value="处理器 A" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=20;shadow=1;fontFamily=Helvetica;" parent="1" vertex="1">
+                    <mxGeometry x="160" y="190" width="100" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="6" value="" style="rounded=0;whiteSpace=wrap;html=1;fontSize=20;shadow=1;fontFamily=Helvetica;" parent="1" vertex="1">
+                    <mxGeometry x="347" y="180" width="120" height="200" as="geometry"/>
+                </mxCell>
+                <mxCell id="7" value="处理器 B" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=20;shadow=1;fontFamily=Helvetica;" parent="1" vertex="1">
+                    <mxGeometry x="357" y="190" width="100" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="10" value="进程 1" style="rounded=0;whiteSpace=wrap;html=1;fontSize=20;shadow=1;fontFamily=Helvetica;" parent="1" vertex="1">
+                    <mxGeometry x="367" y="240" width="80" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="12" value="进程 2" style="rounded=0;whiteSpace=wrap;html=1;fontSize=20;shadow=1;fontFamily=Helvetica;" parent="1" vertex="1">
+                    <mxGeometry x="367" y="290" width="80" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="13" value="内核" style="rounded=0;whiteSpace=wrap;html=1;fontSize=20;shadow=1;fontFamily=Helvetica;" parent="1" vertex="1">
+                    <mxGeometry x="367" y="340" width="80" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="14" value="" style="rounded=0;whiteSpace=wrap;html=1;fontSize=20;shadow=1;fontFamily=Helvetica;" parent="1" vertex="1">
+                    <mxGeometry x="540" y="180" width="120" height="200" as="geometry"/>
+                </mxCell>
+                <mxCell id="15" value="处理器 C" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=20;shadow=1;fontFamily=Helvetica;" parent="1" vertex="1">
+                    <mxGeometry x="550" y="190" width="100" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="16" value="进程 1" style="rounded=0;whiteSpace=wrap;html=1;fontSize=20;shadow=1;fontFamily=Helvetica;" parent="1" vertex="1">
+                    <mxGeometry x="560" y="240" width="80" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="17" value="进程 2" style="rounded=0;whiteSpace=wrap;html=1;fontSize=20;shadow=1;fontFamily=Helvetica;" parent="1" vertex="1">
+                    <mxGeometry x="560" y="290" width="80" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="18" value="内核" style="rounded=0;whiteSpace=wrap;html=1;fontSize=20;shadow=1;fontFamily=Helvetica;" parent="1" vertex="1">
+                    <mxGeometry x="560" y="340" width="80" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="22" value="" style="endArrow=block;startArrow=block;html=1;fontSize=20;rounded=0;startFill=1;endFill=1;exitX=0.507;exitY=-0.021;exitDx=0;exitDy=0;exitPerimeter=0;shadow=0;fontFamily=Helvetica;" parent="1" source="3" edge="1">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="210" y="170" as="sourcePoint"/>
+                        <mxPoint x="350" y="110" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="210" y="110"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="23" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;shadow=0;fontSize=20;exitX=1.022;exitY=0.632;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.5;entryY=-0.021;entryDx=0;entryDy=0;entryPerimeter=0;fontFamily=Helvetica;" parent="1" source="2" target="14" edge="1">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="470" y="110" as="sourcePoint"/>
+                        <mxPoint x="610" y="170" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="600" y="110"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="24" value="" style="endArrow=block;startArrow=block;html=1;rounded=0;shadow=0;fontSize=20;exitX=0.511;exitY=-0.015;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.51;entryY=1.076;entryDx=0;entryDy=0;entryPerimeter=0;startFill=1;endFill=1;fontFamily=Helvetica;" parent="1" source="6" target="2" edge="1">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="360" y="190" as="sourcePoint"/>
+                        <mxPoint x="410" y="140" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="25" value="进程 1" style="rounded=0;whiteSpace=wrap;html=1;fontSize=20;shadow=1;fontFamily=Helvetica;" parent="1" vertex="1">
+                    <mxGeometry x="170" y="240" width="80" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="26" value="进程 2" style="rounded=0;whiteSpace=wrap;html=1;fontSize=20;shadow=1;fontFamily=Helvetica;" parent="1" vertex="1">
+                    <mxGeometry x="170" y="290" width="80" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="27" value="内核" style="rounded=0;whiteSpace=wrap;html=1;fontSize=20;shadow=1;fontFamily=Helvetica;" parent="1" vertex="1">
+                    <mxGeometry x="170" y="340" width="80" height="30" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>
