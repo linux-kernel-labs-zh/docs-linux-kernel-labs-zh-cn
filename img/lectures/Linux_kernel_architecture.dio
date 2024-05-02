@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram id="4ORXoXpxBxCznqyrlw8V" name="Page-1">
-        <mxGraphModel dx="1776" dy="725" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+        <mxGraphModel dx="1421" dy="580" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -61,61 +61,61 @@
                         <mxPoint x="438" y="393" as="targetPoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="25" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;shadow=1;fontSize=20;" edge="1" parent="1">
+                <mxCell id="25" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;shadow=1;fontSize=20;" parent="1" edge="1">
                     <mxGeometry width="50" height="50" relative="1" as="geometry">
                         <mxPoint x="568" y="67" as="sourcePoint"/>
                         <mxPoint x="588" y="67" as="targetPoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="26" value="设备驱动" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=20;" vertex="1" parent="1">
+                <mxCell id="26" value="设备驱动" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=20;" parent="1" vertex="1">
                     <mxGeometry x="269" y="404" width="100" height="40" as="geometry"/>
                 </mxCell>
-                <mxCell id="27" value="字符" style="rounded=0;whiteSpace=wrap;html=1;fontSize=20;shadow=1;" vertex="1" parent="1">
+                <mxCell id="27" value="字符" style="rounded=0;whiteSpace=wrap;html=1;fontSize=20;shadow=1;" parent="1" vertex="1">
                     <mxGeometry x="130" y="444" width="80" height="36" as="geometry"/>
                 </mxCell>
-                <mxCell id="28" value="块" style="rounded=0;whiteSpace=wrap;html=1;fontSize=20;shadow=1;" vertex="1" parent="1">
+                <mxCell id="28" value="块" style="rounded=0;whiteSpace=wrap;html=1;fontSize=20;shadow=1;" parent="1" vertex="1">
                     <mxGeometry x="230" y="444" width="90" height="36" as="geometry"/>
                 </mxCell>
-                <mxCell id="29" value="以太网" style="rounded=0;whiteSpace=wrap;html=1;fontSize=20;shadow=1;" vertex="1" parent="1">
+                <mxCell id="29" value="以太网" style="rounded=0;whiteSpace=wrap;html=1;fontSize=20;shadow=1;" parent="1" vertex="1">
                     <mxGeometry x="340" y="444" width="96" height="36" as="geometry"/>
                 </mxCell>
-                <mxCell id="30" value="wifi" style="rounded=0;whiteSpace=wrap;html=1;fontSize=20;shadow=1;" vertex="1" parent="1">
+                <mxCell id="30" value="wifi" style="rounded=0;whiteSpace=wrap;html=1;fontSize=20;shadow=1;" parent="1" vertex="1">
                     <mxGeometry x="450" y="444" width="80" height="36" as="geometry"/>
                 </mxCell>
-                <mxCell id="31" value="文件系统" style="rounded=0;whiteSpace=wrap;html=1;fontSize=20;shadow=1;" vertex="1" parent="1">
+                <mxCell id="31" value="文件系统" style="rounded=0;whiteSpace=wrap;html=1;fontSize=20;shadow=1;" parent="1" vertex="1">
                     <mxGeometry x="130" y="490" width="110" height="40" as="geometry"/>
                 </mxCell>
-                <mxCell id="32" value="输入" style="rounded=0;whiteSpace=wrap;html=1;fontSize=20;shadow=1;" vertex="1" parent="1">
+                <mxCell id="32" value="输入" style="rounded=0;whiteSpace=wrap;html=1;fontSize=20;shadow=1;" parent="1" vertex="1">
                     <mxGeometry x="259" y="490" width="91" height="40" as="geometry"/>
                 </mxCell>
-                <mxCell id="33" value="iio" style="rounded=0;whiteSpace=wrap;html=1;fontSize=20;shadow=1;" vertex="1" parent="1">
+                <mxCell id="33" value="iio" style="rounded=0;whiteSpace=wrap;html=1;fontSize=20;shadow=1;" parent="1" vertex="1">
                     <mxGeometry x="369" y="490" width="91" height="40" as="geometry"/>
                 </mxCell>
-                <mxCell id="34" value="usb" style="rounded=0;whiteSpace=wrap;html=1;fontSize=20;shadow=1;" vertex="1" parent="1">
+                <mxCell id="34" value="usb" style="rounded=0;whiteSpace=wrap;html=1;fontSize=20;shadow=1;" parent="1" vertex="1">
                     <mxGeometry x="480" y="490" width="70" height="40" as="geometry"/>
                 </mxCell>
-                <mxCell id="35" value="framebuffer" style="rounded=0;whiteSpace=wrap;html=1;fontSize=20;shadow=1;" vertex="1" parent="1">
+                <mxCell id="35" value="framebuffer" style="rounded=0;whiteSpace=wrap;html=1;fontSize=20;shadow=1;" parent="1" vertex="1">
                     <mxGeometry x="130" y="540" width="110" height="40" as="geometry"/>
                 </mxCell>
-                <mxCell id="36" value="平台" style="rounded=0;whiteSpace=wrap;html=1;fontSize=20;shadow=1;" vertex="1" parent="1">
+                <mxCell id="36" value="平台" style="rounded=0;whiteSpace=wrap;html=1;fontSize=20;shadow=1;" parent="1" vertex="1">
                     <mxGeometry x="259" y="540" width="111" height="40" as="geometry"/>
                 </mxCell>
-                <mxCell id="37" value="drm" style="rounded=0;whiteSpace=wrap;html=1;fontSize=20;shadow=1;" vertex="1" parent="1">
+                <mxCell id="37" value="drm" style="rounded=0;whiteSpace=wrap;html=1;fontSize=20;shadow=1;" parent="1" vertex="1">
                     <mxGeometry x="394" y="540" width="92" height="40" as="geometry"/>
                 </mxCell>
-                <mxCell id="38" value="" style="rounded=0;whiteSpace=wrap;html=1;fontSize=20;shadow=1;" vertex="1" parent="1">
+                <mxCell id="38" value="" style="rounded=0;whiteSpace=wrap;html=1;fontSize=20;shadow=1;" parent="1" vertex="1">
                     <mxGeometry x="564" y="404" width="206" height="195" as="geometry"/>
                 </mxCell>
-                <mxCell id="40" value="架构" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;shadow=1;fontSize=20;" vertex="1" parent="1">
+                <mxCell id="40" value="arch" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;shadow=1;fontSize=20;" parent="1" vertex="1">
                     <mxGeometry x="637" y="406" width="60" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="42" value="机器 1" style="rounded=0;whiteSpace=wrap;html=1;shadow=1;fontSize=20;" vertex="1" parent="1">
+                <mxCell id="42" value="机器 1" style="rounded=0;whiteSpace=wrap;html=1;shadow=1;fontSize=20;" parent="1" vertex="1">
                     <mxGeometry x="610" y="444" width="120" height="40" as="geometry"/>
                 </mxCell>
-                <mxCell id="43" value="机器 2" style="rounded=0;whiteSpace=wrap;html=1;shadow=1;fontSize=20;" vertex="1" parent="1">
+                <mxCell id="43" value="机器 2" style="rounded=0;whiteSpace=wrap;html=1;shadow=1;fontSize=20;" parent="1" vertex="1">
                     <mxGeometry x="610" y="510" width="120" height="40" as="geometry"/>
                 </mxCell>
-                <mxCell id="44" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;shadow=1;fontSize=20;" edge="1" parent="1">
+                <mxCell id="44" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;shadow=1;fontSize=20;" parent="1" edge="1">
                     <mxGeometry width="50" height="50" relative="1" as="geometry">
                         <mxPoint x="664" y="582" as="sourcePoint"/>
                         <mxPoint x="684" y="582" as="targetPoint"/>
