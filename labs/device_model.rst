@@ -867,7 +867,7 @@ PNP 操作
 =========
 
 .. include:: ../labs/exercises-summary.hrst
-.. |LAB_NAME| replace:: 设备模型
+.. |LAB_NAME| replace:: device_model
 
 0. 引言
 ---------

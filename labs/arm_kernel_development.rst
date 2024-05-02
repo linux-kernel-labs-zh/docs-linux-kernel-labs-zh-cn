@@ -256,7 +256,7 @@ Qemu
 ===========
 
 .. include:: ../labs/exercises-summary.hrst
-.. |LAB_NAME| replace:: ARM 内核开发
+.. |LAB_NAME| replace:: arm_kernel_development
 
 .. warning::
 

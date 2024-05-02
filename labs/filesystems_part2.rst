@@ -550,7 +550,7 @@ Dentry 操作
 =========
 
 .. include:: ../labs/exercises-summary.hrst
-.. |LAB_NAME| replace:: 文件系统
+.. |LAB_NAME| replace:: filesystems
 
 .. important::
 

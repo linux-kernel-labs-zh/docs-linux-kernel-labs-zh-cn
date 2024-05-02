@@ -156,7 +156,7 @@ top
 =========
 
 .. include:: ../labs/exercises-summary.hrst
-.. |LAB_NAME| replace:: 内核分析
+.. |LAB_NAME| replace:: kernel_profiling
 
 .. note::
 

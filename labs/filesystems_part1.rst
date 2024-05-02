@@ -414,7 +414,7 @@ VFS 函数通常以超级块、索引节点和/或包含指向超级块的指针
 =========
 
 .. include:: ../labs/exercises-summary.hrst
-.. |LAB_NAME| replace:: 文件系统
+.. |LAB_NAME| replace:: filesystems
 
 ..
   _[SURVEY-LABEL]

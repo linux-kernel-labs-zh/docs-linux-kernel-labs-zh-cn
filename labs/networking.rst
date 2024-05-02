@@ -816,7 +816,7 @@ netcat
 ====
 
 .. include:: ../labs/exercises-summary.hrst
-.. |LAB_NAME| replace:: 网络
+.. |LAB_NAME| replace:: networking
 
 .. important::
 
