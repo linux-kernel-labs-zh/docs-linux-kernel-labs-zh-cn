@@ -227,7 +227,7 @@ mmap 系统调用有以下参数：
 =========
 
 .. include:: ../labs/exercises-summary.hrst
-.. |LAB_NAME| replace:: 内存映射
+.. |LAB_NAME| replace:: memory_mapping
 
 1. 将连续的物理内存映射到用户空间
 --------------------------------------------------

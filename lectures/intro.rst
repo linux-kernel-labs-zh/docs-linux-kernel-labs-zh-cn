@@ -85,6 +85,7 @@
    :inline-contents: True
 
    .. image:: ../img/lectures/Monolithic_kernel.svg
+      :width: 660px
 
 
 尽管如此，大部分单体内核在子系统间都实现了逻辑上的分隔，尤其是核心内核与设备驱动程序之间，它们通常需要通过较为严格的 API 来互相访问服务（这些 API 并非总是固定不变的）。显然，这种做法依赖于内核的具体实现和架构设计。

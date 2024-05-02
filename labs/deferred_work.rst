@@ -553,7 +553,7 @@ tasklet
 ========
 
 .. include:: ../labs/exercises-summary.hrst
-.. |LAB_NAME| replace:: 延迟工作
+.. |LAB_NAME| replace:: deferred_work
 
 0. 简介
 --------

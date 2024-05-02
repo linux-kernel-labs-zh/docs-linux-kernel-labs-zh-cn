@@ -689,7 +689,7 @@
 =========
 
 .. include:: ../labs/exercises-summary.hrst
-.. |LAB_NAME| replace:: 块设备驱动程序
+.. |LAB_NAME| replace:: block_device_drivers
 
 0. 简介
 --------

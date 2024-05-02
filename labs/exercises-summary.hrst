@@ -15,13 +15,13 @@
    .. code-block:: shell
 
       tools/labs $ make clean
-      tools/labs $ LABS=<lab name> make skels
+      tools/labs $ LABS=<实验名称> make skels
 
    你还可以使用以下命令为单个任务生成骨架代码：
 
    .. code-block:: shell
 
-      tools/labs $ LABS=<lab name>/<task name> make skels
+      tools/labs $ LABS=<实验名称>/<任务名称> make skels
 
    生成骨架驱动程序后，构建源代码：
 
@@ -35,7 +35,7 @@
 
       tools/labs $ make console
 
-   模块将放置在 /home/root/skels/|LAB_NAME|/<task_name> 目录中。
+   模块将放置在 /home/root/skels/|LAB_NAME|/<任务名称> 目录中。
 
    重新构建模块时，无需停止虚拟机！本地 `skels` 目录与虚拟机共享。
 

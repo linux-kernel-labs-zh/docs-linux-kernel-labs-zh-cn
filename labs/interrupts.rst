@@ -451,7 +451,7 @@ ioperm 函数的第三个参数用于请求或释放端口权限：1 表示获�
 * drivers/input/serio/i8042.c
 * drivers/input/keyboard/atkbd.c
 
-Linux设备驱动程序
+Linux 设备驱动程序
 --------------------
 
 * `Linux 设备驱动程序，第 3 版，第 9 章——与硬件通信 <http://lwn.net/images/pdf/LDD3/ch09.pdf>`_
@@ -463,7 +463,7 @@ Linux设备驱动程序
 =========
 
 .. include:: ../labs/exercises-summary.hrst
-.. |LAB_NAME| replace:: 中断
+.. |LAB_NAME| replace:: interrupts
 
 0. 简介
 --------

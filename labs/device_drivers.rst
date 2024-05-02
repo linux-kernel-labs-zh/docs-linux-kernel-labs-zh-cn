@@ -583,7 +583,7 @@ ioctl
 =========
 
 .. include:: ../labs/exercises-summary.hrst
-.. |LAB_NAME| replace:: 设备驱动
+.. |LAB_NAME| replace:: device_drivers
 
 0. 简介
 -------
