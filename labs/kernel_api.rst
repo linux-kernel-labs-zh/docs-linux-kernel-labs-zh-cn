@@ -224,8 +224,8 @@ printk
 
 列表的演变可以在下图中看到：
 
-.. image:: ../res/list_evolution.png
-   :width: 85%
+.. image:: ../img/list_evolution.svg
+   :width: 1000px
 
 从上面的例子可以看出，通过 :c:macro:`list_add` 宏引入了堆栈类型的行为，并使用了标记。
 
