@@ -2,6 +2,10 @@
 系统调用
 =======
 
+.. meta::
+   :description: 介绍了 Linux 系统调用的实现机制，包括系统调用的基本概念、系统调用在内核中的处理流程，以及使用虚拟机和 gdb 工具对系统调用进行调试和分析。
+   :keywords: Linux, 系统调用, 内核, 中断, 用户空间, 内核空间, gdb
+
 `查看幻灯片 <syscalls-slides.html>`_
 
 .. slideconf::

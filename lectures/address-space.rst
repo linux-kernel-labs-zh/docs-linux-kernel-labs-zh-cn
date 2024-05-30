@@ -2,6 +2,10 @@
 地址空间
 =================
 
+.. meta::
+   :description: 介绍了 x86 架构下的内存管理单元（MMU）的工作机制，包括分段和分页，以及在 Linux 操作系统中是如何使用分段机制的。
+   :keywords: 地址空间, MMU, 分段, 分页, 选择器, 段描述符, Linux, 线程本地存储
+
 `查看幻灯片 <address-space-slides.html>`_
 
 .. slideconf::

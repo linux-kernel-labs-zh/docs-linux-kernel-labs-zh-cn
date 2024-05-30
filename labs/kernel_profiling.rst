@@ -3,7 +3,8 @@
 ================
 
 .. meta::
-   :description: 熟悉 Linux 内核分析的基础知识，理解基本的分析工具，学习分析方法和良好实践
+    :description: 介绍 Linux 内核分析的基础知识、常用分析工具以及分析方法和良好实践
+    :keywords: 内核分析, Linux, perf, ps, htop, lsof, 内核调试
 
 实验目标
 ==============

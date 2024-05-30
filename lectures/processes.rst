@@ -2,6 +2,10 @@
 进程
 ====
 
+.. meta::
+   :description: 介绍操作系统中进程和线程的概念，包括进程资源、进程控制块 task_struct，以及如何使用调试器检查进程信息
+   :keywords: 进程, 线程, 调试, task_struct, /proc, pahole, gdb, lx-ps
+
 `查看幻灯片 <processes-slides.html>`_
 
 .. slideconf::

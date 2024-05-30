@@ -2,6 +2,10 @@
 Linux 设备模型
 ==================
 
+.. meta::
+   :description: 介绍 Linux 设备模型的概念和相关机制，包括即插即用、sysfs 虚拟文件系统等
+   :keywords: Linux, 设备模型, 即插即用, sysfs, 设备, 总线, 驱动程序
+
 概述
 ========
 

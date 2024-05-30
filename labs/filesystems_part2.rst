@@ -3,7 +3,8 @@
 ============================
 
 .. meta::
-   :description: 提高对 inode、file 和 dentry 的了解，了解如何在 VFS（虚拟文件系统）中添加对常规文件和目录的支持，了解文件系统的内部实现
+   :description: 介绍文件系统驱动程序的实现细节，包括 inode、file 和 dentry 数据结构，以及如何在 VFS 中添加对常规文件和目录的支持，并介绍文件系统的内部实现。
+   :keywords: 文件系统, inode, dentry, VFS, 文件系统实现
 
 实验目标
 ==============

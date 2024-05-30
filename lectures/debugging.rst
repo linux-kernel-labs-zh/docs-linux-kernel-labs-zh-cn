@@ -2,6 +2,10 @@
 调试
 =========
 
+.. meta::
+   :description: 介绍了 Linux 内核的调试方法，包括解码 oops 和 panic 错误信息、列表调试、内存调试、锁调试以及性能分析等内容，为内核开发人员提供了实用的调试技巧。
+   :keywords: Linux 内核, 调试, oops, panic, 内存调试, 锁调试, 性能分析
+
 `查看幻灯片 <debugging-slides.html>`_
 
 .. slideconf::
