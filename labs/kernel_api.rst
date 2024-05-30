@@ -3,7 +3,8 @@
 ========
 
 .. meta::
-   :description: 熟悉基本的 Linux 内核 API，描述内存分配机制，描述锁定（locking）机制
+   :description: 介绍 Linux 内核 API 的基本概念和函数，包括内存访问、执行上下文、锁定机制等内容。
+   :keywords: Linux, 内核, API, 内存分配, 锁定, 可抢占性, 内核编程
 
 实验目标
 ========

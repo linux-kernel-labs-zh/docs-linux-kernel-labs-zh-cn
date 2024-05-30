@@ -3,8 +3,8 @@
 ==============
 
 .. meta::
-   :description: 理解地址空间映射机制，了解与内存管理相关的重要结构
-   :keywords: mmap, struct page, struct vm_area_struct, struct vm_struct, remap_pfn_range, SetPageReserved, ClearPageReserved 
+   :description: 介绍 Linux 内核中内存映射机制的基本概念和相关数据结构
+   :keywords: 内核编程, Linux, 内存管理, 地址空间, mmap, page, vm_area_struct, remap_pfn_range
 
 实验目标
 ==============

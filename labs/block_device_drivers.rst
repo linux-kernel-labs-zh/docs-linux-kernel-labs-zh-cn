@@ -3,7 +3,8 @@
 ====================
 
 .. meta::
-   :description: 了解 Linux 中 I/O 子系统的行为，在块设备的结构和函数上进行实际操作，通过解决练习，掌握块设备的 API 使用基础技能
+   :description: 介绍 Linux 内核中块设备驱动程序的基本概念和编程接口
+   :keywords: Linux, 内核, 块设备, 驱动程序, 注册, 磁盘, gendisk, alloc_disk, add_disk, del_gendisk
 
 实验目标
 ==============

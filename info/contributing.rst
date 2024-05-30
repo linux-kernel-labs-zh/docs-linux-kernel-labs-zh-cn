@@ -2,6 +2,10 @@
 向 Linux 内核实验项目做贡献
 ===========================
 
+.. meta::
+   :description: 介绍如何为 Linux 内核实验项目做出贡献的指南，包括如何 fork 仓库、创建拉取请求以及修改拉取请求等步骤
+   :keywords: Linux, 内核, 实验, 贡献, fork, pull request, GitHub
+
 ``Linux 内核实验`` 是一个开放的平台。你可以通过对文档、练习或基础设施的贡献来帮助它变得更好。无论是对错别字的修正还是在文档中添加新的部分，所有的贡献我们都欢迎。
 
 所有需要进行贡献的信息都可以在 `Linux 内核实验 Linux 仓库 <https://github.com/linux-kernel-labs/linux>`_ 中找到。如果要改变任何东西，你需要从你自己的 fork 创建一个拉取请求（``Pull Request``，``PR``）到这个仓库。PR 将由团队成员进行审核，并在解决任何可能的问题后合并。

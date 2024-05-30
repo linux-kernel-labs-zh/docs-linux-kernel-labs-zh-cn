@@ -2,6 +2,10 @@
 文件系统管理
 =====================
 
+.. meta::
+   :description: 介绍了文件系统的基本概念和管理，包括文件系统的抽象、操作以及 Linux 中的虚拟文件系统（VFS）。
+   :keywords: 文件系统, 超级块, 索引节点, 目录项, VFS, Linux 内核
+
 `查看幻灯片 <fs-slides.html>`_
 
 .. slideconf::

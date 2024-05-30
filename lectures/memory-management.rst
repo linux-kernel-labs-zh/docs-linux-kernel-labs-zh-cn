@@ -2,6 +2,10 @@
 内存管理
 =================
 
+.. meta::
+   :description: 介绍了 Linux 内核中的物理内存管理、虚拟内存管理、页面分配、伙伴算法、SLAB 分配器等内容。
+   :keywords: Linux 内核, 内存管理, 物理内存, 虚拟内存, 页面分配, 伙伴算法, SLAB 分配器
+
 `查看幻灯片 <memory-management-slides.html>`_
 
 .. slideconf::

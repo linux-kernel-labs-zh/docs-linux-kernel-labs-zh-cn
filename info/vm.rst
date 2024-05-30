@@ -4,6 +4,10 @@
 推荐配置
 =====================
 
+.. meta::
+   :description: 介绍在基于 QEMU 虚拟机上运行 Linux 内核的操作步骤和要求。包括虚拟机所需软件包、启动虚拟机以及连接到虚拟机的具体方法。
+   :keywords: Linux, QEMU, 虚拟机, 内核编程, 操作系统实验
+
 要搭建一个功能齐全的环境，最简单的方式是遵循 `这个仓库 <https://github.com/linux-kernel-labs-zh/so2-labs>`__ 中列出的步骤。
 
 =========
