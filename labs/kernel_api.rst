@@ -122,7 +122,7 @@ printk
 内存分配
 --------
 
-在 Linux 内核中，只能分配驻留内存。要想分配驻留内存，可以使用 :c:func:`kmalloc` 调用。下面是一个典型的 :c:func:`kmalloc` 调用示例：
+在 Linux 中，常驻内存只能使用 :c:func:`kmalloc` 调用来分配。下面是一个典型的 :c:func:`kmalloc` 调用示例：
 
 .. code-block:: c
 
